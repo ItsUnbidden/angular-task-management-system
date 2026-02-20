@@ -1,0 +1,145 @@
+<mat-card appearance="outlined" class="overview-card">
+    @if (isTaskLoading()) {
+        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+        <span>Loading task...</span>
+    }
+    @else {
+        <mat-card-header>
+            <button mat-stroked-button [routerLink]="['../../']" [relativeTo]="route">
+                <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+            </button>
+            @if (isEditingName()) {
+                <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitTaskName()">
+                    <mat-form-field>
+                        <mat-label>New task name</mat-label>
+                        <input matInput type="text" formControlName="taskName">
+                    </mat-form-field>
+                    <button mat-icon-button type="submit" [disabled]="!nameEditForm.valid">
+                        <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                    </button>
+                    <button mat-icon-button type="button" (click)="onCloseEditing()">
+                        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                    </button>
+                </form>
+            }
+            @else {
+                <div class="row">
+                    <h2>
+                        {{ task()?.name }}                       
+                    </h2>
+                    <button mat-icon-button (click)="onTaskNameEdit()">
+                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                    </button>
+                </div>          
+            }
+        </mat-card-header>
+
+        <mat-divider></mat-divider>
+
+        <mat-card-content>
+            <div class="description-row">
+                @if (isEditingDescription()) {
+                    <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
+                        <mat-form-field class="description-input" appearance="outline">
+                            <mat-label>New task description</mat-label>
+                            <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
+                        </mat-form-field>
+                        <div class="actions">
+                            <button mat-icon-button type="submit" [disabled]="!descriptionEditForm.valid">
+                                <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                            </button>
+                            <button mat-icon-button type="button" (click)="onCloseEditing()">
+                                <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                            </button>
+                        </div>
+                    </form>
+                }
+                @else {
+                    @if (task()?.description) {
+                        <p class="description-field">{{ task()?.description ?? "" }}</p>
+                    } 
+                    @else {
+                        <p class="description-field">No description</p>
+                    }
+                    <button mat-icon-button (click)="onTaskDescriptionEdit()">
+                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                    </button>                        
+                }
+            </div>
+            @if (isEditingDate()) {
+                <form [formGroup]="dateEditForm" (ngSubmit)="onSubmitTaskDueDate()">
+                    <mat-form-field appearance="outline">
+                        <mat-label>New task due date</mat-label>
+                        <input matInput [matDatepicker]="picker" formControlName="taskDueDate">
+
+                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-datepicker #picker></mat-datepicker>
+                    </mat-form-field>
+                    
+                    <button mat-icon-button type="submit" [disabled]="!dateEditForm.valid">
+                        <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                    </button>
+                    <button mat-icon-button type="button" (click)="onCloseEditing()">
+                        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                    </button>
+                </form>
+            }
+            @else {
+                <div class="row">
+                    <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
+                    <button mat-icon-button (click)="onTaskDueDateEdit()">
+                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                    </button>
+                </div>
+            }
+            @if (isEditingChips()) {
+                <form [formGroup]="priorityEditForm" (ngSubmit)="onSubmitTaskPriority()">
+                    <div class="row">
+                        <mat-form-field appearance="outline">
+                            <mat-label>New priority</mat-label>
+                            <mat-select formControlName="taskPriority">
+                                @for (option of priorityOptions; track option) {
+                                    <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                        <button mat-icon-button type="submit" [disabled]="!priorityEditForm.valid">
+                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="onCloseEditing()">
+                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                    </div>
+                </form>
+            }
+            @else {
+                <mat-chip-set>
+                    <mat-chip [ngClass]="parseEnumColor(task()?.priority ?? null)">
+                        {{ parseEnumText(task()?.priority ?? null) }}
+                    </mat-chip>
+                    <mat-chip [ngClass]="parseEnumColor(task()?.status ?? null)">
+                        {{ parseEnumText(task()?.status ?? null) }}
+                    </mat-chip>
+                </mat-chip-set>
+                <button mat-icon-button (click)="onTaskChipsEdit()">
+                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                </button>
+            }
+            <div>
+                @if (task()?.status === 'IN_PROGRESS') {
+                    <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
+                    <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
+                }
+                @else if (task()?.status === 'NOT_STARTED') {
+                    <button matButton="filled" (click)="onStatusChange('IN_PROGRESS')">Start</button>
+                }
+                @else if (task()?.status === 'OVERDUE') {
+                    <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
+                }
+                @else {
+                    <button matButton="outlined" (click)="onStatusChange('IN_PROGRESS')">Mark as in progress</button>
+                }                    
+            </div>
+        </mat-card-content>
+    }
+</mat-card>

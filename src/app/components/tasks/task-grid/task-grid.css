@@ -1,0 +1,24 @@
+.tasks-card {
+    width: 800px;
+    margin-top: 35px;
+}
+
+.task-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: auto auto auto;
+  margin-bottom: 12px;
+}
+
+.task-tile {
+  cursor: pointer;
+}
+
+.task-description {
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+}

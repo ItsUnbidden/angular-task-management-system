@@ -1,0 +1,41 @@
+<main>
+    <h2 mat-dialog-title>New Task</h2>
+
+    <div mat-dialog-content>
+        <form [formGroup]="taskControl">
+            <mat-form-field>
+                <input matInput placeholder="Task name" formControlName="name">
+            </mat-form-field>
+            <mat-form-field>
+                <textarea matInput placeholder="Description" formControlName="description"></textarea>
+            </mat-form-field>
+            <mat-form-field>
+                <mat-label>Priority</mat-label>
+                <mat-select formControlName="priority" >
+                    @for (option of priorityOptions; track option) {
+                        <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+            <mat-form-field>
+                <mat-label>Due date</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="dueDate">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            <mat-form-field>
+                <mat-label>Assigned user</mat-label>
+                <mat-select formControlName="assignee" >
+                    @for (user of data.projectMembers; track user.id) {
+                        <mat-option [value]="user">{{ user.username }}</mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+        </form>
+    </div>
+
+    <div mat-dialog-actions align="end">
+        <button mat-button (click)="close()">Cancel</button>
+        <button mat-flat-button (click)="submit()" [disabled]="taskControl.invalid">Create task</button>
+    </div>
+</main>

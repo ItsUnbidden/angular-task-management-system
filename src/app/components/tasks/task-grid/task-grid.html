@@ -1,0 +1,45 @@
+<mat-card class="tasks-card">
+    <mat-card-header>
+        <mat-card-title class="card-title">Tasks</mat-card-title>
+        <button mat-flat-button (click)="onCreateNewTask()" color="primary">Create task</button>
+    </mat-card-header>
+
+    <mat-divider></mat-divider>
+
+    <mat-card-content>
+        @if (isTaskPageLoading()) {
+            <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+            <span>Loading tasks...</span>
+        }
+        @else {
+            <div class="tasks-grid">
+                @for (task of tasks(); track task.id) {
+                    <mat-card class="task-tile" (click)="onOpenTask(task)">
+                        <mat-card-header>
+                            <mat-card-title>{{ task.name }}</mat-card-title>
+                            <mat-card-subtitle>{{ task.assigneeUsername }}</mat-card-subtitle>
+                        </mat-card-header>
+
+                        <mat-card-content>
+                            <p class="task-description">{{ task.description ?? 'No description' }}</p>
+
+                            <mat-chip-set>
+                                <mat-chip [ngClass]="parseEnumColor(task.status)">
+                                    {{ parseEnumText(task.status) }}
+                                </mat-chip>
+                                <mat-chip [ngClass]="parseEnumColor(task.priority)">
+                                    {{ parseEnumText(task.priority) }}
+                                </mat-chip>
+                            </mat-chip-set>
+                        </mat-card-content>
+                            
+                        <mat-card-footer>
+                            <span>{{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}</span>
+                        </mat-card-footer>
+                    </mat-card>
+                }
+            </div>
+            <mat-paginator [length]="totalTasks()" [pageIndex]="taskPageIndex()" [pageSize]="taskPageSize()" [pageSizeOptions]="[6, 12, 24]" (page)="onTaskPage($event)"></mat-paginator>
+        }
+    </mat-card-content>
+</mat-card>

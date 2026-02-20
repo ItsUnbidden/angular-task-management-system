@@ -1,0 +1,69 @@
+<main>
+    <mat-card class="auth-card">
+        @if (isRegistering()) {
+            <mat-card-header>
+                <mat-card-title class="auth-card-title">Sign up</mat-card-title>
+            </mat-card-header>
+            
+            <form class="auth-form" [formGroup]="registrationForm" (ngSubmit)="onRegistrationSubmit()">
+                <mat-form-field class="auth-field">
+                    <mat-label>Username</mat-label>
+                    <input matInput id="usernameRegistration" type="text" formControlName="username">
+                </mat-form-field>
+                <div class="password-fields">
+                    <mat-form-field class="auth-field">
+                        <mat-label>Password</mat-label>
+                        <input matInput id="passwordRegistration" type="password" formControlName="password">
+                    </mat-form-field>
+                    <mat-form-field class="auth-field">
+                        <mat-label>Repeat Password</mat-label>
+                        <input matInput id="passwordRepeat" type="password" formControlName="repeatPassword">
+                    </mat-form-field>
+                </div>
+                <mat-form-field class="auth-field">
+                    <mat-label>Email</mat-label>
+                    <input matInput id="emailRegistration" type="email" formControlName="email">
+                </mat-form-field>
+                <div class="name-fields">
+                    <mat-form-field class="auth-field name-field">
+                        <mat-label>First Name</mat-label>
+                        <input matInput id="firstNameRegistration" type="text" formControlName="firstName">
+                    </mat-form-field>
+                    <mat-form-field class="auth-field name-field">
+                        <mat-label>Last Name</mat-label>
+                        <input matInput id="lastNameRegistration" type="text" formControlName="lastName">
+                    </mat-form-field>
+                </div>
+                <button matButton="filled" class="submit-button" type="submit" [disabled]="!registrationForm.valid || !isSubmitEnabled()">Sign up</button>
+            </form>
+            @if (errorMessage()) {
+                <div class="error-label">{{ errorMessage() }}</div>
+            }
+            <mat-divider/>
+            <div class="mini-label">Already have an account?</div>
+            <button matButton class="toggle-registration-button" (click)="toggleRegistration()">Sign in</button>
+        }
+        @else {
+            <mat-card-header>
+                <mat-card-title class="auth-card-title">Sign in</mat-card-title>
+            </mat-card-header>
+            <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onLoginSubmit()">
+                <mat-form-field class="auth-field">
+                    <mat-label>Username</mat-label>
+                    <input matInput id="usernameLogin" type="text" formControlName="username">
+                </mat-form-field>
+                <mat-form-field class="auth-field">
+                    <mat-label>Password</mat-label>
+                    <input matInput id="passwordLogin" type="password" formControlName="password">
+                </mat-form-field>
+                <button matButton="filled" class="submit-button" type="submit" [disabled]="!loginForm.valid || !isSubmitEnabled()">Sign in</button>
+            </form>
+            @if (errorMessage()) {
+                <div class="error-label">{{ errorMessage() }}</div>
+            }
+            <mat-divider/>
+            <div class="mini-label">Don't have an account?</div>
+            <button matButton class="toggle-registration-button" (click)="toggleRegistration()">Sign up</button>
+        }
+    </mat-card>
+</main>

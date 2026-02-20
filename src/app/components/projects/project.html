@@ -1,0 +1,115 @@
+<main>
+    <mat-card appearance="outlined" class="overview-card">
+        @if (isProjectLoading()) {
+            <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+            <span>Loading project...</span>
+        }
+        @else {
+            <mat-card-header>
+                <mat-card-title class="card-title">Overview</mat-card-title>
+            </mat-card-header>
+
+            <mat-divider></mat-divider>
+
+            <mat-card-content>
+                @if (isEditingName()) {
+                    <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
+                        <mat-form-field>
+                            <mat-label>New project name</mat-label>
+                            <input matInput type="text" formControlName="projectName">
+                        </mat-form-field>
+                        <button mat-icon-button type="submit">
+                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="onCloseEditing()">
+                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                    </form>
+                }
+                @else {
+                    <div class="row">
+                        <h2>
+                            {{ project()?.name }}                       
+                        </h2>
+                        <button mat-icon-button (click)="onProjectNameEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    </div>
+                    
+                }
+                <div class="description-row">
+                    @if (isEditingDescription()) {
+                        <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
+                            <mat-form-field class="description-input" appearance="outline">
+                                <mat-label>New project description</mat-label>
+                                <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>
+                            </mat-form-field>
+                            <div class="actions">
+                                <button mat-icon-button type="submit">
+                                    <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                                </button>
+                                <button mat-icon-button type="button" (click)="onCloseEditing()">
+                                    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    @else {
+                        @if (project()?.description) {
+                            <p class="description-field">{{ project()?.description ?? "" }}</p>
+                        } 
+                        @else {
+                            <p class="description-field">No description</p>
+                        }
+                        <button mat-icon-button (click)="onProjectDescriptionEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>                        
+                    }
+                </div>
+                @if (isEditingDates()) {
+                    <form [formGroup]="datesEditForm" (ngSubmit)="onSubmitProjectDates()">
+                        <mat-form-field appearance="outline">
+                            <mat-label>New project dates</mat-label>
+                            <mat-date-range-input [rangePicker]="picker">
+                                <input matStartDate formControlName="startDate" placeholder="Start">
+                                <input matEndDate formControlName="endDate" placeholder="End">
+                            </mat-date-range-input>
+
+                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-date-range-picker #picker></mat-date-range-picker>
+                        </mat-form-field>
+                        
+                        <button mat-icon-button type="submit">
+                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="onCloseEditing()">
+                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                    </form>
+                }
+                @else {
+                    <div class="row">
+                        <div class = "muted">
+                            {{ project()?.startDate | date:'mediumDate' }}
+                            —
+                            {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
+                        </div>
+
+                        <button mat-icon-button (click)="onProjectDatesEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    </div>
+                }
+
+                <mat-slide-toggle [formControl]="isPrivateCtrl" (change)="onIsPrivateToggleChange($event.checked)">
+                    Private
+                </mat-slide-toggle>
+
+                <mat-chip [ngClass]="statusColor(project()?.status ?? null)">
+                    {{ statusText(project()?.status ?? null) }}
+                </mat-chip>
+            </mat-card-content>
+        }
+    </mat-card>
+    <router-outlet></router-outlet>
+</main>

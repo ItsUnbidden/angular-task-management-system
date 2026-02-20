@@ -1,0 +1,55 @@
+main {
+    display: flex;
+    flex-direction: column;
+    justify-content: baseline;
+    align-items: center;
+    margin-top: 200px;
+    height: 100vh;
+}
+
+.overview-card {
+    display: flex;
+    flex-direction: column;
+    width: 800px;
+}
+
+.row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.card-title {
+    margin-bottom: 10px;
+}
+
+.description-row {
+    width: 100%;
+}
+
+.description-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.description-input textarea[matInput] {
+    height: 140px;
+    resize: none;
+    overflow: auto;
+}
+
+.descritpion-edit {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    flex: 1;
+    min-width: 0;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    flex: 0 0 auto;
+}
