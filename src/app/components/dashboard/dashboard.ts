@@ -102,15 +102,9 @@ export class Dashboard {
       disableClose: true
     });
 
-    ref.afterClosed().subscribe(result => {
-      if (result) {
-        this.projectService.createProject(result).subscribe({
-          next: () => this.loadMyProjects(),
-          error: (err) => {
-            console.error('Failed to create project:', err);
-            this.error = this.humanError(err);
-          }
-        });
+    ref.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.loadMyProjects();
       }
     });
   }

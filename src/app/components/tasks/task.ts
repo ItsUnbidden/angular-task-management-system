@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TaskPriority, TaskResponse, TaskStatus, TaskUpdateRequest } from '../../models';
+import { ProjectResponse, TaskPriority, TaskResponse, TaskStatus, TaskUpdateRequest } from '../../models';
 import { TaskService } from '../../service/task.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { map } from 'rxjs';
@@ -17,6 +17,8 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
+import { UserService } from '../../service/user.service';
+import { ProjectService } from '../../service/project.service';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -29,15 +31,17 @@ interface TaskPriorityOption {
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule ],
+    MatChipsModule, MatSelectModule],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })
 export class Task {
-  route: ActivatedRoute = inject(ActivatedRoute);
+  route = inject(ActivatedRoute);
+  userService = inject(UserService);
 
   taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
 
+  project = signal<ProjectResponse | null>(null);
   task = signal<TaskResponse | null>(null);
   isTaskLoading = signal(false);
 
@@ -45,6 +49,14 @@ export class Task {
   isEditingDescription = signal(false);
   isEditingDate = signal(false);
   isEditingChips = signal(false);
+
+  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
+  currentProjectRole = computed(() => {
+    const project = this.project();
+    const user = this.currentUser();
+
+    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
+  });
 
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
@@ -82,7 +94,7 @@ export class Task {
     { priority: 'HIGH', priorityView: 'High' },
   ]
 
-  constructor(private taskService: TaskService) {
+  constructor(private taskService: TaskService, private projectService: ProjectService) {
     effect(() => {
       this.taskService.cacheSelectedTask(this.taskId());
     });
@@ -92,6 +104,11 @@ export class Task {
 
       if (task) {
         untracked(() => {
+          if (projectService.project()?.id !== task.projectId) {
+            this.projectService.loadProjectToCache(task.projectId);
+          }
+          this.project = this.projectService.project;
+
           if (!this.nameEditForm.dirty) {
             this.nameEditForm.patchValue({
               taskName: task.name

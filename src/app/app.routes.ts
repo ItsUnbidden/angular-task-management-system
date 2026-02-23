@@ -13,6 +13,11 @@ export const routes: Routes = [{
     canActivate: [NoAuthGuard]
 },
 {
+    path: 'forbidden',
+    loadComponent: () => import('./components/util/forbidden/forbidden').then(m => m.Forbidden),
+    canActivate: [AuthGuard]
+},
+{
     path: 'dashboard',
     loadComponent: () => import('./components/dashboard/dashboard').then(m => m.Dashboard),
     canActivate: [AuthGuard]

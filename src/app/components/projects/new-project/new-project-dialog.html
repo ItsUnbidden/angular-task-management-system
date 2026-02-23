@@ -20,11 +20,18 @@
             </mat-form-field>
             
             <mat-checkbox formControlName="isPrivate">Private Project</mat-checkbox>
+
+            @if (isSendingRequest()) {
+                <mat-spinner>Please wait...</mat-spinner>
+            }
+            @else {
+                <mat-error>{{ error() }}</mat-error>
+            }
         </form>
     </div>
 
     <div mat-dialog-actions align="end">
-        <button mat-button (click)="close()">Cancel</button>
-        <button mat-flat-button (click)="submit()" [disabled]="projectControl.invalid">Create Project</button>
+        <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
+        <button mat-flat-button (click)="submit()" [disabled]="projectControl.invalid || isSendingRequest()">Create Project</button>
     </div>
 </main>

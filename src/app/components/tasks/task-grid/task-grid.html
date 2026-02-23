@@ -1,14 +1,16 @@
 <mat-card class="tasks-card">
     <mat-card-header>
         <mat-card-title class="card-title">Tasks</mat-card-title>
-        <button mat-flat-button (click)="onCreateNewTask()" color="primary">Create task</button>
+        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+            <button mat-flat-button (click)="onCreateNewTask()" color="primary">Create task</button>
+        }
     </mat-card-header>
 
     <mat-divider></mat-divider>
 
     <mat-card-content>
-        @if (isTaskPageLoading()) {
-            <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+        @if (isLoadingTasks()) {
+            <mat-spinner diameter="30"></mat-spinner>
             <span>Loading tasks...</span>
         }
         @else {

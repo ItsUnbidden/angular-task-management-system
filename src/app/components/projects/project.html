@@ -1,7 +1,7 @@
 <main>
     <mat-card appearance="outlined" class="overview-card">
         @if (isProjectLoading()) {
-            <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+            <mat-spinner diameter="30"></mat-spinner>
             <span>Loading project...</span>
         }
         @else {
@@ -31,9 +31,11 @@
                         <h2>
                             {{ project()?.name }}                       
                         </h2>
-                        <button mat-icon-button (click)="onProjectNameEdit()">
-                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                        </button>
+                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                            <button mat-icon-button (click)="onProjectNameEdit()">
+                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                            </button>
+                        }                       
                     </div>
                     
                 }
@@ -61,9 +63,11 @@
                         @else {
                             <p class="description-field">No description</p>
                         }
-                        <button mat-icon-button (click)="onProjectDescriptionEdit()">
-                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                        </button>                        
+                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                            <button mat-icon-button (click)="onProjectDescriptionEdit()">
+                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                            </button>   
+                        }                                            
                     }
                 </div>
                 @if (isEditingDates()) {
@@ -95,9 +99,11 @@
                             {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
                         </div>
 
-                        <button mat-icon-button (click)="onProjectDatesEdit()">
-                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                        </button>
+                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                            <button mat-icon-button (click)="onProjectDatesEdit()">
+                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                            </button>
+                        }                       
                     </div>
                 }
 
@@ -108,7 +114,82 @@
                 <mat-chip [ngClass]="statusColor(project()?.status ?? null)">
                     {{ statusText(project()?.status ?? null) }}
                 </mat-chip>
+
+                <mat-expansion-panel>
+                    <mat-expansion-panel-header>
+                        <mat-panel-title>Project members</mat-panel-title>
+                        <mat-panel-description>
+                            <h4>Creator:</h4> {{ creator()?.username }}
+                            <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
+                        </mat-panel-description>
+                    </mat-expansion-panel-header>
+                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        <button matButton="elevated" (click)="onAddUser()">
+                            <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                            Add user
+                        </button>
+                    }                  
+                    @if (admins().length !== 0) {
+                        <h3>Admins</h3>
+                        @for (admin of admins(); track admin.userId) {
+                            <div class="row">
+                                <p>{{ admin.username }}</p>
+                                @if (currentProjectRole()?.roleType === 'CREATOR') {
+                                    <button matButton="elevated" (click)="onTransferOwnership(admin)">
+                                        <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
+                                        Make owner
+                                    </button>
+                                    <button matButton="elevated" (click)="onRemoveAdmin(admin)">
+                                        <mat-icon fontSet="material-symbols-outlined">remove_moderator</mat-icon>
+                                        Remove admin
+                                    </button>
+                                }     
+                                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR' && currentUser()?.id !== admin.userId) {
+                                    <button matButton="elevated" (click)="onRemoveUser(admin)">
+                                        <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
+                                        Remove
+                                    </button>
+                                }                                                           
+                            </div>
+                        }
+                    }
+                    @if (contributors().length !== 0) {
+                        <h3>Contributors</h3>
+                        @for (contributor of contributors(); track contributor.userId) {
+                            <div class="row">
+                                <p>{{ contributor.username }}</p>
+                                @if (currentProjectRole()?.roleType === 'CREATOR') {
+                                    <button matButton="elevated" (click)="onMakeAdmin(contributor)">
+                                        <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
+                                        Make admin
+                                    </button>
+                                }
+                                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                                    <button matButton="elevated" (click)="onRemoveUser(contributor)">
+                                        <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
+                                        Remove
+                                    </button>
+                                }                               
+                            </div>
+                        }
+                    }
+                </mat-expansion-panel>
             </mat-card-content>
+
+            <mat-card-actions>
+                @if (currentProjectRole()?.roleType !== 'CREATOR') {
+                    <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
+                }
+                @else {
+                    <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
+                }               
+                @if (isDropboxAuthorized()) {
+                    <button matButton="elevated" (click)="onConnectDropbox()">Connect dropbox</button>
+                }
+                @if (isGoogleCalendarAuthorized()) {
+                    <button matButton="elevated" (click)="onConnectCalendar()">Connect calendar</button>
+                }
+            </mat-card-actions>
         }
     </mat-card>
     <router-outlet></router-outlet>

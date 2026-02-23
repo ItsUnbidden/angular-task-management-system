@@ -87,6 +87,10 @@ export interface ProjectRoleResponse {
   roleType: ProjectRoleType;
 }
 
+export interface ProjectRoleUpdateRequest {
+  newRole: ProjectRoleType;
+}
+
 export interface EssentialUserResponse {
   id: number;
   username: string;
@@ -110,6 +114,12 @@ export interface Page<T> {
   totalElements: number;
   number: number;
   size: number;
+}
+
+export interface GeneralApiError {
+  timestamp: string;
+  status: number;
+  error: string;
 }
 
 export type ProjectStatus = 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';

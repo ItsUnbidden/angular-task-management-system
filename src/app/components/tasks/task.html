@@ -1,6 +1,6 @@
 <mat-card appearance="outlined" class="overview-card">
     @if (isTaskLoading()) {
-        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+        <mat-spinner diameter="30"></mat-spinner>
         <span>Loading task...</span>
     }
     @else {
@@ -27,9 +27,11 @@
                     <h2>
                         {{ task()?.name }}                       
                     </h2>
-                    <button mat-icon-button (click)="onTaskNameEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>
+                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        <button mat-icon-button (click)="onTaskNameEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    }                   
                 </div>          
             }
         </mat-card-header>
@@ -61,9 +63,11 @@
                     @else {
                         <p class="description-field">No description</p>
                     }
-                    <button mat-icon-button (click)="onTaskDescriptionEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>                        
+                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        <button mat-icon-button (click)="onTaskDescriptionEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>                        
+                    }
                 }
             </div>
             @if (isEditingDate()) {
@@ -87,9 +91,11 @@
             @else {
                 <div class="row">
                     <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
-                    <button mat-icon-button (click)="onTaskDueDateEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>
+                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        <button mat-icon-button (click)="onTaskDueDateEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    }
                 </div>
             }
             @if (isEditingChips()) {
@@ -121,11 +127,16 @@
                         {{ parseEnumText(task()?.status ?? null) }}
                     </mat-chip>
                 </mat-chip-set>
-                <button mat-icon-button (click)="onTaskChipsEdit()">
-                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                </button>
+                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                    <button mat-icon-button (click)="onTaskChipsEdit()">
+                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                    </button>
+                }
             }
-            <div>
+        </mat-card-content>
+
+        <mat-card-actions>
+            @if (task()?.assigneeId === currentUser()?.id) {
                 @if (task()?.status === 'IN_PROGRESS') {
                     <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
                     <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
@@ -138,8 +149,8 @@
                 }
                 @else {
                     <button matButton="outlined" (click)="onStatusChange('IN_PROGRESS')">Mark as in progress</button>
-                }                    
-            </div>
-        </mat-card-content>
+                }                  
+            }  
+        </mat-card-actions>
     }
 </mat-card>

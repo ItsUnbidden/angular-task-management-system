@@ -1,4 +1,4 @@
-import { Component, effect, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -12,6 +12,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { NewTaskDialog } from '../new-task-dialog/new-task-dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { UserService } from '../../../service/user.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-task-grid',
@@ -20,18 +22,30 @@ import { Router } from '@angular/router';
   styleUrl: './task-grid.css',
 })
 export class TaskGrid {
+  private userService = inject(UserService);
+  
   project = signal<ProjectResponse | null>(null);
   tasks = signal<TaskResponse[]>([]);
-  isTaskPageLoading = signal(false);
-  isCreatingTask = signal(false);
+
+  isLoadingTasks = signal(false);
 
   taskPageIndex = signal(0);
   taskPageSize = signal(6);
   totalTasks = signal(0);
 
+  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
+  currentProjectRole = computed(() => {
+    const project = this.project();
+    const user = this.currentUser();
+
+    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
+  });
+
   constructor(private dialog: MatDialog, private projectService: ProjectService, private taskService: TaskService, private router: Router) {
     this.project = this.projectService.project;
     this.tasks = this.taskService.tasks;
+    this.isLoadingTasks = this.taskService.isLoadingTasks;
+    this.totalTasks = this.taskService.totalTasks;
 
     effect(() => {
       const project = this.project();
@@ -55,7 +69,6 @@ export class TaskGrid {
     const project = this.project();
 
     if (project) {
-      this.isCreatingTask.set(true);
       this.dialog.open(NewTaskDialog, {
         data: {
           projectId: project.id,
@@ -67,12 +80,9 @@ export class TaskGrid {
         width: '420px'
       })
       .afterClosed()
-      .subscribe(result => {
-        if (result) {
-          this.taskService.createTask(result).subscribe(t => {
-            this.isCreatingTask.set(false);
-            this.taskService.cacheProjectTasksPage(project.id, this.taskPageIndex(), this.taskPageSize());
-          })
+      .subscribe(confirmed => {
+        if (confirmed) {         
+          this.taskService.cacheProjectTasksPage(project.id, this.taskPageIndex(), this.taskPageSize());        
         }
       })
     }

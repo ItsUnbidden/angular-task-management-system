@@ -1,7 +1,7 @@
-import { Component, Inject } from '@angular/core';
+import { Component, Inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { EssentialUserResponse, TaskCreateRequest, TaskPriority, UserResponse } from '../../../models';
+import { EssentialUserResponse, GeneralApiError, TaskCreateRequest, TaskPriority, UserResponse } from '../../../models';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -9,6 +9,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from "@angular/material/select";
+import { TaskService } from '../../../service/task.service';
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -22,11 +24,14 @@ export interface NewTaskDialogData {
 
 @Component({
   selector: 'app-new-task-dialog',
-  imports: [MatDialogModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule, MatButtonModule, MatIconModule, MatSelectModule],
+  imports: [MatDialogModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule, MatButtonModule, MatIconModule, MatSelectModule, MatProgressSpinnerModule],
   templateUrl: './new-task-dialog.html',
   styleUrl: './new-task-dialog.css',
 })
 export class NewTaskDialog {
+  error = signal('');
+  isSendingRequest = signal(false);
+
   taskControl = new FormGroup({
     name: new FormControl('', [
       Validators.required,
@@ -49,7 +54,7 @@ export class NewTaskDialog {
     { priority: 'HIGH', priorityView: 'High' },
   ]
 
-  constructor(private dialogRef: MatDialogRef<NewTaskDialog, TaskCreateRequest>, @Inject(MAT_DIALOG_DATA) public data: NewTaskDialogData) {}
+  constructor(private dialogRef: MatDialogRef<NewTaskDialog, boolean>, private taskService: TaskService, @Inject(MAT_DIALOG_DATA) public data: NewTaskDialogData) {}
 
   close(): void {
     this.dialogRef.close();
@@ -57,7 +62,7 @@ export class NewTaskDialog {
 
   submit(): void {
     if (this.taskControl.valid) {
-      const result: TaskCreateRequest = {
+      const request: TaskCreateRequest = {
         name: this.taskControl.get('name')?.value || '',
         description: this.taskControl.get('description')?.value || undefined,
         priority: this.taskControl.get('priority')?.value as TaskPriority,
@@ -65,7 +70,24 @@ export class NewTaskDialog {
         projectId: this.data.projectId,
         assigneeId: Number(this.taskControl.get('assignee')?.value?.id),
       };
-      this.dialogRef.close(result);
+      this.isSendingRequest.set(true);
+      this.taskService.createTask(request).subscribe({
+        next: () => {
+          this.isSendingRequest.set(false);
+          this.dialogRef.close(true);
+        },
+        error: (err) => {
+          const error = err.error as GeneralApiError;
+                    
+          if (error) {
+            this.error.set(error.error);
+          }
+          else {
+            this.error.set('Unknown error')
+          }
+          this.isSendingRequest.set(false);
+        }
+      })
     }
   }
 

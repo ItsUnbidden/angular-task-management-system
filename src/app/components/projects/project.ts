@@ -1,6 +1,6 @@
-import { Component, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ProjectService } from '../../service/project.service';
-import { ProjectResponse, ProjectUpdateRequest } from '../../models';
+import { GeneralApiError, ProjectResponse, ProjectRoleResponse, ProjectUpdateRequest, UserResponse } from '../../models';
 import { MatCardModule } from "@angular/material/card";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -14,13 +14,16 @@ import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatDivider } from '@angular/material/divider';
 import { toSignal } from '@angular/core/rxjs-interop'
-import { ActivatedRoute, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { map } from 'rxjs';
 import { MatChipsModule } from '@angular/material/chips';
 import { CommonModule } from '@angular/common';
 import { MatPaginatorModule } from '@angular/material/paginator';
-import { TaskService } from '../../service/task.service';
-
+import { MatExpansionModule } from '@angular/material/expansion';
+import { AddUserDialog } from '../users/add-user-dialog/add-user-dialog';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { HttpErrorResponse } from '@angular/common/http';
+import { UserService } from '../../service/user.service';
 
 @Component({
   selector: 'app-overview',
@@ -30,12 +33,14 @@ import { TaskService } from '../../service/task.service';
     ReactiveFormsModule, MatButtonModule,
     MatSlideToggleModule, MatDatepickerModule,
     MatDivider, MatChipsModule,
-    MatPaginatorModule, RouterOutlet],
+    MatPaginatorModule, RouterOutlet,
+    MatExpansionModule, MatSnackBarModule],
   templateUrl: './project.html',
   styleUrl: './project.css',
 })
 export class Project {
   private route = inject(ActivatedRoute);
+  private userService = inject(UserService);
 
   project = signal<ProjectResponse | null>(null);
   isProjectLoading = signal(false);
@@ -44,6 +49,21 @@ export class Project {
   isEditingDescription = signal(false);
   isEditingDates = signal(false);
   isSavingPrivacy = signal(true);
+  // Not implemented at the moment
+  isDropboxAuthorized = signal(false);
+  isGoogleCalendarAuthorized = signal(false);
+
+  creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
+  admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
+  contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
+
+  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
+  currentProjectRole = computed(() => {
+    const project = this.project();
+    const user = this.currentUser();
+
+    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
+  });
 
   projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
@@ -70,7 +90,8 @@ export class Project {
 
   isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
-  constructor(private projectService: ProjectService, private taskService: TaskService, private dialog: MatDialog) {
+  constructor(private projectService: ProjectService, private dialog: MatDialog,
+              private snackBar: MatSnackBar, private router: Router) {
     this.project = projectService.project;
     this.isProjectLoading = projectService.isLoading;
     
@@ -78,7 +99,7 @@ export class Project {
       const id = this.projectId();
 
       if (id) {
-        projectService.loadProjectToCache(id);
+        this.handleLoadProjectToCache(id);
       }      
     })
 
@@ -117,6 +138,21 @@ export class Project {
         this.isPrivateCtrl.enable({ emitEvent: false });
       }
     });
+
+    effect(() => {
+      const projectRole = this.currentProjectRole();
+
+      if (projectRole) {
+        untracked(() => {
+          if (projectRole.roleType === 'CONTRIBUTOR') {
+            this.isPrivateCtrl.disable();
+          }
+          else {
+            this.isPrivateCtrl.enable();
+          }
+        })
+      }
+    })
   } 
 
   onProjectNameEdit() {
@@ -134,7 +170,7 @@ export class Project {
 
       if (request) {
         request.name = this.nameEditForm.value.projectName;
-        this.projectService.updateCachedProject(project.id, request);
+        this.handleUpdateCachedProject(project.id, request);
       }
     }
     this.isEditingName.set(false);
@@ -161,7 +197,7 @@ export class Project {
 
       if (request) {
         request.description = this.descriptionEditForm.value.projectDescription ?? undefined;
-        this.projectService.updateCachedProject(project.id, request);
+        this.handleUpdateCachedProject(project.id, request);
       }
     }
     this.isEditingDescription.set(false);
@@ -217,10 +253,252 @@ export class Project {
           request.startDate = this.toLocalDateString(this.datesEditForm.value.startDate) ?? '';
         }
         request.endDate = this.toLocalDateString(this.datesEditForm.value.endDate ?? null);
-        this.projectService.updateCachedProject(project.id, request);
+        this.handleUpdateCachedProject(project.id, request);
       }
     }
     this.isEditingDates.set(false);
+  }
+
+  onAddUser() {
+    this.dialog.open(AddUserDialog, {
+      data: this.projectId(),
+      disableClose: true,
+      width: '420px'
+    })
+    .afterClosed()
+    .subscribe(confirmed => {
+      if (confirmed) {
+        console.log('User added successfuly.')
+      }
+    });
+  }
+
+  onRemoveUser(projectRole: ProjectRoleResponse) {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: `Remove user ${projectRole.username}?`,
+          message: `Are you sure you want to remove ${projectRole.username} from the project?`,
+          cancelButton: 'No',
+          submitButton: 'Yes'
+        }
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.removeUserFromProject(project.id, projectRole.userId).subscribe({
+            next: () => {
+              this.handleLoadProjectToCache(project.id);
+            },
+            error: (err: HttpErrorResponse) => {
+              const error = err.error as GeneralApiError;
+
+              if (error) {
+                this.snackBar.open(`Error: ${error.error}`, 'Dismiss', {
+                  duration: 5000
+                })
+              }
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onQuitProject() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Quit project',
+          message: 'Are you sure you want to quit this project?',
+          submitButton: 'Yes',
+          cancelButton: 'No'
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.quitProject(project.id).subscribe({
+            next: () => {
+              this.router.navigateByUrl('/dashboard');
+              this.snackBar.open(`You have successfuly left ${project.name}`, 'Dismiss', {
+                duration: 3000
+              })
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error.error;
+
+              this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onMakeAdmin(projectRole: ProjectRoleResponse) {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Make admin',
+          message: `Are you sure you want to make ${projectRole.username} an admin in this project?`,
+          submitButton: 'Yes',
+          cancelButton: 'No'
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'ADMIN'}).subscribe({
+            next: () => {
+              this.snackBar.open(`${projectRole.username} is now an admin`, 'Dismiss', {
+                duration: 3000
+              })
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error.error;
+
+              this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onRemoveAdmin(projectRole: ProjectRoleResponse) {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Remove admin',
+          message: `Are you sure you want to reduce privileges for ${projectRole.username} in this project?`,
+          submitButton: 'Yes',
+          cancelButton: 'No'
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'CONTRIBUTOR'}).subscribe({
+            next: () => {
+              this.snackBar.open(`${projectRole.username} is now a contributor`, 'Dismiss', {
+                duration: 3000
+              })
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error.error;
+
+              this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onTransferOwnership(projectRole: ProjectRoleResponse) {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Trasfer ownership',
+          message: `Are you sure you want to transfer ownership of this project to ${projectRole.username}?`,
+          submitButton: 'Yes',
+          cancelButton: 'No'
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'CREATOR'}).subscribe({
+            next: () => {
+              this.snackBar.open(`${projectRole.username} is now the creator. You are now an admin.`, 'Dismiss', {
+                duration: 3000
+              })
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error.error;
+
+              this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onDeleteProject() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Delete project',
+          message: `Are you sure you want to delete this project? This operation is irreversible.`,
+          submitButton: 'Yes',
+          cancelButton: 'No'
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.deleteProject(project.id).subscribe({
+            next: () => {
+              this.router.navigateByUrl('/dashboard');
+              this.snackBar.open(`You have successfuly deleted ${project.name}`, 'Dismiss', {
+                duration: 3000
+              })
+            },
+            error: (err: HttpErrorResponse) => {
+              const errorMessage = err.error.error;
+
+              this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      })
+    }
+  }
+
+  onConnectDropbox() {
+    this.snackBar.open(`Not implemented.`, 'Dismiss', {
+      duration: 3000
+    })
+  }
+
+  onConnectCalendar() {
+    this.snackBar.open(`Not implemented.`, 'Dismiss', {
+      duration: 3000
+    })
   }
 
   statusColor(status: string | null): string {
@@ -266,5 +544,35 @@ export class Project {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private handleLoadProjectToCache(projectId: number) {
+    this.projectService.loadProjectToCache(projectId).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        if (error) {
+          if (err.status === 403) {
+            this.router.navigateByUrl('/forbidden');
+          } else {
+            this.snackBar.open('Unknown error occured. Please try again.', 'Dismiss');
+          }
+        }
+      }
+    });
+  }
+
+  private handleUpdateCachedProject(projectId: number, request: ProjectUpdateRequest) {
+    this.projectService.updateCachedProject(projectId, request).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        if (error) {
+          this.snackBar.open('You do not have the authority to access this resource.', 'Dismiss', {
+            duration: 5000
+          });
+        }
+      }
+    });
   }
 }
