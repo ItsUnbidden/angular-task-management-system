@@ -1,0 +1,95 @@
+@if (isEditing()) {
+    <div mat-dialog-title>
+        <button matButton="outlined" (click)="onBack()">
+            <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+        </button>
+        <h2>Edit {{ selectedLabel()?.name ?? '' }}</h2>
+    </div>
+
+    <div mat-dialog-content>
+        <form [formGroup]="labelForm">
+            <mat-form-field>
+                <input matInput placeholder="Label name" formControlName="name">
+            </mat-form-field>
+
+            <mat-label>Color</mat-label>
+            <mat-chip-listbox formControlName="color">
+                @for (paletteItem of paletteItems; track paletteItem) {
+                    <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
+                        <span class="dot" aria-hidden="true"></span>
+                    </mat-chip-option>
+                }
+            </mat-chip-listbox>
+
+            @if (isLoading()) {
+                <mat-spinner>Please wait...</mat-spinner>
+            }
+            @else {
+                <mat-error>{{ error() }}</mat-error>
+            }
+        </form>
+    </div>
+    <div mat-dialog-actions align="end">
+        <button mat-button (click)="onExecuteEditLabel()" [disabled]="isLoading() || labelForm.invalid">Edit</button>
+    </div>
+}
+@else if (isDeleting()) {
+    <div>
+        <button matButton="outlined" (click)="onBack()">
+            <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+        </button>
+        <h2 mat-dialog-title>Delete {{ selectedLabel()?.name ?? '' }}</h2>
+    </div>
+
+    <div mat-dialog-content>
+        <p>Are you sure you want to delete label {{ selectedLabel()?.name ?? ''}}? @if (numberOfAffectedTasks() > 0) { Be aware that this action will remove this label from {{ numberOfAffectedTasks() }} other tasks. }</p>
+    </div>
+
+    <div mat-dialog-actions align="end">
+        <button mat-button (click)="onExecuteDeleteLabel()">Delete</button>
+    </div>
+}
+@else {
+    <h2 mat-dialog-title>Label management</h2>
+
+    <div mat-dialog-content>
+        @if (!isLoading()) {     
+            <table mat-table [dataSource]="dataSource" class="mat-elevation-z8">
+                <ng-container matColumnDef="chip">
+                    <th mat-header-cell *matHeaderCellDef>Label</th>
+                    <td mat-cell *matCellDef="let label">
+                        <mat-chip class="label-chip" [attr.data-color]="label.color">
+                            {{ label.name }}
+                        </mat-chip>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="edit">
+                    <th mat-header-cell *matHeaderCellDef>Edit</th>
+                    <td mat-cell *matCellDef="let label">
+                        <button matButton="elevated" (click)="onEditLabel(label)">
+                            Edit
+                        </button>
+                    </td>
+                </ng-container>
+                <ng-container matColumnDef="delete">
+                    <th mat-header-cell *matHeaderCellDef>Delete</th>
+                    <td mat-cell *matCellDef="let label">
+                        <button matButton="elevated" (click)="onRemoveLabel(label)">
+                            Delete
+                        </button>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        }
+        @else {
+            <mat-spinner>Please wait...</mat-spinner>
+        }
+
+        <div mat-dialog-actions align="end">
+            <button mat-button (click)="onClose()" [disabled]="isLoading()">Close</button>
+        </div>
+    </div>
+}

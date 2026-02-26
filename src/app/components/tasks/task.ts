@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProjectResponse, TaskPriority, TaskResponse, TaskStatus, TaskUpdateRequest } from '../../models';
+import { GeneralApiError, LabelResponse, TaskPriority, TaskStatus, TaskUpdateRequest } from '../../models';
 import { TaskService } from '../../service/task.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { map } from 'rxjs';
@@ -19,6 +19,13 @@ import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
 import { UserService } from '../../service/user.service';
 import { ProjectService } from '../../service/project.service';
+import { LabelService } from '../../service/label.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import { NewLabelDialog } from '../label/new-label-dialog/new-label-dialog';
+import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
+import { LabelManagementDialog } from '../label/label-management-dialog/label-management-dialog';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -36,27 +43,30 @@ interface TaskPriorityOption {
   styleUrl: './task.css',
 })
 export class Task {
+  private projectService = inject(ProjectService);
+  private taskService = inject(TaskService);
+  private userService = inject(UserService);
+  private labelService = inject(LabelService);
   route = inject(ActivatedRoute);
-  userService = inject(UserService);
 
   taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
 
-  project = signal<ProjectResponse | null>(null);
-  task = signal<TaskResponse | null>(null);
-  isTaskLoading = signal(false);
+  project = this.projectService.project;
+  task = this.taskService.selectedTask;
+  labels = signal<LabelResponse[]>([]);
+  projectLabels = signal<LabelResponse[]>([]);
+  currentUser = this.userService.user;
+  isTaskLoading = this.taskService.isLoadingSelectedTask;
+  isLoadingLabels = signal(false);
 
   isEditingName = signal(false);
   isEditingDescription = signal(false);
   isEditingDate = signal(false);
   isEditingChips = signal(false);
 
-  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
-  currentProjectRole = computed(() => {
-    const project = this.project();
-    const user = this.currentUser();
-
-    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
-  });
+  isCreator = this.projectService.isCreator;
+  isAdmin = this.projectService.isAdmin;
+  isContributor = this.projectService.isContributor;
 
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
@@ -66,48 +76,52 @@ export class Task {
         Validators.maxLength(50)
       ]
     })
-  })
+  });
 
   descriptionEditForm = new FormGroup({
     taskDescription: new FormControl('', {
       validators: [
         Validators.maxLength(500)
       ]})
-  })
+  });
 
   dateEditForm = new FormGroup({
     taskDueDate: new FormControl<Date | null>(null)
-  })
+  });
 
-  priorityEditForm = new FormGroup({
+  chipsEditForm = new FormGroup({
     taskPriority: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required
       ]
-    })
-  })
+    }),
+    labels: new FormControl<number[]>([], { nonNullable: true })
+  });
 
   priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low' },
     { priority: 'MEDIUM', priorityView: 'Medium' },
-    { priority: 'HIGH', priorityView: 'High' },
-  ]
+    { priority: 'HIGH', priorityView: 'High' }
+  ];
 
-  constructor(private taskService: TaskService, private projectService: ProjectService) {
+  constructor(private snackBar: MatSnackBar, private dialog: MatDialog) {
     effect(() => {
-      this.taskService.cacheSelectedTask(this.taskId());
+      const taskId = this.taskId();
+
+      this.taskService.cacheSelectedTask(taskId);
     });
 
     effect(() => {
       const task = this.task();
 
       if (task) {
+        this.loadLabelsForTask(task.id);
+
         untracked(() => {
-          if (projectService.project()?.id !== task.projectId) {
+          if (this.projectService.project()?.id !== task.projectId) {
             this.projectService.loadProjectToCache(task.projectId);
           }
-          this.project = this.projectService.project;
 
           if (!this.nameEditForm.dirty) {
             this.nameEditForm.patchValue({
@@ -124,17 +138,21 @@ export class Task {
               taskDueDate: new Date(task.dueDate ?? '')
             })
           }
-          if (!this.priorityEditForm.dirty) {
-            this.priorityEditForm.patchValue({
-              taskPriority: task.priority,
-            })
-          }
+          this.chipsEditForm.patchValue({
+            taskPriority: task.priority,
+            labels: task.labelIds
+          })
         })
       }
-    })
+    });
 
-    this.task = this.taskService.selectedTask;
-    this.isTaskLoading = this.taskService.isLoadingSelectedTask;
+    effect(() => {
+      const project = this.project();
+
+      if (project) {
+        this.loadLabelsForProject(project.id);
+      }
+    })
   };
 
   onSubmitTaskName() {
@@ -203,15 +221,15 @@ export class Task {
     this.isEditingDescription.set(false);
   }
 
-  onSubmitTaskPriority() {
-    const task = this.task();
-    const newPriority = this.priorityEditForm.value.taskPriority;
+  onSubmitTaskChips() {
+    const newPriority = this.chipsEditForm.value.taskPriority;
 
     if (newPriority) {
       const request = this.makeTaskUpdateRequest();
 
       if (request) {
         request.priority = newPriority as TaskPriority;
+        request.labelIds = this.chipsEditForm.value.labels ?? [];
         this.taskService.updateCachedTask(request);
       }
     }
@@ -233,6 +251,59 @@ export class Task {
       const request = { newStatus: newStatus };
       
       this.taskService.updateCachedTask(request);
+    }
+  }
+
+  onAddNewLabel() {
+    const project = this.project();
+    const task = this.task();
+
+    if (project && task)
+    this.dialog.open(NewLabelDialog, {
+      data: {
+        projectId: project.id,
+        taskId: task.id
+      },
+      disableClose: true,
+      width: '420px'
+    })
+    .afterClosed()
+    .subscribe(confirmed => {
+      if (confirmed) {
+        const taskId = this.taskId();
+        const project = this.project();
+
+        if (taskId) {
+          this.taskService.cacheSelectedTask(taskId);
+        }
+        if (project) {
+          this.loadLabelsForProject(project.id);
+        }
+      }
+    })
+  }
+
+  onOpenLabelManagement() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(LabelManagementDialog, {
+        data: {
+          projectId: project.id,
+          taskId: this.taskId() ?? 0
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe({
+        next: hasChangedLabels => {
+          if (hasChangedLabels) {
+            this.loadLabelsForProject(project.id);
+            this.loadLabelsForTask(this.taskId());
+          }
+        }
+      })
     }
   }
 
@@ -280,7 +351,44 @@ export class Task {
             description: task.description,
             dueDate: task.dueDate,
             priority: task.priority,
-            newAssigneeId: task.assigneeId };
+            newAssigneeId: task.assigneeId, 
+            labelIds: task.labelIds };
+  }
+
+  private loadLabelsForTask(taskId: number) {
+    this.isLoadingLabels.set(true);
+    this.labelService.getLabelsForTask(taskId).subscribe({
+      next: labels => {
+        this.labels.set(labels);
+        this.isLoadingLabels.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading labels.', 'Dismiss', {
+          duration: 5000
+        })
+        this.isLoadingLabels.set(false);
+      }
+    });
+  }
+
+  private loadLabelsForProject(projectId: number) {
+    this.isLoadingLabels.set(true);
+    this.labelService.getLabelsForProject(projectId).subscribe({
+      next: labels => {
+        this.projectLabels.set(labels);
+        this.isLoadingLabels.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
+          duration: 5000
+        })
+        this.isLoadingLabels.set(false);
+      }
+    })
   }
   
   private toLocalDateString(date: Date | null): string | undefined {

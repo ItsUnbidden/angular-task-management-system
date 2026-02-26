@@ -75,6 +75,7 @@ export interface TaskUpdateRequest {
   priority: TaskPriority;
   dueDate?: string;
   newAssigneeId?: number;
+  labelIds: number[];
 }
 
 export interface TaskUpdateStatusRequest {
@@ -89,6 +90,27 @@ export interface ProjectRoleResponse {
 
 export interface ProjectRoleUpdateRequest {
   newRole: ProjectRoleType;
+}
+
+export interface LabelResponse {
+  id: number;
+  name: string;
+  color: string;
+  projectId: number;
+  taskIds: number[];
+}
+
+export interface LabelCreateRequest {
+  name: string;
+  color: string;
+  projectId: number;
+  taskIds: number[];
+}
+
+export interface LabelUpdateRequest {
+  name: string;
+  color: string;
+  taskIds: number[];
 }
 
 export interface EssentialUserResponse {

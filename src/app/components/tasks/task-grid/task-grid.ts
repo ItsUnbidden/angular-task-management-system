@@ -23,30 +23,21 @@ import { toSignal } from '@angular/core/rxjs-interop';
 })
 export class TaskGrid {
   private userService = inject(UserService);
+  private projectService = inject(ProjectService);
+  private taskService = inject(TaskService);
   
-  project = signal<ProjectResponse | null>(null);
-  tasks = signal<TaskResponse[]>([]);
-
-  isLoadingTasks = signal(false);
+  project = this.projectService.project;
+  tasks = this.taskService.tasks;
+  currentUser = this.userService.user;
+  isLoadingTasks = this.taskService.isLoadingTasks;
 
   taskPageIndex = signal(0);
   taskPageSize = signal(6);
-  totalTasks = signal(0);
+  totalTasks = this.taskService.totalTasks;
 
-  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
-  currentProjectRole = computed(() => {
-    const project = this.project();
-    const user = this.currentUser();
+  isAdmin = this.projectService.isAdmin;
 
-    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
-  });
-
-  constructor(private dialog: MatDialog, private projectService: ProjectService, private taskService: TaskService, private router: Router) {
-    this.project = this.projectService.project;
-    this.tasks = this.taskService.tasks;
-    this.isLoadingTasks = this.taskService.isLoadingTasks;
-    this.totalTasks = this.taskService.totalTasks;
-
+  constructor(private dialog: MatDialog, private router: Router) {
     effect(() => {
       const project = this.project();
 

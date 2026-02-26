@@ -1,15 +1,43 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap, throwError } from 'rxjs';
 import { ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
 import { environment } from '../../environments/environment';
+import { UserService } from './user.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectService {
+  private userService = inject(UserService);
+
   project = signal<ProjectResponse | null>(null);
   isLoading = signal(false);
+
+  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
+  currentProjectRole = computed(() => {
+    const project = this.project();
+    const user = this.currentUser();
+
+    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
+  });
+
+  isCreator = computed(() => {
+    const projectRole = this.currentProjectRole();
+
+    return (projectRole) ? projectRole.roleType === 'CREATOR' : false;
+  });
+  isAdmin = computed(() => {
+    const projectRole = this.currentProjectRole();
+
+    return (projectRole) ? projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
+  });
+  isContributor = computed(() => {
+    const projectRole = this.currentProjectRole();
+
+    return (projectRole) ? projectRole.roleType === 'CONTRIBUTOR' || projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
+  });
 
   constructor(private http: HttpClient) {}
 

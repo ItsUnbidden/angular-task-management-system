@@ -14,7 +14,7 @@
                         <mat-label>New task name</mat-label>
                         <input matInput type="text" formControlName="taskName">
                     </mat-form-field>
-                    <button mat-icon-button type="submit" [disabled]="!nameEditForm.valid">
+                    <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid">
                         <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                     </button>
                     <button mat-icon-button type="button" (click)="onCloseEditing()">
@@ -27,7 +27,7 @@
                     <h2>
                         {{ task()?.name }}                       
                     </h2>
-                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                    @if (isAdmin()) {
                         <button mat-icon-button (click)="onTaskNameEdit()">
                             <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                         </button>
@@ -47,7 +47,7 @@
                             <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
                         </mat-form-field>
                         <div class="actions">
-                            <button mat-icon-button type="submit" [disabled]="!descriptionEditForm.valid">
+                            <button mat-icon-button type="submit" [disabled]="descriptionEditForm.invalid">
                                 <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                             </button>
                             <button mat-icon-button type="button" (click)="onCloseEditing()">
@@ -63,7 +63,7 @@
                     @else {
                         <p class="description-field">No description</p>
                     }
-                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                    @if (isAdmin()) {
                         <button mat-icon-button (click)="onTaskDescriptionEdit()">
                             <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                         </button>                        
@@ -80,7 +80,7 @@
                         <mat-datepicker #picker></mat-datepicker>
                     </mat-form-field>
                     
-                    <button mat-icon-button type="submit" [disabled]="!dateEditForm.valid">
+                    <button mat-icon-button type="submit" [disabled]="dateEditForm.invalid">
                         <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                     </button>
                     <button mat-icon-button type="button" (click)="onCloseEditing()">
@@ -91,7 +91,7 @@
             @else {
                 <div class="row">
                     <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
-                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                    @if (isAdmin()) {
                         <button mat-icon-button (click)="onTaskDueDateEdit()">
                             <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                         </button>
@@ -99,23 +99,42 @@
                 </div>
             }
             @if (isEditingChips()) {
-                <form [formGroup]="priorityEditForm" (ngSubmit)="onSubmitTaskPriority()">
+                <form [formGroup]="chipsEditForm" (ngSubmit)="onSubmitTaskChips()">
                     <div class="row">
-                        <mat-form-field appearance="outline">
+                        <div>
+                            <mat-form-field appearance="outline">
                             <mat-label>New priority</mat-label>
                             <mat-select formControlName="taskPriority">
                                 @for (option of priorityOptions; track option) {
                                     <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
                                 }
                             </mat-select>
-                        </mat-form-field>
-                        <button mat-icon-button type="submit" [disabled]="!priorityEditForm.valid">
+                            </mat-form-field>
+
+                            <button matButton="elevated" type="button" (click)="onAddNewLabel()">
+                                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                                Add a new label
+                            </button>
+                            <button matButton="elevated" type="button" (click)="onOpenLabelManagement()">
+                                <mat-icon fontSet="material-symbols-outlined">edit_attributes</mat-icon>
+                                Label management
+                            </button>
+
+                            <mat-chip-listbox multiple formControlName="labels">
+                                @for (label of projectLabels(); track label.id) {
+                                    <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">                                        
+                                        {{ label.name }}                                                                          
+                                    </mat-chip-option>
+                                }
+                            </mat-chip-listbox>
+                        </div>
+                        <button mat-icon-button type="submit" [disabled]="chipsEditForm.invalid">
                             <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                         </button>
                         <button mat-icon-button type="button" (click)="onCloseEditing()">
                             <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
                         </button>
-                    </div>
+                    </div>                   
                 </form>
             }
             @else {
@@ -127,7 +146,14 @@
                         {{ parseEnumText(task()?.status ?? null) }}
                     </mat-chip>
                 </mat-chip-set>
-                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                <mat-chip-set>
+                    @for (label of labels(); track label.id) {
+                        <mat-chip class="label-chip" [attr.data-color]="label.color">
+                            {{ label.name }}
+                        </mat-chip>
+                    }
+                </mat-chip-set>
+                @if (isAdmin()) {
                     <button mat-icon-button (click)="onTaskChipsEdit()">
                         <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                     </button>

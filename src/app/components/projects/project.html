@@ -31,7 +31,7 @@
                         <h2>
                             {{ project()?.name }}                       
                         </h2>
-                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        @if (isAdmin()) {
                             <button mat-icon-button (click)="onProjectNameEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>
@@ -63,7 +63,7 @@
                         @else {
                             <p class="description-field">No description</p>
                         }
-                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        @if (isAdmin()) {
                             <button mat-icon-button (click)="onProjectDescriptionEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>   
@@ -99,7 +99,7 @@
                             {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
                         </div>
 
-                        @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                        @if (isAdmin()) {
                             <button mat-icon-button (click)="onProjectDatesEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>
@@ -123,7 +123,7 @@
                             <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
                         </mat-panel-description>
                     </mat-expansion-panel-header>
-                    @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                    @if (isAdmin()) {
                         <button matButton="elevated" (click)="onAddUser()">
                             <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
                             Add user
@@ -134,7 +134,7 @@
                         @for (admin of admins(); track admin.userId) {
                             <div class="row">
                                 <p>{{ admin.username }}</p>
-                                @if (currentProjectRole()?.roleType === 'CREATOR') {
+                                @if (isCreator()) {
                                     <button matButton="elevated" (click)="onTransferOwnership(admin)">
                                         <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
                                         Make owner
@@ -144,7 +144,7 @@
                                         Remove admin
                                     </button>
                                 }     
-                                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR' && currentUser()?.id !== admin.userId) {
+                                @if (isAdmin() && currentUser()?.id !== admin.userId) {
                                     <button matButton="elevated" (click)="onRemoveUser(admin)">
                                         <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                         Remove
@@ -158,13 +158,13 @@
                         @for (contributor of contributors(); track contributor.userId) {
                             <div class="row">
                                 <p>{{ contributor.username }}</p>
-                                @if (currentProjectRole()?.roleType === 'CREATOR') {
+                                @if (isCreator()) {
                                     <button matButton="elevated" (click)="onMakeAdmin(contributor)">
                                         <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
                                         Make admin
                                     </button>
                                 }
-                                @if (currentProjectRole()?.roleType !== 'CONTRIBUTOR') {
+                                @if (isAdmin() && currentUser()?.id !== contributor.userId) {
                                     <button matButton="elevated" (click)="onRemoveUser(contributor)">
                                         <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                         Remove
@@ -177,7 +177,7 @@
             </mat-card-content>
 
             <mat-card-actions>
-                @if (currentProjectRole()?.roleType !== 'CREATOR') {
+                @if (!isCreator()) {
                     <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
                 }
                 @else {

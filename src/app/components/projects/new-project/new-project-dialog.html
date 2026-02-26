@@ -1,37 +1,35 @@
-<main>
-    <h2 mat-dialog-title>New Project</h2>
+<h2 mat-dialog-title>New Project</h2>
 
-    <div mat-dialog-content>
-        <form [formGroup]="projectControl">
-            <mat-form-field>
-                <input matInput placeholder="Project name" formControlName="name">
-            </mat-form-field>
-            <mat-form-field>
-                <textarea matInput placeholder="Description" formControlName="description"></textarea>
-            </mat-form-field>
-            <mat-form-field>
-                <mat-label>Project Dates</mat-label>
-                <mat-date-range-input [rangePicker]="picker">
-                    <input matStartDate mat-input formControlName="startDate">
-                    <input matEndDate mat-input formControlName="endDate">
-                </mat-date-range-input>
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-date-range-picker #picker></mat-date-range-picker>
-            </mat-form-field>
-            
-            <mat-checkbox formControlName="isPrivate">Private Project</mat-checkbox>
+<div mat-dialog-content>
+    <form [formGroup]="projectControl">
+        <mat-form-field>
+            <input matInput placeholder="Project name" formControlName="name">
+        </mat-form-field>
+        <mat-form-field>
+            <textarea matInput placeholder="Description" formControlName="description"></textarea>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Project dates</mat-label>
+            <mat-date-range-input [rangePicker]="picker">
+                <input matStartDate mat-input formControlName="startDate">
+                <input matEndDate mat-input formControlName="endDate">
+            </mat-date-range-input>
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-date-range-picker #picker></mat-date-range-picker>
+        </mat-form-field>
+        
+        <mat-checkbox formControlName="isPrivate">Private project</mat-checkbox>
 
-            @if (isSendingRequest()) {
-                <mat-spinner>Please wait...</mat-spinner>
-            }
-            @else {
-                <mat-error>{{ error() }}</mat-error>
-            }
-        </form>
-    </div>
+        @if (isSendingRequest()) {
+            <mat-spinner>Please wait...</mat-spinner>
+        }
+        @else {
+            <mat-error>{{ error() }}</mat-error>
+        }
+    </form>
+</div>
 
-    <div mat-dialog-actions align="end">
-        <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
-        <button mat-flat-button (click)="submit()" [disabled]="projectControl.invalid || isSendingRequest()">Create Project</button>
-    </div>
-</main>
+<div mat-dialog-actions align="end">
+    <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
+    <button mat-flat-button (click)="submit()" [disabled]="projectControl.invalid || isSendingRequest()">Create project</button>
+</div>

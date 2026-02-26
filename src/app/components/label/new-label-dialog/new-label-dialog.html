@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>New Label</h2>
+
+<div mat-dialog-content>
+    <form [formGroup]="labelForm">
+        <mat-form-field>
+            <input matInput placeholder="Label name" formControlName="name">
+        </mat-form-field>
+
+        <mat-label>Color</mat-label>
+        <mat-chip-listbox formControlName="color">
+            @for (paletteItem of paletteItems; track paletteItem) {
+                <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
+                    <span class="dot" aria-hidden="true"></span>
+                </mat-chip-option>
+            }
+        </mat-chip-listbox>
+
+        @if (isSendingRequest()) {
+            <mat-spinner>Please wait...</mat-spinner>
+        }
+        @else {
+            <mat-error>{{ error() }}</mat-error>
+        }
+    </form>
+</div>
+
+<div mat-dialog-actions align="end">
+    <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
+    <button mat-flat-button (click)="submit()" [disabled]="labelForm.invalid || isSendingRequest()">Create label</button>
+</div>

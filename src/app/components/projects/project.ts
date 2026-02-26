@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ProjectService } from '../../service/project.service';
-import { GeneralApiError, ProjectResponse, ProjectRoleResponse, ProjectUpdateRequest, UserResponse } from '../../models';
+import { GeneralApiError, ProjectResponse, ProjectRoleResponse, ProjectUpdateRequest } from '../../models';
 import { MatCardModule } from "@angular/material/card";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -40,30 +40,29 @@ import { UserService } from '../../service/user.service';
 })
 export class Project {
   private route = inject(ActivatedRoute);
+  private projectService = inject(ProjectService);
   private userService = inject(UserService);
 
-  project = signal<ProjectResponse | null>(null);
-  isProjectLoading = signal(false);
+  project = this.projectService.project;
+  currentUser = this.userService.user;
+  isProjectLoading = this.projectService.isLoading;
  
   isEditingName = signal(false);
   isEditingDescription = signal(false);
   isEditingDates = signal(false);
   isSavingPrivacy = signal(true);
+  
   // Not implemented at the moment
   isDropboxAuthorized = signal(false);
   isGoogleCalendarAuthorized = signal(false);
 
+  isCreator = this.projectService.isCreator;
+  isAdmin = this.projectService.isAdmin;
+  isContributor = this.projectService.isContributor;
+
   creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
   admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
   contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
-
-  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
-  currentProjectRole = computed(() => {
-    const project = this.project();
-    const user = this.currentUser();
-
-    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
-  });
 
   projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
@@ -90,11 +89,7 @@ export class Project {
 
   isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
-  constructor(private projectService: ProjectService, private dialog: MatDialog,
-              private snackBar: MatSnackBar, private router: Router) {
-    this.project = projectService.project;
-    this.isProjectLoading = projectService.isLoading;
-    
+  constructor(private dialog: MatDialog, private snackBar: MatSnackBar, private router: Router) {
     effect(() => {
       const id = this.projectId();
 
@@ -140,18 +135,16 @@ export class Project {
     });
 
     effect(() => {
-      const projectRole = this.currentProjectRole();
+      const isAdmin = this.isAdmin();
 
-      if (projectRole) {
-        untracked(() => {
-          if (projectRole.roleType === 'CONTRIBUTOR') {
-            this.isPrivateCtrl.disable();
-          }
-          else {
-            this.isPrivateCtrl.enable();
-          }
-        })
-      }
+      untracked(() => {
+        if (isAdmin) {
+          this.isPrivateCtrl.enable();
+        }
+        else {
+          this.isPrivateCtrl.disable();
+        }
+      })
     })
   } 
 

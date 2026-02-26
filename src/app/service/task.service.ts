@@ -66,6 +66,10 @@ export class TaskService {
     return this.http.get<TaskResponse[]>(`${environment.apiUrl}/api/tasks/me`);
   }
 
+  getTasksByLabel(labelId: number) : Observable<TaskResponse[]> {
+    return this.http.get<TaskResponse[]>(`${environment.apiUrl}/api/tasks/labels/${labelId}`);
+  }
+
   createTask(request: TaskCreateRequest) : Observable<TaskResponse> {
     return this.http.post<TaskResponse>(`${environment.apiUrl}/api/tasks`, request);
   }

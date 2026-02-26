@@ -72,7 +72,6 @@ export class NewProjectDialog {
           this.isSendingRequest.set(false);
         }
       });
-      this.dialogRef.close();
     }
   }
 
