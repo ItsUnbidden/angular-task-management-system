@@ -113,9 +113,30 @@ export interface LabelUpdateRequest {
   taskIds: number[];
 }
 
+export interface MessageResponse {
+  id: number;
+  userId: number;
+  username: string;
+  text: string;
+  timestamp: string;
+  lastUpdated: string;
+}
+
+export interface CommentResponse extends MessageResponse {
+  amountOfReplies: number;
+}
+
+export interface ReplyResponse extends MessageResponse {
+  replyDtos: ReplyResponse[];
+}
+
 export interface EssentialUserResponse {
   id: number;
   username: string;
+}
+
+export interface MessageCreateRequest {
+  text: string;
 }
 
 export interface UserResponse extends EssentialUserResponse {
@@ -140,7 +161,6 @@ export interface Page<T> {
 
 export interface GeneralApiError {
   timestamp: string;
-  status: number;
   error: string;
 }
 

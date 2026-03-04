@@ -24,8 +24,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { NewLabelDialog } from '../label/new-label-dialog/new-label-dialog';
-import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 import { LabelManagementDialog } from '../label/label-management-dialog/label-management-dialog';
+import { MessageList } from "../messages/message-list/message-list";
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -38,7 +38,7 @@ interface TaskPriorityOption {
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule],
+    MatChipsModule, MatSelectModule, MessageList],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })

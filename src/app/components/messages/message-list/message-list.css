@@ -1,0 +1,9 @@
+.reply {
+    --indent-size: 20px;
+
+    padding-left: calc(var(--depth) * var(--indent-size));
+
+    display: flex;
+    flex-direction: column;
+    gap: 4;
+}
