@@ -164,6 +164,11 @@ export interface GeneralApiError {
   error: string;
 }
 
+export interface OAuth2StatusResponse {
+  status: OAuth2Status;
+  aquiredAt: string;
+}
+
 export type ProjectStatus = 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
 
 export type TaskStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
@@ -173,3 +178,5 @@ export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ProjectRoleType = 'CREATOR' | 'ADMIN' | 'CONTRIBUTOR';
 
 export type UserRole = 'USER' | 'MANAGER' | 'OWNER';
+
+export type OAuth2Status = 'OK' | 'EXPIRED' | 'NOT_CONNECTED';

@@ -46,7 +46,7 @@ export class UserService {
     this.user.set(user);
   }
 
-  setLoggedOut() {
+  clearUser() {
     this.user.set(null);
   }
 
