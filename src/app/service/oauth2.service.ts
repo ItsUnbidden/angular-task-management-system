@@ -7,7 +7,7 @@ import { OAuth2StatusResponse } from '../models';
 @Injectable({
   providedIn: 'root',
 })
-export class Oauth2Service {
+export class OAuth2Service {
   isDropboxConnected = signal(false);
   isCalendarConnected = signal(false);
 

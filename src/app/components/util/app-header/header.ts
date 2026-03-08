@@ -8,7 +8,7 @@ import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GeneralApiError } from '../../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Oauth2Service } from '../../../service/oauth2.service';
+import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 
@@ -20,7 +20,7 @@ import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 })
 export class Header {
   private userService = inject(UserService);
-  private oauth2Service = inject(Oauth2Service);
+  private oauth2Service = inject(OAuth2Service);
 
   isLoggedIn = computed(() => {
     const user = this.userService.user();

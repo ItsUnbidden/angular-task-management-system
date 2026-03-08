@@ -130,13 +130,20 @@ export interface ReplyResponse extends MessageResponse {
   replyDtos: ReplyResponse[];
 }
 
+export interface MessageCreateRequest {
+  text: string;
+}
+
+export interface AttachmentResponse {
+  id: number;
+  taskId: number;
+  filename: string;
+  uploadDate: string;
+}
+
 export interface EssentialUserResponse {
   id: number;
   username: string;
-}
-
-export interface MessageCreateRequest {
-  text: string;
 }
 
 export interface UserResponse extends EssentialUserResponse {

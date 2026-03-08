@@ -179,5 +179,8 @@
             }  
         </mat-card-actions>
     }
+    @if (isDropboxConnected()) {
+        <app-attachment-list></app-attachment-list>
+    }
     <app-message-list></app-message-list>
 </mat-card>

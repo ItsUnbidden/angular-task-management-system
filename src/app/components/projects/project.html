@@ -183,10 +183,10 @@
                 @else {
                     <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
                 }               
-                @if (isDropboxAuthorized()) {
+                @if (isDropboxConnected() && !project()?.isDropboxConnected) {
                     <button matButton="elevated" (click)="onConnectDropbox()">Connect dropbox</button>
                 }
-                @if (isGoogleCalendarAuthorized()) {
+                @if (isCalendarConnected() && !project()?.isCalendarConnected) {
                     <button matButton="elevated" (click)="onConnectCalendar()">Connect calendar</button>
                 }
             </mat-card-actions>

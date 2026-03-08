@@ -141,4 +141,24 @@ export class ProjectService {
       }
     }));
   }
+
+  connectProjectToDropbox(projectId: number): Observable<ProjectResponse> {
+    this.isLoading.set(true);
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/connect`, {}).pipe(tap({
+      next: project => {
+        this.project.set(project);
+        this.isLoading.set(false);
+      }
+    }));
+  }
+
+  connectProjectToCalendar(projectId: number): Observable<ProjectResponse> {
+    this.isLoading.set(true);
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/calendar/connect`, {}).pipe(tap({
+      next: project => {
+        this.project.set(project);
+        this.isLoading.set(false);
+      }
+    }));
+  }
 }

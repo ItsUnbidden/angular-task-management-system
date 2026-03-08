@@ -1,7 +1,7 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Header } from "./components/util/app-header/header";
-import { Oauth2Service } from './service/oauth2.service';
+import { OAuth2Service } from './service/oauth2.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { registerIcons } from './app.config';
 import { MatIconRegistry } from '@angular/material/icon';
@@ -16,7 +16,7 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class App implements OnInit {
     protected readonly title = signal('test-angular');
 
-    constructor(private oauth2Service: Oauth2Service, private router: Router, private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+    constructor(private oauth2Service: OAuth2Service, private router: Router, private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
         registerIcons(iconRegistry, sanitizer);
     }
 

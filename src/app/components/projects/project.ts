@@ -24,6 +24,7 @@ import { AddUserDialog } from '../users/add-user-dialog/add-user-dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserService } from '../../service/user.service';
+import { OAuth2Service } from '../../service/oauth2.service';
 
 @Component({
   selector: 'app-overview',
@@ -42,29 +43,29 @@ export class Project {
   private route = inject(ActivatedRoute);
   private projectService = inject(ProjectService);
   private userService = inject(UserService);
+  private oauth2Service = inject(OAuth2Service);
 
-  project = this.projectService.project;
-  currentUser = this.userService.user;
-  isProjectLoading = this.projectService.isLoading;
+  readonly project = this.projectService.project;
+  readonly currentUser = this.userService.user;
+  readonly isProjectLoading = this.projectService.isLoading;
  
-  isEditingName = signal(false);
-  isEditingDescription = signal(false);
-  isEditingDates = signal(false);
-  isSavingPrivacy = signal(true);
+  readonly isEditingName = signal(false);
+  readonly isEditingDescription = signal(false);
+  readonly isEditingDates = signal(false);
+  readonly isSavingPrivacy = signal(true);
   
-  // Not implemented at the moment
-  isDropboxAuthorized = signal(false);
-  isGoogleCalendarAuthorized = signal(false);
+  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
+  readonly isCalendarConnected = this.oauth2Service.isCalendarConnected;
 
-  isCreator = this.projectService.isCreator;
-  isAdmin = this.projectService.isAdmin;
-  isContributor = this.projectService.isContributor;
+  readonly isCreator = this.projectService.isCreator;
+  readonly isAdmin = this.projectService.isAdmin;
+  readonly isContributor = this.projectService.isContributor;
 
-  creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
-  admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
-  contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
+  readonly creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
+  readonly admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
+  readonly contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
 
-  projectId = toSignal(
+  readonly projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
   );
 
@@ -469,15 +470,35 @@ export class Project {
   }
 
   onConnectDropbox() {
-    this.snackBar.open(`Not implemented.`, 'Dismiss', {
-      duration: 3000
-    })
+    const project = this.project();
+
+    if (project) {
+      this.projectService.connectProjectToDropbox(project.id).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
+            duration: 5000
+          })
+        }
+      })
+    }
   }
 
   onConnectCalendar() {
-    this.snackBar.open(`Not implemented.`, 'Dismiss', {
-      duration: 3000
-    })
+    const project = this.project();
+
+    if (project) {
+      this.projectService.connectProjectToCalendar(project.id).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
+            duration: 5000
+          })
+        }
+      })
+    }
   }
 
   statusColor(status: string | null): string {

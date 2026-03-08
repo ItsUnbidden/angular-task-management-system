@@ -26,16 +26,16 @@ export class TaskGrid {
   private projectService = inject(ProjectService);
   private taskService = inject(TaskService);
   
-  project = this.projectService.project;
-  tasks = this.taskService.tasks;
-  currentUser = this.userService.user;
-  isLoadingTasks = this.taskService.isLoadingTasks;
+  readonly project = this.projectService.project;
+  readonly tasks = this.taskService.tasks;
+  readonly currentUser = this.userService.user;
+  readonly isLoadingTasks = this.taskService.isLoadingTasks;
 
-  taskPageIndex = signal(0);
-  taskPageSize = signal(6);
-  totalTasks = this.taskService.totalTasks;
+  readonly taskPageIndex = signal(0);
+  readonly taskPageSize = signal(6);
+  readonly totalTasks = this.taskService.totalTasks;
 
-  isAdmin = this.projectService.isAdmin;
+  readonly isAdmin = this.projectService.isAdmin;
 
   constructor(private dialog: MatDialog, private router: Router) {
     effect(() => {

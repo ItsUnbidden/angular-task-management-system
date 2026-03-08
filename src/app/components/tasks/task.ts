@@ -26,6 +26,8 @@ import { MatDialog } from '@angular/material/dialog';
 import { NewLabelDialog } from '../label/new-label-dialog/new-label-dialog';
 import { LabelManagementDialog } from '../label/label-management-dialog/label-management-dialog';
 import { MessageList } from "../messages/message-list/message-list";
+import { AttachmentList } from "../attachments/attachment-list/attachment-list";
+import { OAuth2Service } from '../../service/oauth2.service';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -38,7 +40,7 @@ interface TaskPriorityOption {
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule, MessageList],
+    MatChipsModule, MatSelectModule, MessageList, AttachmentList],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })
@@ -47,26 +49,29 @@ export class Task {
   private taskService = inject(TaskService);
   private userService = inject(UserService);
   private labelService = inject(LabelService);
+  private oauth2Service = inject(OAuth2Service);
+
   route = inject(ActivatedRoute);
 
-  taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
+  readonly taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
 
-  project = this.projectService.project;
-  task = this.taskService.selectedTask;
-  labels = signal<LabelResponse[]>([]);
-  projectLabels = signal<LabelResponse[]>([]);
-  currentUser = this.userService.user;
-  isTaskLoading = this.taskService.isLoadingSelectedTask;
-  isLoadingLabels = signal(false);
+  readonly project = this.projectService.project;
+  readonly task = this.taskService.selectedTask;
+  readonly labels = signal<LabelResponse[]>([]);
+  readonly projectLabels = signal<LabelResponse[]>([]);
+  readonly currentUser = this.userService.user;
+  readonly isTaskLoading = this.taskService.isLoadingSelectedTask;
+  readonly isLoadingLabels = signal(false);
+  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
 
-  isEditingName = signal(false);
-  isEditingDescription = signal(false);
-  isEditingDate = signal(false);
-  isEditingChips = signal(false);
+  readonly isEditingName = signal(false);
+  readonly isEditingDescription = signal(false);
+  readonly isEditingDate = signal(false);
+  readonly isEditingChips = signal(false);
 
-  isCreator = this.projectService.isCreator;
-  isAdmin = this.projectService.isAdmin;
-  isContributor = this.projectService.isContributor;
+  readonly isCreator = this.projectService.isCreator;
+  readonly isAdmin = this.projectService.isAdmin;
+  readonly isContributor = this.projectService.isContributor;
 
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
@@ -258,29 +263,30 @@ export class Task {
     const project = this.project();
     const task = this.task();
 
-    if (project && task)
-    this.dialog.open(NewLabelDialog, {
-      data: {
-        projectId: project.id,
-        taskId: task.id
-      },
-      disableClose: true,
-      width: '420px'
-    })
-    .afterClosed()
-    .subscribe(confirmed => {
-      if (confirmed) {
-        const taskId = this.taskId();
-        const project = this.project();
-
-        if (taskId) {
-          this.taskService.cacheSelectedTask(taskId);
+    if (project && task) {
+      this.dialog.open(NewLabelDialog, {
+        data: {
+          projectId: project.id,
+          taskId: task.id
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          const taskId = this.taskId();
+          const project = this.project();
+  
+          if (taskId) {
+            this.taskService.cacheSelectedTask(taskId);
+          }
+          if (project) {
+            this.loadLabelsForProject(project.id);
+          }
         }
-        if (project) {
-          this.loadLabelsForProject(project.id);
-        }
-      }
-    })
+      })
+    }
   }
 
   onOpenLabelManagement() {
