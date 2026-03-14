@@ -147,6 +147,8 @@ export class ProjectService {
     return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/connect`, {}).pipe(tap({
       next: project => {
         this.project.set(project);
+      },
+      finalize: () => {
         this.isLoading.set(false);
       }
     }));
@@ -157,8 +159,34 @@ export class ProjectService {
     return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/calendar/connect`, {}).pipe(tap({
       next: project => {
         this.project.set(project);
+      },
+      finalize: () => {
         this.isLoading.set(false);
       }
     }));
+  }
+
+  disconnectDropbox(projectId: number) : Observable<ProjectResponse> {
+    this.isLoading.set(true);
+    return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/disconnect`).pipe(tap({
+      next: (project) => {
+        this.project.set(project);
+      },
+      finalize: () => {
+        this.isLoading.set(false);
+      }
+    }))
+  }
+
+  disconnectCalendar(projectId: number) : Observable<ProjectResponse> {
+    this.isLoading.set(true);
+    return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/google/disconnect`).pipe(tap({
+      next: (project) => {
+        this.project.set(project);
+      },
+      finalize: () => {
+        this.isLoading.set(false);
+      }
+    }))
   }
 }

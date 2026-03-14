@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Page, TaskCreateRequest, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
+import { Page, TaskCreateRequest, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -49,9 +49,9 @@ export class TaskService {
     }
   }
 
-  cacheProjectTasksPage(projectId: number, page: number, size: number) {
+  cacheProjectTasksPage(projectId: number, filter: TaskFilter, page: number, size: number) {
     this.isLoadingTasks.set(true);
-    this.getTasksForProject(projectId, page, size).subscribe(res => {
+    this.getFilteredTasksInProject(projectId, filter, page, size).subscribe(res => {
       this.tasks.set(res.content);
       this.totalTasks.set(res.totalElements);
       this.isLoadingTasks.set(false);
@@ -68,6 +68,28 @@ export class TaskService {
 
   getTasksByLabel(labelId: number) : Observable<TaskResponse[]> {
     return this.http.get<TaskResponse[]>(`${environment.apiUrl}/api/tasks/labels/${labelId}`);
+  }
+  
+  getFilteredTasksInProject(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {
+    let params = new HttpParams();
+
+    if (filter.assigneeId)
+      params = params.set('assigneeId', filter.assigneeId);
+    if (filter.priority)
+      params = params.set('priority', filter.priority);
+    if (filter.status)
+      params = params.set('status', filter.status);
+    if (filter.dueDateFrom)
+      params = params.set('dueDateFrom', filter.dueDateFrom)
+    if (filter.dueDateTo)
+      params = params.set('dueDateTo', filter.dueDateTo)
+    if (filter.labelIds && filter.labelIds.length !== 0)
+      params = params.set('labelIds', filter.labelIds.join());
+      
+    params = params
+      .set('size', size)
+      .set('page', page);
+    return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/projects/${projectId}/filter`, { params });
   }
 
   createTask(request: TaskCreateRequest) : Observable<TaskResponse> {

@@ -183,11 +183,33 @@
                 @else {
                     <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
                 }               
-                @if (isDropboxConnected() && !project()?.isDropboxConnected) {
-                    <button matButton="elevated" (click)="onConnectDropbox()">Connect dropbox</button>
+                @if (isCreator() && isDropboxConnected()) {
+                    @if (project()?.isDropboxConnected) {
+                        <button matButton="elevated" (click)="onDisconnectDropbox()">
+                            <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                            Disconnect Dropbox
+                        </button>
+                    }
+                    @else {
+                        <button matButton="elevated" (click)="onConnectDropbox()">
+                            <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                            Connect Dropbox
+                        </button>
+                    }
                 }
-                @if (isCalendarConnected() && !project()?.isCalendarConnected) {
-                    <button matButton="elevated" (click)="onConnectCalendar()">Connect calendar</button>
+                @if (isCreator() && isCalendarConnected()) {
+                    @if (project()?.isCalendarConnected) {
+                        <button matButton="elevated" (click)="onDisconnectCalendar()">
+                            <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                            Disconnect Calendar
+                        </button>
+                    }
+                    @else {
+                        <button matButton="elevated" (click)="onConnectCalendar()">
+                            <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                            Connect Calendar
+                        </button>
+                    }
                 }
             </mat-card-actions>
         }

@@ -82,10 +82,21 @@ export interface TaskUpdateStatusRequest {
   newStatus: TaskStatus;
 }
 
+export interface TaskFilter {
+  assigneeId?: number;
+  dueDateFrom?: string;
+  dueDateTo?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  labelIds?: number[];
+}
+
 export interface ProjectRoleResponse {
   userId: number;
   username: string;
   roleType: ProjectRoleType;
+  isDropboxConnected: boolean;
+  isCalendarConnected: boolean;
 }
 
 export interface ProjectRoleUpdateRequest {
@@ -174,6 +185,10 @@ export interface GeneralApiError {
 export interface OAuth2StatusResponse {
   status: OAuth2Status;
   aquiredAt: string;
+}
+
+export interface ThirdPartyTestResponse {
+  result: string;
 }
 
 export type ProjectStatus = 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';

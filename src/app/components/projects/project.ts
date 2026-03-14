@@ -25,6 +25,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserService } from '../../service/user.service';
 import { OAuth2Service } from '../../service/oauth2.service';
+import { toLocalDateString } from '../../utils';
 
 @Component({
   selector: 'app-overview',
@@ -242,9 +243,9 @@ export class Project {
 
       if (request) {
         if (this.datesEditForm.value.startDate) {
-          request.startDate = this.toLocalDateString(this.datesEditForm.value.startDate) ?? '';
+          request.startDate = toLocalDateString(this.datesEditForm.value.startDate) ?? '';
         }
-        request.endDate = this.toLocalDateString(this.datesEditForm.value.endDate ?? null);
+        request.endDate = toLocalDateString(this.datesEditForm.value.endDate ?? null);
         this.handleUpdateCachedProject(project.id, request);
       }
     }
@@ -488,16 +489,74 @@ export class Project {
   onConnectCalendar() {
     const project = this.project();
 
-    if (project) {
+    if (project) {         
       this.projectService.connectProjectToCalendar(project.id).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
+          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
             duration: 5000
           })
         }
+      });     
+    }
+  }
+
+  onDisconnectDropbox() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Disconnect Dropbox',
+          message: `Are you sure you want to disconnect Dropbox from this project? This will delete all attachments in the project.`
+        },
+        disableClose: true,
+        width: '420px'
       })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.disconnectDropbox(project.id).subscribe({
+            error: (err: HttpErrorResponse) => {
+              const error = err.error as GeneralApiError;
+
+              this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Dropbox.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      });
+    }
+  }
+
+  onDisconnectCalendar() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Disconnect Calendar',
+          message: `Are you sure you want to disconnect Calendar from this project? This will delete the calendar and all its events.`
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          this.projectService.disconnectCalendar(project.id).subscribe({
+            error: (err: HttpErrorResponse) => {
+              const error = err.error as GeneralApiError;
+
+              this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Calendar.', 'Dismiss', {
+                duration: 5000
+              })
+            }
+          });
+        }
+      });
     }
   }
 
@@ -533,17 +592,6 @@ export class Project {
             startDate: project.startDate ?? '',
             endDate: project.endDate,
             isPrivate: project.isPrivate };
-  }
-
-  private toLocalDateString(date: Date | null): string | undefined {
-    if (!date) {
-      return undefined;
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   private handleLoadProjectToCache(projectId: number) {

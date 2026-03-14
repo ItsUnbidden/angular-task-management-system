@@ -5,7 +5,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { ProjectResponse, TaskResponse } from '../../../models';
+import { EssentialUserResponse, GeneralApiError, LabelResponse, TaskFilter, TaskPriority, TaskResponse, TaskStatus } from '../../../models';
 import { ProjectService } from '../../../service/project.service';
 import { TaskService } from '../../../service/task.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -13,11 +13,31 @@ import { NewTaskDialog } from '../new-task-dialog/new-task-dialog';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { UserService } from '../../../service/user.service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { MatSelectModule } from '@angular/material/select';
+import { FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatNativeDateModule } from '@angular/material/core';
+import { LabelService } from '../../../service/label.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatIconModule } from "@angular/material/icon";
+import { toLocalDateString } from '../../../utils';
+
+interface TaskStatusOption {
+  status: TaskStatus;
+  statusView: string;
+  class: string;
+
+}
+interface TaskPriorityOption {
+  priority: TaskPriority;
+  priorityView: string;
+  class: string;
+}
 
 @Component({
   selector: 'app-task-grid',
-  imports: [ CommonModule, MatCardModule, MatDividerModule, MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule, MatButtonModule ],
+  imports: [CommonModule, MatCardModule, MatDividerModule, MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule, MatButtonModule, MatSelectModule, ReactiveFormsModule, MatDatepickerModule, MatNativeDateModule, MatIconModule],
   templateUrl: './task-grid.html',
   styleUrl: './task-grid.css',
 })
@@ -25,8 +45,17 @@ export class TaskGrid {
   private userService = inject(UserService);
   private projectService = inject(ProjectService);
   private taskService = inject(TaskService);
+  private labelService = inject(LabelService);
   
   readonly project = this.projectService.project;
+  readonly projectUsers = computed(() => {
+    const project = this.project();
+    
+    return (project) ? project.projectRoles.map<EssentialUserResponse>(pr => {
+      return { id: pr.userId, username: pr.username };
+    }) : null;
+  });
+  readonly projectLabels = signal<LabelResponse[]>([]);
   readonly tasks = this.taskService.tasks;
   readonly currentUser = this.userService.user;
   readonly isLoadingTasks = this.taskService.isLoadingTasks;
@@ -34,15 +63,69 @@ export class TaskGrid {
   readonly taskPageIndex = signal(0);
   readonly taskPageSize = signal(6);
   readonly totalTasks = this.taskService.totalTasks;
+  readonly taskFilter = signal<TaskFilter>({});
 
   readonly isAdmin = this.projectService.isAdmin;
 
-  constructor(private dialog: MatDialog, private router: Router) {
+  statusOptions: TaskStatusOption[] = [
+    { status: 'NOT_STARTED', statusView: 'Not started', class: 'status-initiated' },
+    { status: 'IN_PROGRESS', statusView: 'In progress', class: 'status-in-progress' },
+    { status: 'COMPLETED', statusView: 'Completed', class: 'status-completed' },
+    { status: 'OVERDUE', statusView: 'Overdue', class: 'status-overdue' }
+  ]
+
+  priorityOptions: TaskPriorityOption[] = [
+    { priority: 'LOW', priorityView: 'Low', class: 'priority-low' },
+    { priority: 'MEDIUM', priorityView: 'Medium', class: 'priority-medium' },
+    { priority: 'HIGH', priorityView: 'High', class: 'priority-high' }
+  ]
+
+  filterForm = new FormGroup({
+    assigneeId: new FormControl<number | null>(null),
+    status: new FormControl<TaskStatus | null>(null),
+    priority: new FormControl<TaskPriority | null>(null),
+    dueDateFrom: new FormControl<Date | null>(null),
+    dueDateTo: new FormControl<Date | null>(null),
+    labelIds: new FormControl<number[]>([])
+  });
+
+  constructor(private dialog: MatDialog, private snackBar: MatSnackBar, private router: Router) {
     effect(() => {
       const project = this.project();
 
       if (project) {
-        this.taskService.cacheProjectTasksPage(project.id, this.taskPageIndex(), this.taskPageSize());
+        this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
+        this.labelService.getLabelsForProject(project.id).subscribe({
+          next: labels => {
+            this.projectLabels.set(labels);
+          },
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading project labels.', 'Dismiss', {
+              duration: 5000
+            });
+          }
+        });
+      }
+    });
+
+    this.filterForm.events.subscribe(() => {
+      const project = this.project();
+      const formValue = this.filterForm.value;
+
+      this.taskFilter.set({
+        assigneeId: formValue.assigneeId ?? undefined,
+        status: formValue.status ?? undefined,
+        priority: formValue.priority ?? undefined,
+        dueDateFrom: toLocalDateString(formValue.dueDateFrom ?? null),
+        dueDateTo: toLocalDateString(formValue.dueDateTo ?? null),
+        labelIds: formValue.labelIds ?? undefined
+      });
+
+      if (project) {
+        
+        this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
       }
     })
   }
@@ -53,7 +136,7 @@ export class TaskGrid {
     this.taskPageIndex.set(event.pageIndex);
     this.taskPageSize.set(event.pageSize);
 
-    if (project) this.taskService.cacheProjectTasksPage(project.id, this.taskPageIndex(), this.taskPageSize());
+    if (project) this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
   }
 
   onCreateNewTask() {
@@ -73,7 +156,7 @@ export class TaskGrid {
       .afterClosed()
       .subscribe(confirmed => {
         if (confirmed) {         
-          this.taskService.cacheProjectTasksPage(project.id, this.taskPageIndex(), this.taskPageSize());        
+          this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());        
         }
       })
     }
@@ -81,6 +164,41 @@ export class TaskGrid {
 
   onOpenTask(task: TaskResponse) {
     this.router.navigateByUrl(`/projects/${task.projectId}/tasks/${task.id}`);
+  }
+
+  onApplyFilter() {
+    const formValue = this.filterForm.value;
+
+    this.taskFilter.set({
+      assigneeId: formValue.assigneeId ?? undefined,
+      status: formValue.status ?? undefined,
+      priority: formValue.priority ?? undefined,
+      dueDateFrom: toLocalDateString(formValue.dueDateFrom ?? null),
+      dueDateTo: toLocalDateString(formValue.dueDateTo ?? null),
+      labelIds: formValue.labelIds ?? undefined
+    });
+    const project = this.project();
+
+    if (project) {
+      this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
+    }
+  }
+
+  onClearFilters() {
+    this.taskFilter.set({});
+    this.filterForm.patchValue({
+      assigneeId: null,
+      status: null,
+      priority: null,
+      dueDateFrom: null,
+      dueDateTo: null,
+      labelIds: []
+    });
+    const project = this.project();
+
+    if (project) {
+      this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
+    }
   }
 
   parseEnumColor(key: string | null): string {

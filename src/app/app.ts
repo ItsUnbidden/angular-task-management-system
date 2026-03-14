@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, effect, OnInit, signal } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Header } from "./components/util/app-header/header";
 import { OAuth2Service } from './service/oauth2.service';
@@ -6,6 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { registerIcons } from './app.config';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
+import { UserService } from './service/user.service';
 
 @Component({
     selector: 'app-root',
@@ -16,7 +17,17 @@ import { DomSanitizer } from '@angular/platform-browser';
 export class App implements OnInit {
     protected readonly title = signal('test-angular');
 
-    constructor(private oauth2Service: OAuth2Service, private router: Router, private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+    constructor(private userService: UserService, private oauth2Service: OAuth2Service, private router: Router,
+            private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+        effect(() => {
+            const user = userService.user();
+
+            if (user) {
+                this.oauth2Service.checkCalendarStatus().subscribe();
+                this.oauth2Service.checkDropboxStatus().subscribe();
+            }
+        })
+
         registerIcons(iconRegistry, sanitizer);
     }
 
@@ -39,7 +50,5 @@ export class App implements OnInit {
                 }
             }
         });
-        this.oauth2Service.checkCalendarStatus().subscribe();
-        this.oauth2Service.checkDropboxStatus().subscribe();
     }
 }

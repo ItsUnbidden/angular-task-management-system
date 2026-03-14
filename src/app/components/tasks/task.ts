@@ -28,6 +28,7 @@ import { LabelManagementDialog } from '../label/label-management-dialog/label-ma
 import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
+import { toLocalDateString } from '../../utils';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -60,6 +61,7 @@ export class Task {
   readonly labels = signal<LabelResponse[]>([]);
   readonly projectLabels = signal<LabelResponse[]>([]);
   readonly currentUser = this.userService.user;
+  readonly currentProjectRole = this.projectService.currentProjectRole;
   readonly isTaskLoading = this.taskService.isLoadingSelectedTask;
   readonly isLoadingLabels = signal(false);
   readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
@@ -206,7 +208,7 @@ export class Task {
 
   onSubmitTaskDueDate() {
     const task = this.task();
-    const newDueDate = this.toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
+    const newDueDate = toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
 
     if (task && newDueDate !== task.dueDate) {
       const request = this.makeTaskUpdateRequest();
@@ -313,6 +315,10 @@ export class Task {
     }
   }
 
+  onJoinDropbox() {
+    
+  }
+
   onCloseEditing() {
     this.isEditingDate.set(false);
     this.isEditingName.set(false);
@@ -395,16 +401,5 @@ export class Task {
         this.isLoadingLabels.set(false);
       }
     })
-  }
-  
-  private toLocalDateString(date: Date | null): string | undefined {
-    if (!date) {
-      return undefined;
-    }
-
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 }

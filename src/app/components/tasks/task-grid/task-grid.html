@@ -14,6 +14,51 @@
             <span>Loading tasks...</span>
         }
         @else {
+            <div class="filters">
+                <form [formGroup]="filterForm" (ngSubmit)="onApplyFilter()">
+                    <mat-form-field>
+                        <mat-label>Assignee</mat-label>
+                        <mat-select formControlName="assigneeId">
+                            <mat-option [value]="null">—</mat-option>
+                            @for (user of projectUsers(); track user.id) {
+                                <mat-option [value]="user.id">{{ user.username }}</mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                    <mat-chip-listbox formControlName="status">
+                        @for (option of statusOptions; track option.status) {
+                            <mat-chip-option [value]="option.status" [ngClass]="option.class">{{ option.statusView }}</mat-chip-option>
+                        }
+                    </mat-chip-listbox>
+                    <mat-chip-listbox formControlName="priority">
+                        @for (option of priorityOptions; track option.priority) {
+                            <mat-chip-option [value]="option.priority" [ngClass]="option.class">{{ option.priorityView }}</mat-chip-option>
+                        }
+                    </mat-chip-listbox>
+                    <mat-form-field>
+                        <mat-label>Dates</mat-label>
+                        <mat-date-range-input [rangePicker]="picker">
+                            <input matStartDate mat-input formControlName="dueDateFrom">
+                            <input matEndDate mat-input formControlName="dueDateTo">
+                        </mat-date-range-input>
+                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                        <mat-date-range-picker #picker></mat-date-range-picker>
+                    </mat-form-field>
+                    <mat-chip-listbox multiple formControlName="labelIds">
+                        @for (label of projectLabels(); track label.id) {
+                            <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
+                        }
+                    </mat-chip-listbox>
+                    <button matButton="elevated" type="submit">
+                        <mat-icon fontSet="material-symbols-outlined">filter_alt</mat-icon>
+                        Apply filters
+                    </button>
+                    <button matButton="outlined" type="button" (click)="onClearFilters()">
+                        <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
+                        Clear filters
+                    </button>
+                </form>
+            </div>
             <div class="tasks-grid">
                 @for (task of tasks(); track task.id) {
                     <mat-card class="task-tile" (click)="onOpenTask(task)">

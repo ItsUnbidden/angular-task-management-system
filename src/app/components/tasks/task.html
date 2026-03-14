@@ -103,12 +103,12 @@
                     <div class="row">
                         <div>
                             <mat-form-field appearance="outline">
-                            <mat-label>New priority</mat-label>
-                            <mat-select formControlName="taskPriority">
-                                @for (option of priorityOptions; track option) {
-                                    <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
-                                }
-                            </mat-select>
+                                <mat-label>New priority</mat-label>
+                                <mat-select formControlName="taskPriority">
+                                    @for (option of priorityOptions; track option) {
+                                        <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
+                                    }
+                                </mat-select>
                             </mat-form-field>
 
                             <button matButton="elevated" type="button" (click)="onAddNewLabel()">
@@ -180,7 +180,27 @@
         </mat-card-actions>
     }
     @if (isDropboxConnected()) {
-        <app-attachment-list></app-attachment-list>
+        @if (project()?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
+            <app-attachment-list></app-attachment-list>
+        }
+        @else if (!project()?.isDropboxConnected) {
+            @if (isCreator()) {
+                <p>Connect the project to Dropbox to access attachments.</p>
+            }
+            @else {
+                <p>The creator of this project hasn't connected it to Dropbox yet.</p>
+            }
+        }
+        @else if (!currentProjectRole()?.isDropboxConnected) {
+            <p>This project is connected to Dropbox, but you haven't joined yet.</p>
+            <button matButton="elevated" (click)="onJoinDropbox()">
+                <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                Join Dropbox
+            </button>
+        }
+    }
+    @else {
+        <p>You need to log into Dropbox in order to use attachments.</p>
     }
     <app-message-list></app-message-list>
 </mat-card>

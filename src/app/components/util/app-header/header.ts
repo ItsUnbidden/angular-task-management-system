@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule, MatIconRegistry } from "@angular/material/icon";
+import { MatIconModule } from "@angular/material/icon";
 import { UserService } from '../../../service/user.service';
 import { Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
@@ -11,10 +11,11 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 @Component({
   selector: 'app-header',
-  imports: [MatButtonModule, MatIconModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -30,6 +31,8 @@ export class Header {
 
   isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
   isDropboxConnected = this.oauth2Service.isDropboxConnected;
+  isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
+  isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
 
   constructor(private router: Router, private authService: AuthService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
 
