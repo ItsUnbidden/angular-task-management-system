@@ -1,4 +1,68 @@
 .overview-card {
     width: 800px;
     margin-top: 35px;
+    margin-bottom: 50px;
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px;
+}
+
+.header-container div {
+    display: flex;
+    align-items: center;
+    gap: 5px
+}
+
+.header-container form {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: -15px;
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: -10px;
+}
+
+.description-input {
+    flex: 1;
+    min-width: 0;
+    width: 100%;
+}
+
+.description-input textarea[matInput] {
+    height: 140px;
+    resize: none;
+    overflow: auto;
+}
+
+.description-edit {
+    display: flex;
+    flex-direction: column;
+}
+
+.task-content-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.task-chips-actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: end;
+}
+
+.task-actions-container {
+    display: flex;
+    justify-content: right;
+    margin-right: 10px;
 }

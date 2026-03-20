@@ -50,7 +50,7 @@ export class Header {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Disconnect Dropbox',
-        message: 'Are you sure you want to disconnect Dropbox?',
+        message: 'Are you sure you want to <strong>disconnect</strong> Dropbox?',
       },
       disableClose: true,
       width: '420px'
@@ -82,7 +82,7 @@ export class Header {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Disconnect Google Calendar',
-        message: 'Are you sure you want to disconnect Google Calendar?',
+        message: 'Are you sure you want to <strong>disconnect</strong> Google Calendar?',
       },
       disableClose: true,
       width: '420px'

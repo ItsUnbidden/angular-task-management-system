@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { Page, TaskCreateRequest, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -49,13 +49,17 @@ export class TaskService {
     }
   }
 
-  cacheProjectTasksPage(projectId: number, filter: TaskFilter, page: number, size: number) {
+  cacheProjectTasksPage(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {
     this.isLoadingTasks.set(true);
-    this.getFilteredTasksInProject(projectId, filter, page, size).subscribe(res => {
-      this.tasks.set(res.content);
-      this.totalTasks.set(res.totalElements);
-      this.isLoadingTasks.set(false);
-    })
+    return this.getFilteredTasksInProject(projectId, filter, page, size).pipe(tap({
+      next: res => {
+        this.tasks.set(res.content);
+        this.totalTasks.set(res.totalElements);
+      },
+      finalize: () => {
+        this.isLoadingTasks.set(false);
+      }
+    }));
   }
 
   getTasksForProject(projectId: number, page: number, size: number) : Observable<Page<TaskResponse>> {

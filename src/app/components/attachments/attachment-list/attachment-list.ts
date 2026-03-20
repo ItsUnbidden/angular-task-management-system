@@ -13,8 +13,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 
-type ProgressBarMode = 'determinate' | 'indeterminate';
-
 @Component({
   selector: 'app-attachment-list',
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule],
@@ -24,10 +22,11 @@ type ProgressBarMode = 'determinate' | 'indeterminate';
 export class AttachmentList {
   private attachmentService = inject(AttachmentService);
 
+  private readonly maxFileSize = 157_286_400;
+
   readonly attachments = this.attachmentService.attachments;
-  readonly uploadProgress = signal<number | null>(null);
-  readonly progressBarMode = signal<ProgressBarMode>('determinate');
   readonly isLoadingAttachments = this.attachmentService.isLoading;
+  readonly isProgressBarActive = signal(false);
 
   constructor(private taskService: TaskService, private snackBar: MatSnackBar, private dialog: MatDialog) {
     effect(() => {
@@ -45,25 +44,20 @@ export class AttachmentList {
     const task = this.taskService.selectedTask();
 
     if (file && task) {
+      if (file.size >= this.maxFileSize) {
+        this.snackBar.open('The selected file is too large. Max file size is 150 MB.', 'Dismiss', {
+          duration: 5000
+        });
+        return;
+      }
       this.attachmentService.uploadFile(task.id, file).subscribe({
         next: event => {
           switch(event.type) {
             case HttpEventType.Sent: 
-              this.uploadProgress.set(0);
-              this.progressBarMode.set('determinate');
-              break;
-            case HttpEventType.UploadProgress:
-              if (event.total) {
-                const percent = Math.round(100 * event.loaded / event.total);
-                if (percent >= 99) {
-                  this.progressBarMode.set('indeterminate');
-                } else {
-                  this.uploadProgress.set(percent);
-                }
-              }
+              this.isProgressBarActive.set(true);
               break;
             case HttpEventType.Response:
-              this.uploadProgress.set(null);
+              this.isProgressBarActive.set(false);
               this.attachmentService.cacheAttachmentsForTask(task.id);
               break;
           }
@@ -103,7 +97,7 @@ export class AttachmentList {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Delete attachment',
-        message: `Are you sure you want to delete file ${attachment.filename}? It will be deleted in the project's Dropbox folder too.`
+        message: `Are you sure you want to delete file <strong>${attachment.filename}</strong>? It will be deleted in the project's Dropbox folder too.`
       },
       disableClose: true,
       width: '420px'

@@ -1,0 +1,16 @@
+.main-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+mat-card {
+    width: 60%;
+    margin-top: 100px;
+}
+
+mat-card-actions {
+    display: flex;
+    justify-content: right;
+    margin-right: 10px;
+}

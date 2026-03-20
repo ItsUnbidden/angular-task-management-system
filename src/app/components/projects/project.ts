@@ -204,7 +204,7 @@ export class Project {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Change project visibility?',
-        message: isOn ? 'Are you sure you want to make this project private?' : 'Are you sure you want to make this project public?'
+        message: isOn ? 'Are you sure you want to make this project <strong>private</strong>?' : 'Are you sure you want to make this project <strong>public</strong>?'
       },
       disableClose: true,
       width: '420px'
@@ -272,8 +272,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: `Remove user ${projectRole.username}?`,
-          message: `Are you sure you want to remove ${projectRole.username} from the project?`
+          title: `Remove user <strong>${projectRole.username}</strong>?`,
+          message: `Are you sure you want to remove <strong>${projectRole.username}</strong> from the project?`
         }
       })
       .afterClosed()
@@ -305,7 +305,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Quit project',
-          message: 'Are you sure you want to quit this project?'
+          message: 'Are you sure you want to <strong>quit</strong> this project?'
         },
         disableClose: true,
         width: '420px'
@@ -340,7 +340,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Make admin',
-          message: `Are you sure you want to make ${projectRole.username} an admin in this project?`
+          message: `Are you sure you want to make <strong>${projectRole.username}</strong> an admin in this project?`
         },
         disableClose: true,
         width: '420px'
@@ -374,7 +374,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Remove admin',
-          message: `Are you sure you want to reduce privileges for ${projectRole.username} in this project?`
+          message: `Are you sure you want to reduce privileges for <strong>${projectRole.username}</strong> in this project?`
         },
         disableClose: true,
         width: '420px'
@@ -408,7 +408,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Trasfer ownership',
-          message: `Are you sure you want to transfer ownership of this project to ${projectRole.username}?`
+          message: `Are you sure you want to transfer ownership of this project to <strong>${projectRole.username}</strong>?`
         },
         disableClose: true,
         width: '420px'
@@ -442,7 +442,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Delete project',
-          message: `Are you sure you want to delete this project? This operation is irreversible.`
+          message: `Are you sure you want to <strong>delete</strong> this project? This operation is irreversible.`
         },
         disableClose: true,
         width: '420px'
@@ -509,7 +509,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Disconnect Dropbox',
-          message: `Are you sure you want to disconnect Dropbox from this project? This will delete all attachments in the project.`
+          message: `Are you sure you want to <strong>disconnect</strong> Dropbox from this project? This will delete <strong>all attachments</strong> in the project.`
         },
         disableClose: true,
         width: '420px'
@@ -538,7 +538,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Disconnect Calendar',
-          message: `Are you sure you want to disconnect Calendar from this project? This will delete the calendar and all its events.`
+          message: `Are you sure you want to <strong>disconnect</strong> Calendar from this project? This will delete the calendar and all its events.`
         },
         disableClose: true,
         width: '420px'

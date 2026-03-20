@@ -169,6 +169,7 @@ export class MessageService {
       const newStatesMap = new Map(states);
 
       newStatesMap.forEach((ms, k) => {
+        ms.isEditing = false;
         ms.isReplying = false;
       })
       const currentState = newStatesMap.get(messageId);
@@ -197,6 +198,7 @@ export class MessageService {
 
       newStatesMap.forEach((ms, k) => {
         ms.isEditing = false;
+        ms.isReplying = false;
       })
       const currentState = newStatesMap.get(messageId);
 

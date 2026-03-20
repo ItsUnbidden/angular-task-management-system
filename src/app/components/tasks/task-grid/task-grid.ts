@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
@@ -22,6 +22,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from "@angular/material/icon";
 import { toLocalDateString } from '../../../utils';
+import { filter } from 'rxjs';
 
 interface TaskStatusOption {
   status: TaskStatus;
@@ -94,7 +95,7 @@ export class TaskGrid {
       const project = this.project();
 
       if (project) {
-        this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
+        this.handleCacheProjectTasks();
         this.labelService.getLabelsForProject(project.id).subscribe({
           next: labels => {
             this.projectLabels.set(labels);
@@ -109,9 +110,20 @@ export class TaskGrid {
         });
       }
     });
+    
+    effect(() => {
+      const isLoadingTasks = this.isLoadingTasks();
 
-    this.filterForm.events.subscribe(() => {
-      const project = this.project();
+      untracked(() => {
+        if (isLoadingTasks) {
+          this.filterForm.disable({ emitEvent: false });
+        } else {
+          this.filterForm.enable({ emitEvent: false });
+        }
+      });
+    })
+
+    this.filterForm.valueChanges.subscribe(() => {
       const formValue = this.filterForm.value;
 
       this.taskFilter.set({
@@ -122,11 +134,7 @@ export class TaskGrid {
         dueDateTo: toLocalDateString(formValue.dueDateTo ?? null),
         labelIds: formValue.labelIds ?? undefined
       });
-
-      if (project) {
-        
-        this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
-      }
+      this.handleCacheProjectTasks();
     })
   }
 
@@ -136,7 +144,7 @@ export class TaskGrid {
     this.taskPageIndex.set(event.pageIndex);
     this.taskPageSize.set(event.pageSize);
 
-    if (project) this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
+    this.handleCacheProjectTasks();
   }
 
   onCreateNewTask() {
@@ -156,7 +164,7 @@ export class TaskGrid {
       .afterClosed()
       .subscribe(confirmed => {
         if (confirmed) {         
-          this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());        
+          this.handleCacheProjectTasks(); 
         }
       })
     }
@@ -165,25 +173,7 @@ export class TaskGrid {
   onOpenTask(task: TaskResponse) {
     this.router.navigateByUrl(`/projects/${task.projectId}/tasks/${task.id}`);
   }
-
-  onApplyFilter() {
-    const formValue = this.filterForm.value;
-
-    this.taskFilter.set({
-      assigneeId: formValue.assigneeId ?? undefined,
-      status: formValue.status ?? undefined,
-      priority: formValue.priority ?? undefined,
-      dueDateFrom: toLocalDateString(formValue.dueDateFrom ?? null),
-      dueDateTo: toLocalDateString(formValue.dueDateTo ?? null),
-      labelIds: formValue.labelIds ?? undefined
-    });
-    const project = this.project();
-
-    if (project) {
-      this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
-    }
-  }
-
+  
   onClearFilters() {
     this.taskFilter.set({});
     this.filterForm.patchValue({
@@ -194,11 +184,7 @@ export class TaskGrid {
       dueDateTo: null,
       labelIds: []
     });
-    const project = this.project();
-
-    if (project) {
-      this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
-    }
+    this.handleCacheProjectTasks();
   }
 
   parseEnumColor(key: string | null): string {
@@ -228,4 +214,20 @@ export class TaskGrid {
       default: return '';
     }
   }
+
+  private handleCacheProjectTasks() {
+    const project = this.project();
+
+    if (project) {
+      this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize()).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+  
+          this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading project tasks.', 'Dismiss', {
+            duration: 5000
+          });
+        }
+      });
+    }
+    }
 }

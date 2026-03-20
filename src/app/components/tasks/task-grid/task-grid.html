@@ -1,92 +1,98 @@
-<mat-card class="tasks-card">
-    <mat-card-header>
-        <mat-card-title class="card-title">Tasks</mat-card-title>
+<mat-card class="tasks-card" appearance="outlined">
+    <mat-card-header class="main-card-header">
+        <mat-card-title>Tasks</mat-card-title>
         @if (isAdmin()) {
-            <button mat-flat-button (click)="onCreateNewTask()" color="primary">Create task</button>
+            <div>
+                <button mat-flat-button (click)="onCreateNewTask()" color="primary" [disabled]="isLoadingTasks()">Create task</button>
+            </div>
         }
     </mat-card-header>
 
     <mat-divider></mat-divider>
 
     <mat-card-content>
+        <mat-card class="filters-card">
+            <mat-card-content>
+                <form [formGroup]="filterForm">
+                    <div class="filters-internal-container">
+                        <mat-form-field>
+                            <mat-label>Assignee</mat-label>
+                            <mat-select formControlName="assigneeId">
+                                <mat-option>—</mat-option>
+                                @for (user of projectUsers(); track user.id) {
+                                    <mat-option [value]="user.id">{{ user.username }}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                        <mat-form-field>
+                            <mat-label>Dates</mat-label>
+                            <mat-date-range-input [rangePicker]="picker">
+                                <input matStartDate mat-input formControlName="dueDateFrom">
+                                <input matEndDate mat-input formControlName="dueDateTo">
+                            </mat-date-range-input>
+                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                            <mat-date-range-picker #picker></mat-date-range-picker>
+                        </mat-form-field>
+                    </div>
+                    <div class="filters-internal-container">
+                        <mat-chip-listbox formControlName="status">
+                            @for (option of statusOptions; track option.status) {
+                                <mat-chip-option [value]="option.status" [ngClass]="option.class">{{ option.statusView }}</mat-chip-option>
+                            }
+                        </mat-chip-listbox>
+                        <mat-chip-listbox formControlName="priority">
+                            @for (option of priorityOptions; track option.priority) {
+                                <mat-chip-option [value]="option.priority" [ngClass]="option.class">{{ option.priorityView }}</mat-chip-option>
+                            }
+                        </mat-chip-listbox>
+                    </div>
+                    <mat-chip-listbox multiple formControlName="labelIds">
+                        @for (label of projectLabels(); track label.id) {
+                            <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
+                        }
+                    </mat-chip-listbox>                    
+                </form>
+            </mat-card-content>
+            <mat-card-actions>
+                <button matButton="outlined" type="button" (click)="onClearFilters()" [disabled]="isLoadingTasks()">
+                    <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
+                    Clear filters
+                </button>
+            </mat-card-actions>
+        </mat-card>
         @if (isLoadingTasks()) {
             <mat-spinner diameter="30"></mat-spinner>
             <span>Loading tasks...</span>
         }
         @else {
-            <div class="filters">
-                <form [formGroup]="filterForm" (ngSubmit)="onApplyFilter()">
-                    <mat-form-field>
-                        <mat-label>Assignee</mat-label>
-                        <mat-select formControlName="assigneeId">
-                            <mat-option [value]="null">—</mat-option>
-                            @for (user of projectUsers(); track user.id) {
-                                <mat-option [value]="user.id">{{ user.username }}</mat-option>
-                            }
-                        </mat-select>
-                    </mat-form-field>
-                    <mat-chip-listbox formControlName="status">
-                        @for (option of statusOptions; track option.status) {
-                            <mat-chip-option [value]="option.status" [ngClass]="option.class">{{ option.statusView }}</mat-chip-option>
-                        }
-                    </mat-chip-listbox>
-                    <mat-chip-listbox formControlName="priority">
-                        @for (option of priorityOptions; track option.priority) {
-                            <mat-chip-option [value]="option.priority" [ngClass]="option.class">{{ option.priorityView }}</mat-chip-option>
-                        }
-                    </mat-chip-listbox>
-                    <mat-form-field>
-                        <mat-label>Dates</mat-label>
-                        <mat-date-range-input [rangePicker]="picker">
-                            <input matStartDate mat-input formControlName="dueDateFrom">
-                            <input matEndDate mat-input formControlName="dueDateTo">
-                        </mat-date-range-input>
-                        <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                        <mat-date-range-picker #picker></mat-date-range-picker>
-                    </mat-form-field>
-                    <mat-chip-listbox multiple formControlName="labelIds">
-                        @for (label of projectLabels(); track label.id) {
-                            <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
-                        }
-                    </mat-chip-listbox>
-                    <button matButton="elevated" type="submit">
-                        <mat-icon fontSet="material-symbols-outlined">filter_alt</mat-icon>
-                        Apply filters
-                    </button>
-                    <button matButton="outlined" type="button" (click)="onClearFilters()">
-                        <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
-                        Clear filters
-                    </button>
-                </form>
-            </div>
             <div class="tasks-grid">
                 @for (task of tasks(); track task.id) {
                     <mat-card class="task-tile" (click)="onOpenTask(task)">
                         <mat-card-header>
                             <mat-card-title>{{ task.name }}</mat-card-title>
-                            <mat-card-subtitle>{{ task.assigneeUsername }}</mat-card-subtitle>
+                            <mat-card-subtitle>Assignee: {{ task.assigneeUsername }}</mat-card-subtitle>
                         </mat-card-header>
-
+                        <mat-divider></mat-divider>
                         <mat-card-content>
                             <p class="task-description">{{ task.description ?? 'No description' }}</p>
 
-                            <mat-chip-set>
-                                <mat-chip [ngClass]="parseEnumColor(task.status)">
-                                    {{ parseEnumText(task.status) }}
-                                </mat-chip>
+                            <div class="task-card-priority">
+                                Priority:
                                 <mat-chip [ngClass]="parseEnumColor(task.priority)">
                                     {{ parseEnumText(task.priority) }}
                                 </mat-chip>
-                            </mat-chip-set>
-                        </mat-card-content>
-                            
-                        <mat-card-footer>
-                            <span>{{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}</span>
-                        </mat-card-footer>
+                            </div>
+                            <div class="task-card-date">
+                                {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
+                                <mat-chip [ngClass]="parseEnumColor(task.status)">
+                                    {{ parseEnumText(task.status) }}
+                                </mat-chip>
+                            </div>
+                        </mat-card-content>               
                     </mat-card>
                 }
             </div>
-            <mat-paginator [length]="totalTasks()" [pageIndex]="taskPageIndex()" [pageSize]="taskPageSize()" [pageSizeOptions]="[6, 12, 24]" (page)="onTaskPage($event)"></mat-paginator>
         }
+        <mat-paginator [length]="totalTasks()" [pageIndex]="taskPageIndex()" [pageSize]="taskPageSize()" [pageSizeOptions]="[6, 12, 24]" (page)="onTaskPage($event)"></mat-paginator>
     </mat-card-content>
 </mat-card>
