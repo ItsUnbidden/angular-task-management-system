@@ -8,7 +8,7 @@ import { catchError, finalize, Observable, of, shareReplay, tap } from 'rxjs';
   providedIn: 'root',
 })
 export class UserService {
-  private user = signal<UserResponse | null | undefined>(undefined);
+  user = signal<UserResponse | null | undefined>(undefined);
   private inFlight$?: Observable<UserResponse | null>;
 
   constructor(private http: HttpClient) {}
@@ -46,7 +46,7 @@ export class UserService {
     this.user.set(user);
   }
 
-  setLoggedOut() {
+  clearUser() {
     this.user.set(null);
   }
 

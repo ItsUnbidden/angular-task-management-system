@@ -1,71 +1,73 @@
 <mat-card appearance="outlined" class="overview-card">
     @if (isTaskLoading()) {
-        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+        <mat-spinner diameter="30"></mat-spinner>
         <span>Loading task...</span>
     }
     @else {
-        <mat-card-header>
-            <button mat-stroked-button [routerLink]="['../../']" [relativeTo]="route">
-                <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
-            </button>
-            @if (isEditingName()) {
-                <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitTaskName()">
-                    <mat-form-field>
-                        <mat-label>New task name</mat-label>
-                        <input matInput type="text" formControlName="taskName">
+        <div class="header-container">
+            <div>
+                <button mat-icon-button [routerLink]="['../../']" [relativeTo]="route">
+                    <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
+                </button>
+                @if (isEditingName()) {
+                    <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitTaskName()">
+                        <mat-form-field>
+                            <mat-label>New task name</mat-label>
+                            <input matInput type="text" formControlName="taskName">
+                        </mat-form-field>
+                        <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid">
+                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="onCloseEditing()">
+                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                    </form>
+                }
+                @else {
+                    <mat-card-title>{{ task()?.name }}</mat-card-title>                                      
+                }
+            </div>
+            @if (isAdmin() && !isEditingName()) {
+                <button mat-icon-button (click)="onTaskNameEdit()">
+                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                </button>
+            }         
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <mat-card-content class="task-content-container">
+            @if (isEditingDescription()) {
+                <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
+                    <mat-form-field class="description-input" appearance="outline">
+                        <mat-label>New task description</mat-label>
+                        <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
                     </mat-form-field>
-                    <button mat-icon-button type="submit" [disabled]="!nameEditForm.valid">
-                        <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-                    </button>
-                    <button mat-icon-button type="button" (click)="onCloseEditing()">
-                        <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-                    </button>
+                    <div class="actions">
+                        <button mat-icon-button type="submit" [disabled]="descriptionEditForm.invalid">
+                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                        </button>
+                        <button mat-icon-button type="button" (click)="onCloseEditing()">
+                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                        </button>
+                    </div>
                 </form>
             }
             @else {
                 <div class="row">
-                    <h2>
-                        {{ task()?.name }}                       
-                    </h2>
-                    <button mat-icon-button (click)="onTaskNameEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>
-                </div>          
-            }
-        </mat-card-header>
-
-        <mat-divider></mat-divider>
-
-        <mat-card-content>
-            <div class="description-row">
-                @if (isEditingDescription()) {
-                    <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
-                        <mat-form-field class="description-input" appearance="outline">
-                            <mat-label>New task description</mat-label>
-                            <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
-                        </mat-form-field>
-                        <div class="actions">
-                            <button mat-icon-button type="submit" [disabled]="!descriptionEditForm.valid">
-                                <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-                            </button>
-                            <button mat-icon-button type="button" (click)="onCloseEditing()">
-                                <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-                            </button>
-                        </div>
-                    </form>
-                }
-                @else {
                     @if (task()?.description) {
                         <p class="description-field">{{ task()?.description ?? "" }}</p>
                     } 
                     @else {
-                        <p class="description-field">No description</p>
+                        <p class="description-none">No description</p>
                     }
-                    <button mat-icon-button (click)="onTaskDescriptionEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>                        
-                }
-            </div>
+                    @if (isAdmin()) {
+                        <button mat-icon-button (click)="onTaskDescriptionEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>                        
+                    }
+                </div>
+            }
             @if (isEditingDate()) {
                 <form [formGroup]="dateEditForm" (ngSubmit)="onSubmitTaskDueDate()">
                     <mat-form-field appearance="outline">
@@ -76,7 +78,7 @@
                         <mat-datepicker #picker></mat-datepicker>
                     </mat-form-field>
                     
-                    <button mat-icon-button type="submit" [disabled]="!dateEditForm.valid">
+                    <button mat-icon-button type="submit" [disabled]="dateEditForm.invalid">
                         <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                     </button>
                     <button mat-icon-button type="button" (click)="onCloseEditing()">
@@ -87,45 +89,81 @@
             @else {
                 <div class="row">
                     <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
-                    <button mat-icon-button (click)="onTaskDueDateEdit()">
-                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    </button>
-                </div>
-            }
-            @if (isEditingChips()) {
-                <form [formGroup]="priorityEditForm" (ngSubmit)="onSubmitTaskPriority()">
-                    <div class="row">
-                        <mat-form-field appearance="outline">
-                            <mat-label>New priority</mat-label>
-                            <mat-select formControlName="taskPriority">
-                                @for (option of priorityOptions; track option) {
-                                    <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
-                                }
-                            </mat-select>
-                        </mat-form-field>
-                        <button mat-icon-button type="submit" [disabled]="!priorityEditForm.valid">
-                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-                        </button>
-                        <button mat-icon-button type="button" (click)="onCloseEditing()">
-                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-                        </button>
-                    </div>
-                </form>
-            }
-            @else {
-                <mat-chip-set>
-                    <mat-chip [ngClass]="parseEnumColor(task()?.priority ?? null)">
-                        {{ parseEnumText(task()?.priority ?? null) }}
-                    </mat-chip>
                     <mat-chip [ngClass]="parseEnumColor(task()?.status ?? null)">
                         {{ parseEnumText(task()?.status ?? null) }}
                     </mat-chip>
-                </mat-chip-set>
-                <button mat-icon-button (click)="onTaskChipsEdit()">
-                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                </button>
+                    @if (isAdmin()) {
+                        <button mat-icon-button (click)="onTaskDueDateEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    }
+                </div>
             }
-            <div>
+            @if (isEditingChips()) {
+                <form [formGroup]="chipsEditForm" (ngSubmit)="onSubmitTaskChips()">
+                    <div class="row">
+                        <div>
+                            <mat-form-field appearance="outline">
+                                <mat-label>New priority</mat-label>
+                                <mat-select formControlName="taskPriority">
+                                    @for (option of priorityOptions; track option) {
+                                        <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+
+                            <mat-chip-listbox multiple formControlName="labels">
+                                @for (label of projectLabels(); track label.id) {
+                                    <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">                                        
+                                        {{ label.name }}                                                                          
+                                    </mat-chip-option>
+                                }
+                            </mat-chip-listbox>
+                        </div>
+                        <div class="task-chips-actions-container">
+                            <button matButton="elevated" type="button" (click)="onAddNewLabel()">
+                                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                                Add a new label
+                            </button>
+                            <button matButton="elevated" type="button" (click)="onOpenLabelManagement()">
+                                <mat-icon fontSet="material-symbols-outlined">edit_attributes</mat-icon>
+                                Label management
+                            </button>
+                            <div>
+                                <button mat-icon-button type="submit" [disabled]="chipsEditForm.invalid">
+                                    <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                                </button>
+                                <button mat-icon-button type="button" (click)="onCloseEditing()">
+                                    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                                </button>
+                            </div>
+                        </div>
+                    </div>                   
+                </form>
+            }
+            @else {
+                <div class="row">
+                    <mat-chip-set>
+                        <mat-chip [ngClass]="parseEnumColor(task()?.priority ?? null)">
+                            {{ parseEnumText(task()?.priority ?? null) }}
+                        </mat-chip>
+                        @for (label of labels(); track label.id) {
+                            <mat-chip class="label-chip" [attr.data-color]="label.color">
+                                {{ label.name }}
+                            </mat-chip>
+                        }
+                    </mat-chip-set>
+                    @if (isAdmin()) {
+                        <button mat-icon-button (click)="onTaskChipsEdit()">
+                            <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                        </button>
+                    }
+                </div>
+            }
+        </mat-card-content>
+
+        <mat-card-actions class="task-actions-container">
+            @if (task()?.assigneeId === currentUser()?.id) {
                 @if (task()?.status === 'IN_PROGRESS') {
                     <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
                     <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
@@ -138,8 +176,34 @@
                 }
                 @else {
                     <button matButton="outlined" (click)="onStatusChange('IN_PROGRESS')">Mark as in progress</button>
-                }                    
-            </div>
-        </mat-card-content>
+                }                  
+            }  
+        </mat-card-actions>
     }
+    <mat-card-content>
+        @if (isDropboxConnected()) {
+            @if (project()?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
+                <app-attachment-list></app-attachment-list>
+            }
+            @else if (!project()?.isDropboxConnected) {
+                @if (isCreator()) {
+                    <p>Connect the project to Dropbox to access attachments.</p>
+                }
+                @else {
+                    <p>The creator of this project hasn't connected it to Dropbox yet.</p>
+                }
+            }
+            @else if (!currentProjectRole()?.isDropboxConnected) {
+                <p>This project is connected to Dropbox, but you haven't joined yet.</p>
+                <button matButton="elevated" (click)="onJoinDropbox()">
+                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                    Join Dropbox
+                </button>
+            }
+        }
+        @else {
+            <p>You need to log into Dropbox in order to use attachments.</p>
+        }
+        <app-message-list></app-message-list>
+    </mat-card-content>
 </mat-card>

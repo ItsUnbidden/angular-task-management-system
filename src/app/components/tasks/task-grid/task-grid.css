@@ -1,17 +1,29 @@
 .tasks-card {
-    width: 800px;
-    margin-top: 35px;
+  width: 800px;
+  margin-top: 35px;
+  margin-bottom: 50px;
 }
 
-.task-grid {
+.tasks-grid {
   display: grid;
-  gap: 12px;
-  grid-template-columns: auto auto auto;
-  margin-bottom: 12px;
+  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-top: 15px;
 }
 
 .task-tile {
   cursor: pointer;
+}
+
+.task-tile mat-card-header {
+  margin-bottom: 10px;
+}
+
+.task-tile mat-card-content {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+  gap: 10px
 }
 
 .task-description {
@@ -21,4 +33,41 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
+}
+
+.main-card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.main-card-header button {
+  margin-top: -10px;
+}
+
+.filters-card {
+  margin-top: 15px;
+}
+
+.filters-card mat-card-actions {
+  display: flex;
+  justify-content: right;
+  margin-right: 10px;
+}
+
+.filters-internal-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.task-card-date {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.task-card-priority {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }

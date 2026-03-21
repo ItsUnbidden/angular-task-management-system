@@ -64,14 +64,13 @@ export class Auth {
         next: () => {
             console.log('Logged in, token stored.');
             this.router.navigateByUrl(this.returnUrl);
+            this.isSubmitEnabled.set(true);
         },
         error: (error) => {
             console.error('Login failed:', error);
             this.errorMessage.set(error.error?.message || error.statusText || 'Unknown error');
-        },
-        complete: () => {
             this.isSubmitEnabled.set(true);
-        }
+        }      
     };
 
     onLoginSubmit() {

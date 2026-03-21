@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TaskPriority, TaskResponse, TaskStatus, TaskUpdateRequest } from '../../models';
+import { GeneralApiError, LabelResponse, TaskPriority, TaskStatus, TaskUpdateRequest } from '../../models';
 import { TaskService } from '../../service/task.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { map } from 'rxjs';
@@ -17,6 +17,18 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
+import { UserService } from '../../service/user.service';
+import { ProjectService } from '../../service/project.service';
+import { LabelService } from '../../service/label.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import { NewLabelDialog } from '../label/new-label-dialog/new-label-dialog';
+import { LabelManagementDialog } from '../label/label-management-dialog/label-management-dialog';
+import { MessageList } from "../messages/message-list/message-list";
+import { AttachmentList } from "../attachments/attachment-list/attachment-list";
+import { OAuth2Service } from '../../service/oauth2.service';
+import { toLocalDateString } from '../../utils';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -29,22 +41,39 @@ interface TaskPriorityOption {
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule ],
+    MatChipsModule, MatSelectModule, MessageList, AttachmentList],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })
 export class Task {
-  route: ActivatedRoute = inject(ActivatedRoute);
+  private projectService = inject(ProjectService);
+  private taskService = inject(TaskService);
+  private userService = inject(UserService);
+  private labelService = inject(LabelService);
+  private oauth2Service = inject(OAuth2Service);
 
-  taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
+  route = inject(ActivatedRoute);
 
-  task = signal<TaskResponse | null>(null);
-  isTaskLoading = signal(false);
+  readonly taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
 
-  isEditingName = signal(false);
-  isEditingDescription = signal(false);
-  isEditingDate = signal(false);
-  isEditingChips = signal(false);
+  readonly project = this.projectService.project;
+  readonly task = this.taskService.selectedTask;
+  readonly labels = signal<LabelResponse[]>([]);
+  readonly projectLabels = signal<LabelResponse[]>([]);
+  readonly currentUser = this.userService.user;
+  readonly currentProjectRole = this.projectService.currentProjectRole;
+  readonly isTaskLoading = this.taskService.isLoadingSelectedTask;
+  readonly isLoadingLabels = signal(false);
+  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
+
+  readonly isEditingName = signal(false);
+  readonly isEditingDescription = signal(false);
+  readonly isEditingDate = signal(false);
+  readonly isEditingChips = signal(false);
+
+  readonly isCreator = this.projectService.isCreator;
+  readonly isAdmin = this.projectService.isAdmin;
+  readonly isContributor = this.projectService.isContributor;
 
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
@@ -54,44 +83,53 @@ export class Task {
         Validators.maxLength(50)
       ]
     })
-  })
+  });
 
   descriptionEditForm = new FormGroup({
     taskDescription: new FormControl('', {
       validators: [
         Validators.maxLength(500)
       ]})
-  })
+  });
 
   dateEditForm = new FormGroup({
     taskDueDate: new FormControl<Date | null>(null)
-  })
+  });
 
-  priorityEditForm = new FormGroup({
+  chipsEditForm = new FormGroup({
     taskPriority: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required
       ]
-    })
-  })
+    }),
+    labels: new FormControl<number[]>([], { nonNullable: true })
+  });
 
   priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low' },
     { priority: 'MEDIUM', priorityView: 'Medium' },
-    { priority: 'HIGH', priorityView: 'High' },
-  ]
+    { priority: 'HIGH', priorityView: 'High' }
+  ];
 
-  constructor(private taskService: TaskService) {
+  constructor(private snackBar: MatSnackBar, private dialog: MatDialog) {
     effect(() => {
-      this.taskService.cacheSelectedTask(this.taskId());
+      const taskId = this.taskId();
+
+      this.taskService.cacheSelectedTask(taskId);
     });
 
     effect(() => {
       const task = this.task();
 
       if (task) {
+        this.loadLabelsForTask(task.id);
+
         untracked(() => {
+          if (this.projectService.project()?.id !== task.projectId) {
+            this.projectService.loadProjectToCache(task.projectId);
+          }
+
           if (!this.nameEditForm.dirty) {
             this.nameEditForm.patchValue({
               taskName: task.name
@@ -107,17 +145,21 @@ export class Task {
               taskDueDate: new Date(task.dueDate ?? '')
             })
           }
-          if (!this.priorityEditForm.dirty) {
-            this.priorityEditForm.patchValue({
-              taskPriority: task.priority,
-            })
-          }
+          this.chipsEditForm.patchValue({
+            taskPriority: task.priority,
+            labels: task.labelIds
+          })
         })
       }
-    })
+    });
 
-    this.task = this.taskService.selectedTask;
-    this.isTaskLoading = this.taskService.isLoadingSelectedTask;
+    effect(() => {
+      const project = this.project();
+
+      if (project) {
+        this.loadLabelsForProject(project.id);
+      }
+    })
   };
 
   onSubmitTaskName() {
@@ -166,7 +208,7 @@ export class Task {
 
   onSubmitTaskDueDate() {
     const task = this.task();
-    const newDueDate = this.toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
+    const newDueDate = toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
 
     if (task && newDueDate !== task.dueDate) {
       const request = this.makeTaskUpdateRequest();
@@ -186,15 +228,15 @@ export class Task {
     this.isEditingDescription.set(false);
   }
 
-  onSubmitTaskPriority() {
-    const task = this.task();
-    const newPriority = this.priorityEditForm.value.taskPriority;
+  onSubmitTaskChips() {
+    const newPriority = this.chipsEditForm.value.taskPriority;
 
     if (newPriority) {
       const request = this.makeTaskUpdateRequest();
 
       if (request) {
         request.priority = newPriority as TaskPriority;
+        request.labelIds = this.chipsEditForm.value.labels ?? [];
         this.taskService.updateCachedTask(request);
       }
     }
@@ -217,6 +259,64 @@ export class Task {
       
       this.taskService.updateCachedTask(request);
     }
+  }
+
+  onAddNewLabel() {
+    const project = this.project();
+    const task = this.task();
+
+    if (project && task) {
+      this.dialog.open(NewLabelDialog, {
+        data: {
+          projectId: project.id,
+          taskId: task.id
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(confirmed => {
+        if (confirmed) {
+          const taskId = this.taskId();
+          const project = this.project();
+  
+          if (taskId) {
+            this.taskService.cacheSelectedTask(taskId);
+          }
+          if (project) {
+            this.loadLabelsForProject(project.id);
+          }
+        }
+      })
+    }
+  }
+
+  onOpenLabelManagement() {
+    const project = this.project();
+
+    if (project) {
+      this.dialog.open(LabelManagementDialog, {
+        data: {
+          projectId: project.id,
+          taskId: this.taskId() ?? 0
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe({
+        next: hasChangedLabels => {
+          if (hasChangedLabels) {
+            this.loadLabelsForProject(project.id);
+            this.loadLabelsForTask(this.taskId());
+          }
+        }
+      })
+    }
+  }
+
+  onJoinDropbox() {
+    
   }
 
   onCloseEditing() {
@@ -263,17 +363,43 @@ export class Task {
             description: task.description,
             dueDate: task.dueDate,
             priority: task.priority,
-            newAssigneeId: task.assigneeId };
+            newAssigneeId: task.assigneeId, 
+            labelIds: task.labelIds };
   }
-  
-  private toLocalDateString(date: Date | null): string | undefined {
-    if (!date) {
-      return undefined;
-    }
 
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+  private loadLabelsForTask(taskId: number) {
+    this.isLoadingLabels.set(true);
+    this.labelService.getLabelsForTask(taskId).subscribe({
+      next: labels => {
+        this.labels.set(labels);
+        this.isLoadingLabels.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading labels.', 'Dismiss', {
+          duration: 5000
+        })
+        this.isLoadingLabels.set(false);
+      }
+    });
+  }
+
+  private loadLabelsForProject(projectId: number) {
+    this.isLoadingLabels.set(true);
+    this.labelService.getLabelsForProject(projectId).subscribe({
+      next: labels => {
+        this.projectLabels.set(labels);
+        this.isLoadingLabels.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
+          duration: 5000
+        })
+        this.isLoadingLabels.set(false);
+      }
+    })
   }
 }

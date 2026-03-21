@@ -82,3 +82,32 @@ body {
     label-text-color: #c62828,
   ))
 }
+
+.label-chip[data-color="blue"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #1e88e5,
+    elevated-selected-container-color: #1e88e5,
+    
+  ))
+}
+
+.label-chip[data-color="green"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #47ad17,
+    elevated-selected-container-color: #47ad17,
+  ))
+}
+
+.label-chip[data-color="red"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #e51e1e,
+    elevated-selected-container-color: #e51e1e,
+  ))
+}
+
+.label-chip[data-color="yellow"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #e5c11e,
+    elevated-selected-container-color: #e5c11e,
+  ))
+}

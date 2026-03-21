@@ -1,0 +1,82 @@
+.main-container {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+.replies-container {
+    --indent-size: 20px;
+    --line-color: rgba(0, 0, 0, 0.12);
+    
+    display: flex;
+    flex-direction: column;
+    margin-top: 10px;
+}
+
+.reply-row-container {
+    display: flex;
+}
+
+.reply {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 10px 5px 10px;
+    width: 100%;
+}
+
+.reply-gutter {
+    position: relative;
+    width: calc(var(--depth) * var(--indent-size));
+    flex: 0 0 auto;
+
+    background-image: repeating-linear-gradient(
+        to right,
+        transparent 0,
+        transparent calc(var(--indent-size) - 2px),
+        var(--line-color) calc(var(--indent-size) - 2px),
+        var(--line-color) var(--indent-size)
+    );
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+}
+
+.large-field {
+    height: 120px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.new-comment-field textarea[matInput] {
+    height: 80px;
+    resize: none;
+    overflow: auto;
+}
+
+.card-title {
+    margin-bottom: 10px;
+}
+
+.new-comment-actions-container {
+    display: flex;
+    justify-content: right;
+    margin-right: 10px;
+}
+
+.message-actions-container {
+    display: flex;
+    justify-content: right;
+    gap: 12px;
+    margin: 0 10px 10px 0;
+}
+
+.reply-header {
+    font-size: 18px;
+    font-weight: 400;
+    margin-bottom: 6px;
+}
+
+.new-reply {
+    display: flex;
+    flex-direction: column;
+    margin: 0 10px 0 10px;
+}

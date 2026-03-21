@@ -1,0 +1,192 @@
+<div class="main-container">
+    <mat-card>
+        <mat-card-header>
+            <mat-card-title class="card-title">{{ task()?.amountOfMessages }} Messages</mat-card-title>
+        </mat-card-header>
+        <mat-divider></mat-divider>
+        <mat-card-content>
+            <form [formGroup]="newCommentForm">
+                <mat-form-field class="large-field">
+                    <textarea matInput type="text" formControlName="comment" placeholder="Here goes your comment..."></textarea>
+                </mat-form-field>
+            </form>
+        </mat-card-content>
+        <mat-card-actions class="new-comment-actions-container">
+            <button matButton="elevated" type="button" (click)="onNewCommentSubmit()" [disabled]="newCommentForm.invalid || isLoadingComments()">Comment</button>
+        </mat-card-actions>
+    </mat-card>
+    
+    @if (isLoadingComments()) {
+        <mat-spinner></mat-spinner>
+        <span>Loading comments...</span>
+    }
+    @else {
+        <mat-list>
+            @for (comment of comments(); track comment.id) {
+                <mat-card>
+                    <mat-card-header>
+                        <mat-card-title class="card-title">{{ comment.username }}</mat-card-title>
+                    </mat-card-header>
+
+                    <mat-divider></mat-divider>
+                    @if (isEditing(comment.id)) {
+                        <mat-card-content>
+                            <form [formGroup]="editMessageForm">
+                                <mat-form-field class="large-field">
+                                    <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                </mat-form-field>
+                            </form>
+                        </mat-card-content>
+
+                        <mat-card-actions class="message-actions-container">
+                            <button matButton="elevated" type="button" (click)="onEditMessageSubmit(comment, null)" [disabled]="editMessageForm.invalid">Edit</button>
+                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">Cancel</button>
+                        </mat-card-actions>
+                    }
+                    @else {
+                        <mat-card-content>
+                            <p>{{ comment.text }}</p>
+                        </mat-card-content>
+
+                        <mat-card-actions class="message-actions-container">
+                            @if (user()?.id === comment.userId) {
+                                <button matButton="elevated" (click)="onEditMessage(comment)">
+                                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                    Edit
+                                </button>
+                                <button matButton="outlined" (click)="onDeleteMessage(comment)">
+                                    <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                                    Delete
+                                </button>
+                            }
+                            @if (comment.amountOfReplies > 0 && !isCommentExpanded(comment.id)) {
+                                <button matButton="elevated" (click)="onOpenCommentReplies(comment)">
+                                    <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
+                                    Show replies ({{ comment.amountOfReplies }})
+                                </button>
+                            } 
+                            @else if (user()?.id !== comment.userId && !isReplying(comment.id)) {
+                                <button matButton="elevated" type="button" (click)="onReply(comment)">
+                                    <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
+                                    Reply
+                                </button>
+                            }
+                        </mat-card-actions>
+                        <mat-divider></mat-divider>
+                        @if (isReplying(comment.id) && user()?.id !== comment.userId) {                               
+                            <div class="new-reply">
+                                <form [formGroup]="newReplyForm">
+                                    <mat-form-field class="large-field">
+                                        <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                    </mat-form-field>
+                                </form>
+                                <div class="message-actions-container">
+                                    <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(comment, null)">Reply</button>
+                                    <button matButton="outlined" type="button" (click)="disableReplying()">Cancel</button>
+                                </div>
+                            </div>
+                        }
+
+                        @if (isCommentExpanded(comment.id)) {
+                            @if (isLoadingRepliesForComment(comment.id)) {
+                                <mat-spinner></mat-spinner>
+                                <span>Loading replies...</span>
+                            }
+                            @else {
+                                <div class="replies-container">                                      
+                                    @for (flattenedReply of getRepliesForComment(comment.id)?.replies; track flattenedReply.reply.id) {        
+                                        <div class="reply-row-container">
+                                            <div class="reply-gutter" [style.--depth]="clampDepth(flattenedReply.depth)"></div>
+                                            <div class="reply">
+                                                <div class="reply-header">{{ flattenedReply.reply.username }}</div>
+                                                @if (isEditing(flattenedReply.reply.id)) {
+                                                    <form [formGroup]="editMessageForm" (ngSubmit)="onEditMessageSubmit(flattenedReply.reply, comment)">
+                                                        <mat-form-field class="large-field">
+                                                            <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                                        </mat-form-field>
+                                                        <div class="message-actions-container">
+                                                            <button matButton="elevated" type="submit" [disabled]="editMessageForm.invalid">Edit</button>
+                                                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">Cancel</button>
+                                                        </div>
+                                                    </form>
+                                                }
+                                                @else {
+                                                    <div class="reply-body">{{ flattenedReply.reply.text }}</div>
+                                                }
+                                                @if (isReplying(flattenedReply.reply.id)) {
+                                                    <div class="new-reply">
+                                                        <form [formGroup]="newReplyForm">
+                                                            <mat-form-field class="large-field">
+                                                                <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                                            </mat-form-field>
+                                                        </form>
+                                                        <div class="message-actions-container">
+                                                            <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(flattenedReply.reply, comment)">Reply</button>
+                                                            <button matButton="outlined" type="button" (click)="disableReplying()">Cancel</button>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                <div class="message-actions-container">
+                                                    @if (!isEditing(flattenedReply.reply.id)) {
+                                                        @if (user()?.id === flattenedReply.reply.userId) {
+                                                            <button matButton="elevated" (click)="onEditMessage(flattenedReply.reply)">
+                                                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                                                Edit
+                                                            </button>
+                                                            <button matButton="elevated" (click)="onDeleteMessage(flattenedReply.reply)">
+                                                                <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                                                                Delete
+                                                            </button>
+                                                        }     
+                                                        @else {
+                                                            @if (!isReplying(flattenedReply.reply.id)) {
+                                                                <button matButton="elevated" (click)="onReply(flattenedReply.reply)">
+                                                                    <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
+                                                                    Reply
+                                                                </button>                                                                                                                                               
+                                                            }
+                                                        }                                                                                                      
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>                                   
+                                    }
+                                </div>
+                            }
+                            <mat-card-actions class="message-actions-container">
+                                @if (isLastRepliesPage(comment.id)) {
+                                    <button matButton="outlined" (click)="onHideReplies(comment.id)">
+                                        Hide replies
+                                        <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
+                                    </button>
+                                }
+                                @else {
+                                    <button matButton="elevated" (click)="onMoreReplies(comment.id)">
+                                        <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
+                                        See more replies
+                                    </button>
+                                }
+                            </mat-card-actions>
+                        }
+                    }                       
+                </mat-card>
+            }
+        </mat-list>
+    }
+    <div class="message-actions-container">
+        @if (isLastCommentsPage()) {
+            @if (currentCommentsPage !== 0) {
+                <button matButton="outlined" (click)="onHideComments()">
+                    Hide comments
+                    <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
+                </button>
+            }
+        }
+        @else {
+            <button matButton="elevated" (click)="onMoreComments()">
+                <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
+                See more comments
+            </button>
+        }
+    </div>
+</div>

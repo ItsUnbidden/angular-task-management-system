@@ -1,9 +1,9 @@
-main {
+.main-container {
     display: flex;
     flex-direction: column;
     justify-content: baseline;
     align-items: center;
-    margin-top: 200px;
+    margin-top: 120px;
     height: 100vh;
 }
 
@@ -15,7 +15,8 @@ main {
 
 .row {
     display: flex;
-    align-items: baseline;
+    justify-content: space-between;
+    align-items: center;
     gap: 8px;
 }
 
@@ -23,13 +24,7 @@ main {
     margin-bottom: 10px;
 }
 
-.description-row {
-    width: 100%;
-}
-
 .description-input {
-    flex: 1;
-    min-width: 0;
     width: 100%;
 }
 
@@ -39,17 +34,45 @@ main {
     overflow: auto;
 }
 
-.descritpion-edit {
+.description-edit {
     display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    width: 100%;
-    flex: 1;
-    min-width: 0;
+    flex-direction: column;
 }
 
 .actions {
     display: flex;
     gap: 10px;
-    flex: 0 0 auto;
+}
+
+.project-actions-container {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 10px 0 10px;
+}
+
+.project-buttons-container {
+    display: flex;
+    gap: 12px;
+}
+
+.project-dates-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+.edit-input-form {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    margin-top: 10px;
+}
+
+mat-accordion {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+mat-accordion .mat-expansion-panel-header-description {
+  justify-content: space-between;
+  align-items: center;
 }

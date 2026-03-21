@@ -31,11 +31,17 @@
                     }
                 </mat-select>
             </mat-form-field>
+            @if (isSendingRequest()) {
+                <mat-spinner>Please wait...</mat-spinner>
+            }
+            @else {
+                <mat-error>{{ error() }}</mat-error>
+            }
         </form>
     </div>
 
     <div mat-dialog-actions align="end">
-        <button mat-button (click)="close()">Cancel</button>
-        <button mat-flat-button (click)="submit()" [disabled]="taskControl.invalid">Create task</button>
+        <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
+        <button mat-flat-button (click)="submit()" [disabled]="taskControl.invalid || isSendingRequest()">Create task</button>
     </div>
 </main>

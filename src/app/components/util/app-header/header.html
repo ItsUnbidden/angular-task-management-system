@@ -1,0 +1,47 @@
+<div class="main-container">
+    <p>Logo here</p>
+    <div class="right-side-container">
+        @if (isLoggedIn()) {
+            @if (isCheckingDropbox()) {
+                <mat-spinner></mat-spinner>
+                <span>Checking Dropbox status...</span>
+            }
+            @else {
+                @if (isDropboxConnected()) {
+                    <button matButton="elevated" (click)="onLogoutDropbox()">
+                        <mat-icon svgIcon="dropbox"></mat-icon>
+                        Logout
+                    </button>
+                }
+                @else {
+                    <button matButton="elevated" (click)="onConnectDropbox()">
+                        <mat-icon svgIcon="dropbox"></mat-icon>
+                        Connect Dropbox
+                    </button>
+                }
+            }
+            @if (isCheckingGoogleCalendar()) {
+                <mat-spinner></mat-spinner>
+                <span>Checking Calendar status...</span>
+            }
+            @else {
+                @if (isGoogleCalendarConnected()) {
+                    <button matButton="elevated" (click)="onLogoutCalendar()">
+                        <mat-icon svgIcon="google-calendar"></mat-icon>
+                        Logout
+                    </button>
+                }
+                @else {
+                    <button matButton="elevated" (click)="onConnectCalendar()">
+                        <mat-icon svgIcon="google-calendar"></mat-icon>
+                        Connect Calendar
+                    </button>
+                }
+            }
+            <button matButton="elevated" (click)="onLogout()">
+                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                Logout
+            </button>
+        }
+    </div>
+</div>

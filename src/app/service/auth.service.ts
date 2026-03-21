@@ -24,7 +24,11 @@ export class AuthService {
   }
 
   logout() : Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/api/auth/logout`, {});
+    return this.http.delete<void>(`${environment.apiUrl}/api/auth/logout`).pipe(tap({
+      next: () => {
+        this.userService.clearUser();
+      }
+    }));
   }
 
   refreshToken(): Observable<void> {

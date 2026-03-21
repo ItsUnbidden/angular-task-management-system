@@ -43,7 +43,7 @@ export class AuthInterceptor implements HttpInterceptor {
         }),
         catchError(err => {
           this.isRefreshDone.next(false);
-          this.userService.setLoggedOut();
+          this.userService.clearUser();
           return throwError(() => err);
         }),
         finalize(() => {
