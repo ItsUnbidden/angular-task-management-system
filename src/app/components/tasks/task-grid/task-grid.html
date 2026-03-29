@@ -61,37 +61,57 @@
             </mat-card-actions>
         </mat-card>
         @if (isLoadingTasks()) {
-            <mat-spinner diameter="30"></mat-spinner>
-            <span>Loading tasks...</span>
+            <div class="task-spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Loading tasks...</span>
+            </div>
         }
         @else {
-            <div class="tasks-grid">
-                @for (task of tasks(); track task.id) {
-                    <mat-card class="task-tile" (click)="onOpenTask(task)">
-                        <mat-card-header>
-                            <mat-card-title>{{ task.name }}</mat-card-title>
-                            <mat-card-subtitle>Assignee: {{ task.assigneeUsername }}</mat-card-subtitle>
-                        </mat-card-header>
-                        <mat-divider></mat-divider>
-                        <mat-card-content>
-                            <p class="task-description">{{ task.description ?? 'No description' }}</p>
+            @if (tasksLoadingError()) {
+                <mat-card-header>
+                    <mat-card-title class="error-card-title">Error</mat-card-title>
+                </mat-card-header>
 
-                            <div class="task-card-priority">
-                                Priority:
-                                <mat-chip [ngClass]="parseEnumColor(task.priority)">
-                                    {{ parseEnumText(task.priority) }}
-                                </mat-chip>
-                            </div>
-                            <div class="task-card-date">
-                                {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
-                                <mat-chip [ngClass]="parseEnumColor(task.status)">
-                                    {{ parseEnumText(task.status) }}
-                                </mat-chip>
-                            </div>
-                        </mat-card-content>               
-                    </mat-card>
-                }
-            </div>
+                <mat-card-content>
+                    <p>{{ tasksLoadingError() }}</p>
+                </mat-card-content>
+
+                <mat-card-actions class="error-actions-container">
+                    <button matButton="elevated" (click)="onTryAgain()">
+                        <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
+                        Reload
+                    </button>
+                </mat-card-actions>
+            }
+            @else {
+                <div class="tasks-grid">
+                    @for (task of tasks(); track task.id) {
+                        <mat-card class="task-tile" (click)="onOpenTask(task)">
+                            <mat-card-header>
+                                <mat-card-title>{{ task.name }}</mat-card-title>
+                                <mat-card-subtitle>Assignee: {{ task.assigneeUsername }}</mat-card-subtitle>
+                            </mat-card-header>
+                            <mat-divider></mat-divider>
+                            <mat-card-content>
+                                <p class="task-description">{{ task.description ?? 'No description' }}</p>
+    
+                                <div class="task-card-priority">
+                                    Priority:
+                                    <mat-chip [ngClass]="parseEnumColor(task.priority)">
+                                        {{ parseEnumText(task.priority) }}
+                                    </mat-chip>
+                                </div>
+                                <div class="task-card-date">
+                                    {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
+                                    <mat-chip [ngClass]="parseEnumColor(task.status)">
+                                        {{ parseEnumText(task.status) }}
+                                    </mat-chip>
+                                </div>
+                            </mat-card-content>               
+                        </mat-card>
+                    }
+                </div>
+            }
         }
         <mat-paginator [length]="totalTasks()" [pageIndex]="taskPageIndex()" [pageSize]="taskPageSize()" [pageSizeOptions]="[6, 12, 24]" (page)="onTaskPage($event)"></mat-paginator>
     </mat-card-content>

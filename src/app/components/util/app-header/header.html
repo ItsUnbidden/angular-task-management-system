@@ -1,10 +1,19 @@
 <div class="main-container">
-    <p>Logo here</p>
+    <div class="left-side-container">
+        <p>Logo here</p>
+        <div class="left-side-actions-container">
+            @if (isLoggedIn() && !isOnDashboard()) {
+                <button matButton="outlined" (click)="onToDashboard()">To dashboard</button>
+            }
+        </div>
+    </div>
     <div class="right-side-container">
         @if (isLoggedIn()) {
             @if (isCheckingDropbox()) {
-                <mat-spinner></mat-spinner>
-                <span>Checking Dropbox status...</span>
+                <div class="spinner-container">
+                    <mat-spinner diameter="30"></mat-spinner>
+                    <span>Checking Dropbox status...</span>
+                </div>
             }
             @else {
                 @if (isDropboxConnected()) {
@@ -21,8 +30,10 @@
                 }
             }
             @if (isCheckingGoogleCalendar()) {
-                <mat-spinner></mat-spinner>
-                <span>Checking Calendar status...</span>
+                <div class="spinner-container">
+                    <mat-spinner diameter="30"></mat-spinner>
+                    <span>Checking Calendar status...</span>
+                </div>
             }
             @else {
                 @if (isGoogleCalendarConnected()) {

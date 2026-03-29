@@ -8,7 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { GeneralApiError, LabelResponse, TaskPriority, TaskStatus, TaskUpdateRequest } from '../../models';
+import { GeneralApiError, LabelResponse, TaskPriority, TaskStatus, TaskUpdateRequest, TaskUpdateStatusRequest } from '../../models';
 import { TaskService } from '../../service/task.service';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { map } from 'rxjs';
@@ -29,6 +29,7 @@ import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
 import { toLocalDateString } from '../../utils';
+import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -65,6 +66,9 @@ export class Task {
   readonly isTaskLoading = this.taskService.isLoadingSelectedTask;
   readonly isLoadingLabels = signal(false);
   readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
+
+  readonly projectLoadingError = this.projectService.error;
+  readonly taskLoadingError = this.taskService.selectedTaskLoadingError;
 
   readonly isEditingName = signal(false);
   readonly isEditingDescription = signal(false);
@@ -116,7 +120,7 @@ export class Task {
     effect(() => {
       const taskId = this.taskId();
 
-      this.taskService.cacheSelectedTask(taskId);
+      this.handleCacheSelectedTask(taskId);
     });
 
     effect(() => {
@@ -127,7 +131,7 @@ export class Task {
 
         untracked(() => {
           if (this.projectService.project()?.id !== task.projectId) {
-            this.projectService.loadProjectToCache(task.projectId);
+            this.projectService.loadProjectToCache(task.projectId).subscribe();
           }
 
           if (!this.nameEditForm.dirty) {
@@ -171,7 +175,7 @@ export class Task {
 
       if (request) {
         request.name = newName;
-        this.taskService.updateCachedTask(request);
+        this.handleUpdateSelectedTask(request);
       }
     }
     this.isEditingName.set(false);
@@ -193,7 +197,7 @@ export class Task {
 
       if (request) {
         request.description = newDescription ?? undefined;
-        this.taskService.updateCachedTask(request);
+        this.handleUpdateSelectedTask(request);
       }
     }
     this.isEditingDescription.set(false);
@@ -215,7 +219,7 @@ export class Task {
 
       if (request) {
         request.dueDate = newDueDate;
-        this.taskService.updateCachedTask(request);
+        this.handleUpdateSelectedTask(request);
       }
     }
     this.isEditingDate.set(false);
@@ -237,7 +241,7 @@ export class Task {
       if (request) {
         request.priority = newPriority as TaskPriority;
         request.labelIds = this.chipsEditForm.value.labels ?? [];
-        this.taskService.updateCachedTask(request);
+        this.handleUpdateSelectedTask(request);
       }
     }
     this.isEditingChips.set(false);
@@ -257,7 +261,7 @@ export class Task {
     if (task) {
       const request = { newStatus: newStatus };
       
-      this.taskService.updateCachedTask(request);
+      this.handleUpdateSelectedTask(request);
     }
   }
 
@@ -281,7 +285,7 @@ export class Task {
           const project = this.project();
   
           if (taskId) {
-            this.taskService.cacheSelectedTask(taskId);
+            this.handleCacheSelectedTask(taskId);
           }
           if (project) {
             this.loadLabelsForProject(project.id);
@@ -316,7 +320,47 @@ export class Task {
   }
 
   onJoinDropbox() {
-    
+    const project = this.project();
+
+    if (project) {         
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Join Dropbox',
+          message: `Are you sure you want to <strong>join</strong> Dropbox in this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(
+        confirmed => {
+          if (confirmed) {
+            this.projectService.joinDropbox(project.id).subscribe({
+              next: () => {
+                this.projectService.loadProjectToCache(project.id).subscribe({
+                  error: (err: HttpErrorResponse) => {
+                    const error = err.error as GeneralApiError;
+
+                    if (error) {
+                      this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while trying to load the project.', 'Dismiss', {
+                        duration: 5000
+                      });
+                    }
+                  }
+                });
+              },
+              error: (err: HttpErrorResponse) => {
+                const error = err.error as GeneralApiError;
+
+                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
+                  duration: 5000
+                });
+              }
+            });     
+          }
+        }
+      );
+    }
   }
 
   onCloseEditing() {
@@ -324,6 +368,10 @@ export class Task {
     this.isEditingName.set(false);
     this.isEditingDescription.set(false);
     this.isEditingChips.set(false);
+  }
+
+  onTryAgain() {
+    this.handleCacheSelectedTask(this.taskId());
   }
 
   parseEnumColor(key: string | null): string {
@@ -352,6 +400,14 @@ export class Task {
       case 'HIGH': return 'High';
       default: return '';
     }
+  }
+
+  private handleCacheSelectedTask(taskId: number) {
+    this.taskService.cacheSelectedTask(taskId).subscribe();
+  }
+
+  private handleUpdateSelectedTask(request: TaskUpdateRequest | TaskUpdateStatusRequest) {
+    this.taskService.updateCachedTask(request)?.subscribe();
   }
 
   private makeTaskUpdateRequest() : TaskUpdateRequest | undefined {

@@ -1,6 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ProjectService } from '../../service/project.service';
-import { GeneralApiError, ProjectResponse, ProjectRoleResponse, ProjectUpdateRequest } from '../../models';
+import { GeneralApiError, ProjectRoleResponse, ProjectUpdateRequest } from '../../models';
 import { MatCardModule } from "@angular/material/card";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -49,14 +49,15 @@ export class Project {
   readonly project = this.projectService.project;
   readonly currentUser = this.userService.user;
   readonly isProjectLoading = this.projectService.isLoading;
+  readonly projectLoadingError = this.projectService.error;
  
   readonly isEditingName = signal(false);
   readonly isEditingDescription = signal(false);
   readonly isEditingDates = signal(false);
   readonly isSavingPrivacy = signal(true);
   
-  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
-  readonly isCalendarConnected = this.oauth2Service.isCalendarConnected;
+  readonly isUserConnectedToDropbox = this.oauth2Service.isDropboxConnected;
+  readonly isUserConnectedToCalendar = this.oauth2Service.isCalendarConnected;
 
   readonly isCreator = this.projectService.isCreator;
   readonly isAdmin = this.projectService.isAdmin;
@@ -70,7 +71,7 @@ export class Project {
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
   );
 
-  nameEditForm = new FormGroup({
+  readonly nameEditForm = new FormGroup({
     projectName: new FormControl('', { nonNullable: true, validators: [
       Validators.required,
       Validators.minLength(3),
@@ -78,27 +79,25 @@ export class Project {
     ] })
   });
 
-  descriptionEditForm = new FormGroup({
+  readonly descriptionEditForm = new FormGroup({
     projectDescription: new FormControl('', { validators: [
       Validators.maxLength(500)
     ] })
   });
 
-  datesEditForm = new FormGroup({
+  readonly datesEditForm = new FormGroup({
     startDate: new FormControl<Date | null>(null),
     endDate: new FormControl<Date | null>(null)
   })
 
-  isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
+  readonly isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
   constructor(private dialog: MatDialog, private snackBar: MatSnackBar, private router: Router) {
     effect(() => {
       const id = this.projectId();
 
-      if (id) {
-        this.handleLoadProjectToCache(id);
-      }      
-    })
+      this.handleLoadProjectToCache(id);
+    });
 
     effect(() => {
       const project = this.project();
@@ -122,9 +121,9 @@ export class Project {
             this.datesEditForm.patchValue({
               startDate: new Date(project.startDate ?? ''),
               endDate: new Date(project.endDate ?? '')
-            })
-          }       
-        })
+            });
+          }
+        });
       }
     });
 
@@ -146,8 +145,8 @@ export class Project {
         else {
           this.isPrivateCtrl.disable();
         }
-      })
-    })
+      });
+    });
   } 
 
   onProjectNameEdit() {
@@ -225,7 +224,7 @@ export class Project {
       } else {
         this.isSavingPrivacy.set(false);
       }
-    })
+    });
   }
 
   onProjectDatesEdit() {
@@ -289,12 +288,12 @@ export class Project {
               if (error) {
                 this.snackBar.open(`Error: ${error.error}`, 'Dismiss', {
                   duration: 5000
-                })
+                });
               }
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -325,11 +324,11 @@ export class Project {
 
               this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -359,11 +358,11 @@ export class Project {
 
               this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -393,11 +392,11 @@ export class Project {
 
               this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -427,11 +426,11 @@ export class Project {
 
               this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -462,11 +461,11 @@ export class Project {
 
               this.snackBar.open(errorMessage ? `Error: ${errorMessage}` : 'Unknown error.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
-      })
+      });
     }
   }
 
@@ -474,31 +473,129 @@ export class Project {
     const project = this.project();
 
     if (project) {
-      this.projectService.connectProjectToDropbox(project.id).subscribe({
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
-            duration: 5000
-          })
-        }
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Connect Dropbox',
+          message: `Are you sure you want to <strong>connect</strong> Dropbox to this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+        },
+        disableClose: true,
+        width: '420px'
       })
+      .afterClosed()
+      .subscribe(
+        confirmed => {
+          if (confirmed) {
+            this.projectService.connectProjectToDropbox(project.id).subscribe({
+              error: (err: HttpErrorResponse) => {
+                const error = err.error as GeneralApiError;
+      
+                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
+                  duration: 5000
+                });
+              }
+            });
+          }
+        }
+      );
     }
   }
 
   onConnectCalendar() {
     const project = this.project();
 
-    if (project) {         
-      this.projectService.connectProjectToCalendar(project.id).subscribe({
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
+    if (project) {      
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Connect Calendar',
+          message: `Are you sure you want to <strong>connect</strong> Calendar to this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(
+        confirmed => {
+          if (confirmed) {
+            this.projectService.connectProjectToCalendar(project.id).subscribe({
+              error: (err: HttpErrorResponse) => {
+                const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
-            duration: 5000
-          })
+                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
+                  duration: 5000
+                });
+              }
+            });     
+          }   
         }
-      });     
+      );
+    }
+  }
+
+  onJoinDropbox() {
+    const project = this.project();
+
+    if (project) {         
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Join Dropbox',
+          message: `Are you sure you want to <strong>join</strong> Dropbox in this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(
+        confirmed => {
+          if (confirmed) {
+            this.projectService.joinDropbox(project.id).subscribe({
+              next: () => {
+                this.handleLoadProjectToCache(project.id);
+              },
+              error: (err: HttpErrorResponse) => {
+                const error = err.error as GeneralApiError;
+
+                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
+                  duration: 5000
+                });
+              }
+            });     
+          }
+        }
+      );
+    }
+  }
+
+  onJoinCalendar() {
+    const project = this.project();
+
+    if (project) {         
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Join Calendar',
+          message: `Are you sure you want to <strong>join</strong> Calendar in this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed()
+      .subscribe(
+        confirmed => {
+          if (confirmed) {
+            this.projectService.joinCalendar(project.id).subscribe({
+              next: () => {
+                this.handleLoadProjectToCache(project.id);
+              },
+              error: (err: HttpErrorResponse) => {
+                const error = err.error as GeneralApiError;
+
+                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Calendar in this project.', 'Dismiss', {
+                  duration: 5000
+                });
+              }
+            });     
+          }
+        }
+      );
     }
   }
 
@@ -523,7 +620,7 @@ export class Project {
 
               this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Dropbox.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
@@ -552,12 +649,16 @@ export class Project {
 
               this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Calendar.', 'Dismiss', {
                 duration: 5000
-              })
+              });
             }
           });
         }
       });
     }
+  }
+
+  onTryAgain() {
+    this.handleLoadProjectToCache(this.projectId());
   }
 
   statusColor(status: string | null): string {
@@ -602,8 +703,6 @@ export class Project {
         if (error) {
           if (err.status === 403) {
             this.router.navigateByUrl('/forbidden');
-          } else {
-            this.snackBar.open('Unknown error occured. Please try again.', 'Dismiss');
           }
         }
       }
@@ -611,16 +710,6 @@ export class Project {
   }
 
   private handleUpdateCachedProject(projectId: number, request: ProjectUpdateRequest) {
-    this.projectService.updateCachedProject(projectId, request).subscribe({
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        if (error) {
-          this.snackBar.open('You do not have the authority to access this resource.', 'Dismiss', {
-            duration: 5000
-          });
-        }
-      }
-    });
+    this.projectService.updateCachedProject(projectId, request).subscribe();
   }
 }

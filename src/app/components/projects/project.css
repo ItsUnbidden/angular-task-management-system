@@ -76,3 +76,9 @@ mat-accordion .mat-expansion-panel-header-description {
   justify-content: space-between;
   align-items: center;
 }
+
+.error-actions-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
