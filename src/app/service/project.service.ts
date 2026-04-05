@@ -1,7 +1,7 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { GeneralApiError, ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
+import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
 import { environment } from '../../environments/environment';
 import { UserService } from './user.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -16,7 +16,7 @@ export class ProjectService {
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
 
-  readonly currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
+  readonly currentUser = this.userService.user;
   readonly currentProjectRole = computed(() => {
     const project = this.project();
     const user = this.currentUser();
@@ -88,8 +88,20 @@ export class ProjectService {
     return this.http.get<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}`);
   }
 
-  getMyProjects() : Observable<ProjectResponse[]> {
-    return this.http.get<ProjectResponse[]>(`${environment.apiUrl}/api/projects/me`);
+  getMyProjects(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
+    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
+    
+    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
+
+    return this.http.get<Page<ProjectResponse>>(`${environment.apiUrl}/api/projects/me`, { params });
+  }
+
+  searchProjectsByName(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
+    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
+    
+    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
+
+    return this.http.get<Page<ProjectResponse>>(`${environment.apiUrl}/api/projects/search`, { params })
   }
 
   createProject(request: ProjectCreateRequest) : Observable<ProjectResponse> {
@@ -206,5 +218,11 @@ export class ProjectService {
         this.isLoading.set(false);
       }
     }))
+  }
+
+  getProjectCreator(project: ProjectResponse) : EssentialUserResponse {
+    const projectRole = project.projectRoles.find(pr => pr.roleType === 'CREATOR');
+
+    return { id: projectRole?.userId ?? 0, username: projectRole?.username ?? 'UNKNOWN_USER' };
   }
 }

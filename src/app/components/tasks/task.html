@@ -108,8 +108,8 @@
                 @else {
                     <div class="row">
                         <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
-                        <mat-chip [ngClass]="parseEnumColor(task()?.status ?? null)">
-                            {{ parseEnumText(task()?.status ?? null) }}
+                        <mat-chip [ngClass]="getChipColorLocal(task()?.status ?? null)">
+                            {{ getChipTextLocal(task()?.status ?? null) }}
                         </mat-chip>
                         @if (isAdmin()) {
                             <button mat-icon-button (click)="onTaskDueDateEdit()">
@@ -163,8 +163,8 @@
                 @else {
                     <div class="row">
                         <mat-chip-set>
-                            <mat-chip [ngClass]="parseEnumColor(task()?.priority ?? null)">
-                                {{ parseEnumText(task()?.priority ?? null) }}
+                            <mat-chip [ngClass]="getChipColorLocal(task()?.priority ?? null)">
+                                {{ getChipTextLocal(task()?.priority ?? null) }}
                             </mat-chip>
                             @for (label of labels(); track label.id) {
                                 <mat-chip class="label-chip" [attr.data-color]="label.color">

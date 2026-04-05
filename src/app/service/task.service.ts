@@ -90,8 +90,12 @@ export class TaskService {
     return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/projects/${projectId}?page=${page}&size=${size}`);
   }
 
-  getMyTasks() : Observable<TaskResponse[]> {
-    return this.http.get<TaskResponse[]>(`${environment.apiUrl}/api/tasks/me`);
+  getMyTasks(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<TaskResponse>> {
+    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
+    
+    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
+
+    return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/me`, { params });
   }
 
   getTasksByLabel(labelId: number) : Observable<TaskResponse[]> {

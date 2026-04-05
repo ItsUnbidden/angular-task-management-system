@@ -17,9 +17,9 @@ import { UserResponse } from '../../models';
     styleUrl: './auth.css'
 })
 export class Auth {
-    isRegistering = signal(false);
-    errorMessage = signal<string | null>(null);
-    isSubmitEnabled = signal(true);
+    readonly isRegistering = signal(false);
+    readonly errorMessage = signal<string | null>(null);
+    readonly isSubmitEnabled = signal(true);
     returnUrl = '/dashboard';
 
     constructor(private authService: AuthService, private route: ActivatedRoute, private router: Router) {

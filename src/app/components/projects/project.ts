@@ -25,7 +25,7 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserService } from '../../service/user.service';
 import { OAuth2Service } from '../../service/oauth2.service';
-import { toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, toLocalDateString } from '../../utils';
 
 @Component({
   selector: 'app-overview',
@@ -661,26 +661,12 @@ export class Project {
     this.handleLoadProjectToCache(this.projectId());
   }
 
-  statusColor(status: string | null): string {
-    switch (status) {
-      case 'INITIATED': return 'status-initiated';
-      case 'NOT_STARTED': return 'status-initiated';
-      case 'IN_PROGRESS': return 'status-in-progress';
-      case 'COMPLETED': return 'status-completed';
-      case 'OVERDUE': return 'status-overdue';
-      default: return '';
-    }
+  getChipColorLocal(value: string | null): string {
+    return getChipColor(value);
   }
 
-  statusText(status: string | null): string {
-    switch (status) {
-      case 'INITIATED': return 'Initiated';
-      case 'NOT_STARTED': return 'Not started';
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'COMPLETED': return 'Completed';
-      case 'OVERDUE': return 'Overdue';
-      default: return '';
-    }
+  getChipTextLocal(value: string | null): string {
+    return getChipText(value);
   }
 
   private makeProjectUpdateRequest() : ProjectUpdateRequest | undefined {

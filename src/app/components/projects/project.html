@@ -118,8 +118,8 @@
                                 {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
                             </div>
     
-                            <mat-chip [ngClass]="statusColor(project()?.status ?? null)">
-                                {{ statusText(project()?.status ?? null) }}
+                            <mat-chip [ngClass]="getChipColorLocal(project()?.status ?? null)">
+                                {{ getChipTextLocal(project()?.status ?? null) }}
                             </mat-chip>      
                             @if (isAdmin()) {
                                 <button mat-icon-button (click)="onProjectDatesEdit()">

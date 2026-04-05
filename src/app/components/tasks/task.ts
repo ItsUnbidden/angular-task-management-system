@@ -28,7 +28,7 @@ import { LabelManagementDialog } from '../label/label-management-dialog/label-ma
 import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
-import { toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, toLocalDateString } from '../../utils';
 import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 
 interface TaskPriorityOption {
@@ -374,32 +374,12 @@ export class Task {
     this.handleCacheSelectedTask(this.taskId());
   }
 
-  parseEnumColor(key: string | null): string {
-    switch (key) {
-      case 'INITIATED': return 'status-initiated';
-      case 'NOT_STARTED': return 'status-initiated';
-      case 'IN_PROGRESS': return 'status-in-progress';
-      case 'COMPLETED': return 'status-completed';
-      case 'OVERDUE': return 'status-overdue';
-      case 'LOW': return 'priority-low';
-      case 'MEDIUM': return 'priority-medium';
-      case 'HIGH': return 'priority-high';
-      default: return '';
-    }
+  getChipColorLocal(value: string | null): string {
+    return getChipColor(value);
   }
 
-  parseEnumText(key: string | null): string {
-    switch (key) {
-      case 'INITIATED': return 'Initiated';
-      case 'NOT_STARTED': return 'Not started';
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'COMPLETED': return 'Completed';
-      case 'OVERDUE': return 'Overdue';
-      case 'LOW': return 'Low';
-      case 'MEDIUM': return 'Medium';
-      case 'HIGH': return 'High';
-      default: return '';
-    }
+  getChipTextLocal(value: string | null): string {
+    return getChipText(value);
   }
 
   private handleCacheSelectedTask(taskId: number) {
