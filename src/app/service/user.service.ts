@@ -8,7 +8,7 @@ import { catchError, finalize, Observable, of, shareReplay, tap } from 'rxjs';
   providedIn: 'root',
 })
 export class UserService {
-  user = signal<UserResponse | null | undefined>(undefined);
+  readonly user = signal<UserResponse | null | undefined>(undefined);
   private inFlight$?: Observable<UserResponse | null>;
 
   constructor(private http: HttpClient) {}

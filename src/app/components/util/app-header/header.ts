@@ -2,7 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
 import { UserService } from '../../../service/user.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, EventType, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -12,6 +12,8 @@ import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-header',
@@ -20,21 +22,29 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './header.css',
 })
 export class Header {
+  private router = inject(Router);
   private userService = inject(UserService);
   private oauth2Service = inject(OAuth2Service);
 
-  isLoggedIn = computed(() => {
+  readonly isLoggedIn = computed(() => {
     const user = this.userService.user();
 
     return user;
   });
+  readonly isOnDashboard = toSignal(this.router.events.pipe(map(event => {
+    if (event.type === EventType.NavigationEnd) {
+      return this.router.url.includes('/dashboard');
+    }
+    return false;
+  })), { initialValue: false });
 
-  isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
-  isDropboxConnected = this.oauth2Service.isDropboxConnected;
-  isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
-  isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
+  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
+  readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
 
-  constructor(private router: Router, private authService: AuthService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
+  readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
+  readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
+
+  constructor(private authService: AuthService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
 
   onConnectDropbox() {
     const returnUrl = this.router.url;
@@ -141,5 +151,9 @@ export class Header {
         }
       }
     });
+  }
+
+  onToDashboard() {
+    this.router.navigateByUrl('/dashboard');
   }
 }

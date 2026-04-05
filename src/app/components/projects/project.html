@@ -1,223 +1,263 @@
 <div class="main-container">
     <mat-card appearance="outlined" class="overview-card">
         @if (isProjectLoading()) {
-            <mat-spinner diameter="30"></mat-spinner>
-            <span>Loading project...</span>
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Loading project...</span>
+            </div>
         }
         @else {
-            <mat-card-header>
-                <mat-card-title class="card-title">Overview</mat-card-title>
-            </mat-card-header>
+            @if (projectLoadingError()) {
+                <mat-card-header>
+                    <mat-card-title class="card-title">Error</mat-card-title>
+                </mat-card-header>
 
-            <mat-divider></mat-divider>
+                <mat-card-content>
+                    <p>{{ projectLoadingError() }}</p>
+                </mat-card-content>
 
-            <mat-card-content>
-                @if (isEditingName()) {
-                    <form class="edit-input-form" [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
-                        <mat-form-field>
-                            <mat-label>New project name</mat-label>
-                            <input matInput type="text" formControlName="projectName">
-                        </mat-form-field>
-                        <button mat-icon-button type="submit">
-                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-                        </button>
-                        <button mat-icon-button type="button" (click)="onCloseEditing()">
-                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-                        </button>
-                    </form>
-                }
-                @else {
-                    <div class="row">
-                        <h2>
-                            {{ project()?.name }}                       
-                        </h2>
-                        @if (isAdmin()) {
-                            <button mat-icon-button (click)="onProjectNameEdit()">
-                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                            </button>
-                        }                       
-                    </div>
-                    
-                }
-                @if (isEditingDescription()) {
-                    <form [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
-                        <mat-form-field class="description-input" appearance="outline">
-                            <mat-label>New project description</mat-label>
-                            <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>
-                        </mat-form-field>
-                        <div class="actions">
+                <mat-card-actions class="error-actions-container">
+                    <button matButton="elevated" (click)="onTryAgain()">
+                        <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
+                        Reload
+                    </button>
+                </mat-card-actions>
+            }
+            @else {
+                <mat-card-header>
+                    <mat-card-title class="card-title">Overview</mat-card-title>
+                </mat-card-header>
+    
+                <mat-divider></mat-divider>
+    
+                <mat-card-content>
+                    @if (isEditingName()) {
+                        <form class="edit-input-form" [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
+                            <mat-form-field>
+                                <mat-label>New project name</mat-label>
+                                <input matInput type="text" formControlName="projectName">
+                            </mat-form-field>
                             <button mat-icon-button type="submit">
                                 <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                             </button>
                             <button mat-icon-button type="button" (click)="onCloseEditing()">
                                 <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
                             </button>
-                        </div>
-                    </form>
-                }
-                @else {
-                    <div class="row">
-                        @if (project()?.description) {
-                            <p class="description-field">{{ project()?.description ?? "" }}</p>
-                        } 
-                        @else {
-                            <p class="description-field">No description</p>
-                        }
-                        @if (isAdmin()) {
-                            <button mat-icon-button (click)="onProjectDescriptionEdit()">
-                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                            </button>   
-                        }                                            
-                    </div>
-                }
-                @if (isEditingDates()) {
-                    <form class="edit-input-form" [formGroup]="datesEditForm" (ngSubmit)="onSubmitProjectDates()">
-                        <mat-form-field appearance="outline">
-                            <mat-label>New project dates</mat-label>
-                            <mat-date-range-input [rangePicker]="picker">
-                                <input matStartDate formControlName="startDate" placeholder="Start">
-                                <input matEndDate formControlName="endDate" placeholder="End">
-                            </mat-date-range-input>
-
-                            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                            <mat-date-range-picker #picker></mat-date-range-picker>
-                        </mat-form-field>
-                        
-                        <button mat-icon-button type="submit">
-                            <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
-                        </button>
-                        <button mat-icon-button type="button" (click)="onCloseEditing()">
-                            <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
-                        </button>
-                    </form>
-                }
-                @else {
-                    <div class="row">
-                        <div class = "muted">
-                            {{ project()?.startDate | date:'mediumDate' }}
-                            —
-                            {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
-                        </div>
-
-                        <mat-chip [ngClass]="statusColor(project()?.status ?? null)">
-                            {{ statusText(project()?.status ?? null) }}
-                        </mat-chip>      
-                        @if (isAdmin()) {
-                            <button mat-icon-button (click)="onProjectDatesEdit()">
-                                <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                            </button>
-                        }                                            
-                    </div>
-                }
-
-                <mat-accordion>
-                    <mat-expansion-panel>
-                        <mat-expansion-panel-header>
-                            <mat-panel-title>Project members</mat-panel-title>
-                            <mat-panel-description>
-                                <div class="row">
-                                    <h4>Creator:</h4> {{ creator()?.username }}
-                                </div>
-                                <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
-                            </mat-panel-description>
-                        </mat-expansion-panel-header>
-                        @if (isAdmin()) {
-                            <button matButton="elevated" (click)="onAddUser()">
-                                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-                                Add user
-                            </button>
-                        }                  
-                        @if (admins().length !== 0) {
-                            <h3>Admins</h3>
-                            @for (admin of admins(); track admin.userId) {
-                                <div class="row">
-                                    <p>{{ admin.username }}</p>
-                                    @if (isCreator()) {
-                                        <button matButton="elevated" (click)="onTransferOwnership(admin)">
-                                            <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
-                                            Make owner
-                                        </button>
-                                        <button matButton="elevated" (click)="onRemoveAdmin(admin)">
-                                            <mat-icon fontSet="material-symbols-outlined">remove_moderator</mat-icon>
-                                            Remove admin
-                                        </button>
-                                    }     
-                                    @if (isAdmin() && currentUser()?.id !== admin.userId) {
-                                        <button matButton="elevated" (click)="onRemoveUser(admin)">
-                                            <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
-                                            Remove
-                                        </button>
-                                    }                                                           
-                                </div>
-                            }
-                        }
-                        @if (contributors().length !== 0) {
-                            <h3>Contributors</h3>
-                            @for (contributor of contributors(); track contributor.userId) {
-                                <div class="row">
-                                    <p>{{ contributor.username }}</p>
-                                    @if (isCreator()) {
-                                        <button matButton="elevated" (click)="onMakeAdmin(contributor)">
-                                            <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
-                                            Make admin
-                                        </button>
-                                    }
-                                    @if (isAdmin() && currentUser()?.id !== contributor.userId) {
-                                        <button matButton="elevated" (click)="onRemoveUser(contributor)">
-                                            <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
-                                            Remove
-                                        </button>
-                                    }                               
-                                </div>
-                            }
-                        }
-                    </mat-expansion-panel>
-                </mat-accordion>
-            </mat-card-content>
-
-            <mat-divider></mat-divider>
-            <mat-card-actions class="project-actions-container">
-                <mat-slide-toggle [formControl]="isPrivateCtrl" (change)="onIsPrivateToggleChange($event.checked)">
-                    Private
-                </mat-slide-toggle>
-                <div class="project-buttons-container">
-                    @if (!isCreator()) {
-                        <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
+                        </form>
                     }
                     @else {
-                        <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
-                    }               
-                    @if (isCreator() && isDropboxConnected()) {
-                        @if (project()?.isDropboxConnected) {
-                            <button matButton="elevated" (click)="onDisconnectDropbox()">
-                                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                                Disconnect Dropbox
+                        <div class="row">
+                            <h2>
+                                {{ project()?.name }}                       
+                            </h2>
+                            @if (isAdmin()) {
+                                <button mat-icon-button (click)="onProjectNameEdit()">
+                                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                </button>
+                            }                       
+                        </div>
+                        
+                    }
+                    @if (isEditingDescription()) {
+                        <form [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
+                            <mat-form-field class="description-input" appearance="outline">
+                                <mat-label>New project description</mat-label>
+                                <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>
+                            </mat-form-field>
+                            <div class="actions">
+                                <button mat-icon-button type="submit">
+                                    <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                                </button>
+                                <button mat-icon-button type="button" (click)="onCloseEditing()">
+                                    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    @else {
+                        <div class="row">
+                            @if (project()?.description) {
+                                <p class="description-field">{{ project()?.description ?? "" }}</p>
+                            } 
+                            @else {
+                                <p class="description-field">No description</p>
+                            }
+                            @if (isAdmin()) {
+                                <button mat-icon-button (click)="onProjectDescriptionEdit()">
+                                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                </button>   
+                            }                                            
+                        </div>
+                    }
+                    @if (isEditingDates()) {
+                        <form class="edit-input-form" [formGroup]="datesEditForm" (ngSubmit)="onSubmitProjectDates()">
+                            <mat-form-field appearance="outline">
+                                <mat-label>New project dates</mat-label>
+                                <mat-date-range-input [rangePicker]="picker">
+                                    <input matStartDate formControlName="startDate" placeholder="Start">
+                                    <input matEndDate formControlName="endDate" placeholder="End">
+                                </mat-date-range-input>
+    
+                                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-date-range-picker #picker></mat-date-range-picker>
+                            </mat-form-field>
+                            
+                            <button mat-icon-button type="submit">
+                                <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                             </button>
+                            <button mat-icon-button type="button" (click)="onCloseEditing()">
+                                <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                            </button>
+                        </form>
+                    }
+                    @else {
+                        <div class="row">
+                            <div class = "muted">
+                                {{ project()?.startDate | date:'mediumDate' }}
+                                —
+                                {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
+                            </div>
+    
+                            <mat-chip [ngClass]="getChipColorLocal(project()?.status ?? null)">
+                                {{ getChipTextLocal(project()?.status ?? null) }}
+                            </mat-chip>      
+                            @if (isAdmin()) {
+                                <button mat-icon-button (click)="onProjectDatesEdit()">
+                                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                </button>
+                            }                                            
+                        </div>
+                    }
+    
+                    <mat-accordion>
+                        <mat-expansion-panel>
+                            <mat-expansion-panel-header>
+                                <mat-panel-title>Project members</mat-panel-title>
+                                <mat-panel-description>
+                                    <div class="row">
+                                        <h4>Creator:</h4> {{ creator()?.username }}
+                                    </div>
+                                    <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
+                                </mat-panel-description>
+                            </mat-expansion-panel-header>
+                            @if (isAdmin()) {
+                                <button matButton="elevated" (click)="onAddUser()">
+                                    <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                                    Add user
+                                </button>
+                            }                  
+                            @if (admins().length !== 0) {
+                                <h3>Admins</h3>
+                                @for (admin of admins(); track admin.userId) {
+                                    <div class="row">
+                                        <p>{{ admin.username }}</p>
+                                        @if (isCreator()) {
+                                            <button matButton="elevated" (click)="onTransferOwnership(admin)">
+                                                <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
+                                                Make owner
+                                            </button>
+                                            <button matButton="elevated" (click)="onRemoveAdmin(admin)">
+                                                <mat-icon fontSet="material-symbols-outlined">remove_moderator</mat-icon>
+                                                Remove admin
+                                            </button>
+                                        }     
+                                        @if (isAdmin() && currentUser()?.id !== admin.userId) {
+                                            <button matButton="elevated" (click)="onRemoveUser(admin)">
+                                                <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
+                                                Remove
+                                            </button>
+                                        }                                                           
+                                    </div>
+                                }
+                            }
+                            @if (contributors().length !== 0) {
+                                <h3>Contributors</h3>
+                                @for (contributor of contributors(); track contributor.userId) {
+                                    <div class="row">
+                                        <p>{{ contributor.username }}</p>
+                                        @if (isCreator()) {
+                                            <button matButton="elevated" (click)="onMakeAdmin(contributor)">
+                                                <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
+                                                Make admin
+                                            </button>
+                                        }
+                                        @if (isAdmin() && currentUser()?.id !== contributor.userId) {
+                                            <button matButton="elevated" (click)="onRemoveUser(contributor)">
+                                                <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
+                                                Remove
+                                            </button>
+                                        }                               
+                                    </div>
+                                }
+                            }
+                        </mat-expansion-panel>
+                    </mat-accordion>
+                </mat-card-content>
+    
+                <mat-divider></mat-divider>
+                <mat-card-actions class="project-actions-container">
+                    <mat-slide-toggle [formControl]="isPrivateCtrl" (change)="onIsPrivateToggleChange($event.checked)">
+                        Private
+                    </mat-slide-toggle>
+                    <div class="project-buttons-container">
+                        @if (!isCreator()) {
+                            <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
                         }
                         @else {
-                            <button matButton="elevated" (click)="onConnectDropbox()">
-                                <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                Connect Dropbox
-                            </button>
-                        }
-                    }
-                    @if (isCreator() && isCalendarConnected()) {
-                        @if (project()?.isCalendarConnected) {
-                            <button matButton="elevated" (click)="onDisconnectCalendar()">
-                                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                                Disconnect Calendar
-                            </button>
+                            <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
+                        }               
+                        @if (isUserConnectedToDropbox()) {
+                            @if (isCreator()) {
+                                @if (project()?.isDropboxConnected) {
+                                    <button matButton="elevated" (click)="onDisconnectDropbox()">
+                                        <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                                        Disconnect Dropbox
+                                    </button>
+                                }
+                                @else {
+                                    <button matButton="elevated" (click)="onConnectDropbox()">
+                                        <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                        Connect Dropbox
+                                    </button>
+                                }
+                            }
                         }
                         @else {
-                            <button matButton="elevated" (click)="onConnectCalendar()">
-                                <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                Connect Calendar
-                            </button>
+                            @if (!isCreator() && project()?.isDropboxConnected) {
+                                <button matButton="elevated" (click)="onJoinDropbox()">
+                                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                    Join Dropbox
+                                </button>
+                            }
                         }
-                    }
-                </div>
-            </mat-card-actions>
+                        @if (isCreator() && isUserConnectedToCalendar()) {
+                            @if (project()?.isCalendarConnected) {
+                                <button matButton="elevated" (click)="onDisconnectCalendar()">
+                                    <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                                    Disconnect Calendar
+                                </button>
+                            }
+                            @else {
+                                <button matButton="elevated" (click)="onConnectCalendar()">
+                                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                    Connect Calendar
+                                </button>
+                            }
+                        }
+                        @else {
+                            @if (!isCreator() && project()?.isCalendarConnected) {
+                                <button matButton="elevated" (click)="onJoinCalendar()">
+                                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                    Join Calendar
+                                </button>
+                            }
+                        }
+                    </div>
+                </mat-card-actions>
+            }
         }
     </mat-card>
-    <router-outlet></router-outlet>
+    @if (!projectLoadingError()) {
+        <router-outlet></router-outlet>
+    }
 </div>

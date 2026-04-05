@@ -22,7 +22,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from "@angular/material/icon";
 import { toLocalDateString } from '../../../utils';
-import { filter } from 'rxjs';
 
 interface TaskStatusOption {
   status: TaskStatus;
@@ -60,6 +59,8 @@ export class TaskGrid {
   readonly tasks = this.taskService.tasks;
   readonly currentUser = this.userService.user;
   readonly isLoadingTasks = this.taskService.isLoadingTasks;
+
+  readonly tasksLoadingError = this.taskService.tasksLoadingError;
 
   readonly taskPageIndex = signal(0);
   readonly taskPageSize = signal(6);
@@ -121,7 +122,7 @@ export class TaskGrid {
           this.filterForm.enable({ emitEvent: false });
         }
       });
-    })
+    });
 
     this.filterForm.valueChanges.subscribe(() => {
       const formValue = this.filterForm.value;
@@ -135,12 +136,10 @@ export class TaskGrid {
         labelIds: formValue.labelIds ?? undefined
       });
       this.handleCacheProjectTasks();
-    })
+    });
   }
 
   onTaskPage(event: PageEvent) {
-    const project = this.project();
-
     this.taskPageIndex.set(event.pageIndex);
     this.taskPageSize.set(event.pageSize);
 
@@ -166,7 +165,7 @@ export class TaskGrid {
         if (confirmed) {         
           this.handleCacheProjectTasks(); 
         }
-      })
+      });
     }
   }
 
@@ -184,6 +183,10 @@ export class TaskGrid {
       dueDateTo: null,
       labelIds: []
     });
+    this.handleCacheProjectTasks();
+  }
+
+  onTryAgain() {
     this.handleCacheProjectTasks();
   }
 
@@ -229,5 +232,5 @@ export class TaskGrid {
         }
       });
     }
-    }
+  }
 }

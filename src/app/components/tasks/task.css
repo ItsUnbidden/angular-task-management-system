@@ -66,3 +66,13 @@
     justify-content: right;
     margin-right: 10px;
 }
+
+.error-actions-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.error-card-title {
+    margin-bottom: 10px;
+}

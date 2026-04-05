@@ -8,10 +8,10 @@ import { GeneralApiError, OAuth2StatusResponse, ThirdPartyTestResponse } from '.
   providedIn: 'root',
 })
 export class OAuth2Service {
-  isDropboxConnected = signal(false);
-  isCalendarConnected = signal(false);
-  isCheckingDropbox = signal(false);
-  isCheckingCalendar = signal(false);
+  readonly isDropboxConnected = signal(false);
+  readonly isCalendarConnected = signal(false);
+  readonly isCheckingDropbox = signal(false);
+  readonly isCheckingCalendar = signal(false);
 
   constructor(private http: HttpClient) {}
 

@@ -1,7 +1,7 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable, tap, throwError } from 'rxjs';
-import { ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
+import { Observable, tap } from 'rxjs';
+import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
 import { environment } from '../../environments/environment';
 import { UserService } from './user.service';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -12,28 +12,29 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class ProjectService {
   private userService = inject(UserService);
 
-  project = signal<ProjectResponse | null>(null);
-  isLoading = signal(false);
+  readonly project = signal<ProjectResponse | null>(null);
+  readonly isLoading = signal(false);
+  readonly error = signal<string | null>(null);
 
-  currentUser = toSignal(this.userService.ensureUserLoaded(), { initialValue: undefined });
-  currentProjectRole = computed(() => {
+  readonly currentUser = this.userService.user;
+  readonly currentProjectRole = computed(() => {
     const project = this.project();
     const user = this.currentUser();
 
     return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
   });
 
-  isCreator = computed(() => {
+  readonly isCreator = computed(() => {
     const projectRole = this.currentProjectRole();
 
     return (projectRole) ? projectRole.roleType === 'CREATOR' : false;
   });
-  isAdmin = computed(() => {
+  readonly isAdmin = computed(() => {
     const projectRole = this.currentProjectRole();
 
     return (projectRole) ? projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
   });
-  isContributor = computed(() => {
+  readonly isContributor = computed(() => {
     const projectRole = this.currentProjectRole();
 
     return (projectRole) ? projectRole.roleType === 'CONTRIBUTOR' || projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
@@ -42,21 +43,26 @@ export class ProjectService {
   constructor(private http: HttpClient) {}
 
   loadProjectToCache(projectId: number) : Observable<ProjectResponse> {
+    this.error.set(null);
     this.isLoading.set(true);
     return this.getProjectById(projectId).pipe(tap({
       next: (p) => {
         this.project.set(p);
         this.isLoading.set(false);
       },
-      error: (err) => {      
+      error: (err: HttpErrorResponse) => {      
         this.project.set(null);
         this.isLoading.set(false);
-        return throwError(() => err);
+        
+        const error = err.error as GeneralApiError;
+
+        this.error.set(error ? error.error : 'Unknown error occured while loading the project.');
       }
     }));
   }
 
   updateCachedProject(projectId: number, request: ProjectUpdateRequest) : Observable<ProjectResponse> {
+    this.error.set(null);
     this.isLoading.set(true);
     return this.updateProject(projectId, request).pipe(tap({
       next: (p) => {
@@ -65,12 +71,16 @@ export class ProjectService {
       },
       error: (err) => {
         this.isLoading.set(false)
-        return throwError(() => err);
+        
+        const error = err.error as GeneralApiError;
+
+        this.error.set(error ? error.error : 'Unknown error occured while updating the project.');
       }
     }));
   }
 
   clearCachedProject() {
+    this.error.set(null);
     this.project.set(null);
   }
 
@@ -78,8 +88,20 @@ export class ProjectService {
     return this.http.get<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}`);
   }
 
-  getMyProjects() : Observable<ProjectResponse[]> {
-    return this.http.get<ProjectResponse[]>(`${environment.apiUrl}/api/projects/me`);
+  getMyProjects(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
+    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
+    
+    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
+
+    return this.http.get<Page<ProjectResponse>>(`${environment.apiUrl}/api/projects/me`, { params });
+  }
+
+  searchProjectsByName(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
+    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
+    
+    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
+
+    return this.http.get<Page<ProjectResponse>>(`${environment.apiUrl}/api/projects/search`, { params })
   }
 
   createProject(request: ProjectCreateRequest) : Observable<ProjectResponse> {
@@ -166,6 +188,14 @@ export class ProjectService {
     }));
   }
 
+  joinDropbox(projectId: number) : Observable<void> {
+    return this.http.patch<void>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/join`, {});
+  }
+
+  joinCalendar(projectId: number) : Observable<void> {
+    return this.http.patch<void>(`${environment.apiUrl}/api/projects/${projectId}/calendar/join`, {});
+  }
+
   disconnectDropbox(projectId: number) : Observable<ProjectResponse> {
     this.isLoading.set(true);
     return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/disconnect`).pipe(tap({
@@ -188,5 +218,11 @@ export class ProjectService {
         this.isLoading.set(false);
       }
     }))
+  }
+
+  getProjectCreator(project: ProjectResponse) : EssentialUserResponse {
+    const projectRole = project.projectRoles.find(pr => pr.roleType === 'CREATOR');
+
+    return { id: projectRole?.userId ?? 0, username: projectRole?.username ?? 'UNKNOWN_USER' };
   }
 }

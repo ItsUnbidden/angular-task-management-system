@@ -42,7 +42,8 @@
 }
 
 .main-card-header button {
-  margin-top: -10px;
+  margin-top: -8px;
+  margin-bottom: -4px;
 }
 
 .filters-card {
@@ -70,4 +71,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.task-spinner-container {
+  display: flex;
+  justify-content: center;  
+}
+
+.error-actions-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.error-card-title {
+  margin-bottom: 10px;
 }
