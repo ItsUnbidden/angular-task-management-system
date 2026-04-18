@@ -24,16 +24,6 @@
                     <mat-label>Email</mat-label>
                     <input matInput id="emailRegistration" type="email" formControlName="email">
                 </mat-form-field>
-                <div class="name-fields">
-                    <mat-form-field class="auth-field name-field">
-                        <mat-label>First Name</mat-label>
-                        <input matInput id="firstNameRegistration" type="text" formControlName="firstName">
-                    </mat-form-field>
-                    <mat-form-field class="auth-field name-field">
-                        <mat-label>Last Name</mat-label>
-                        <input matInput id="lastNameRegistration" type="text" formControlName="lastName">
-                    </mat-form-field>
-                </div>
                 <button matButton="filled" class="submit-button" type="submit" [disabled]="!registrationForm.valid || !isSubmitEnabled()">Sign up</button>
             </form>
             @if (errorMessage()) {

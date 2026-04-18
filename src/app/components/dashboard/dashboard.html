@@ -137,11 +137,18 @@
                 </mat-card>
             </div>
         </mat-tab>
-        <mat-tab label="Public projects">
+        <mat-tab [label]="isManager() ? 'All projects' : 'Public projects'">
             <div class="table-card-container">
                 <mat-card class="table-card" appearance="outlined">
                     <mat-card-header>
-                        <mat-card-title>Public projects</mat-card-title>                        
+                        <mat-card-title>
+                            @if (isManager()) {
+                                All projects (Manager privilege)
+                            }
+                            @else {
+                                Public projects
+                            }
+                        </mat-card-title>                        
                     </mat-card-header>
                     <mat-card-content>
                         <form [formGroup]="publicProjectsFilterForm">

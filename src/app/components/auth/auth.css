@@ -46,12 +46,6 @@ main {
     margin: 10px 0 30px 0;
 }
 
-.name-fields {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-}
-
 .password-fields {
     display: flex;
     flex-direction: row;

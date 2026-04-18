@@ -49,7 +49,7 @@
                         </mat-card-content>
 
                         <mat-card-actions class="message-actions-container">
-                            @if (user()?.id === comment.userId) {
+                            @if (user()?.id === comment.userId || isManager()) {
                                 <button matButton="elevated" (click)="onEditMessage(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                     Edit
@@ -65,7 +65,7 @@
                                     Show replies ({{ comment.amountOfReplies }})
                                 </button>
                             } 
-                            @else if (user()?.id !== comment.userId && !isReplying(comment.id)) {
+                            @else if ((user()?.id !== comment.userId || isManager()) && !isReplying(comment.id)) {
                                 <button matButton="elevated" type="button" (click)="onReply(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
                                     Reply
@@ -73,7 +73,7 @@
                             }
                         </mat-card-actions>
                         <mat-divider></mat-divider>
-                        @if (isReplying(comment.id) && user()?.id !== comment.userId) {                               
+                        @if (isReplying(comment.id)) {                               
                             <div class="new-reply">
                                 <form [formGroup]="newReplyForm">
                                     <mat-form-field class="large-field">
@@ -128,7 +128,7 @@
                                                 }
                                                 <div class="message-actions-container">
                                                     @if (!isEditing(flattenedReply.reply.id)) {
-                                                        @if (user()?.id === flattenedReply.reply.userId) {
+                                                        @if (user()?.id === flattenedReply.reply.userId || isManager()) {
                                                             <button matButton="elevated" (click)="onEditMessage(flattenedReply.reply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                                                 Edit
@@ -137,14 +137,18 @@
                                                                 <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
                                                                 Delete
                                                             </button>
-                                                        }     
-                                                        @else {
-                                                            @if (!isReplying(flattenedReply.reply.id)) {
+                                                            @if (isManager()) {
                                                                 <button matButton="elevated" (click)="onReply(flattenedReply.reply)">
                                                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
                                                                     Reply
-                                                                </button>                                                                                                                                               
+                                                                </button>       
                                                             }
+                                                        }     
+                                                        @else if (!isReplying(flattenedReply.reply.id)) {                                                            
+                                                            <button matButton="elevated" (click)="onReply(flattenedReply.reply)">
+                                                                <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
+                                                                Reply
+                                                            </button>                                                                                                                                                                                                           
                                                         }                                                                                                      
                                                     }
                                                 </div>

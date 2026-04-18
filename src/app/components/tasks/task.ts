@@ -79,6 +79,8 @@ export class Task {
   readonly isAdmin = this.projectService.isAdmin;
   readonly isContributor = this.projectService.isContributor;
 
+  readonly isManager = this.userService.isManager;
+
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
       validators: [

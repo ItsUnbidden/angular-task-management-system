@@ -34,6 +34,8 @@ export class MessageList {
   readonly isLoadingComments = this.messageService.isLoadingComments;
   readonly isLastCommentsPage = signal(false);
 
+  readonly isManager = this.userService.isManager;
+
   readonly maxReplyDepth = 6;
 
   currentCommentsPage = 0;

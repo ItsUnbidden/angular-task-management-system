@@ -68,6 +68,7 @@ export class TaskGrid {
   readonly taskFilter = signal<TaskFilter>({});
 
   readonly isAdmin = this.projectService.isAdmin;
+  readonly isManager = this.userService.isManager;
 
   statusOptions: TaskStatusOption[] = [
     { status: 'NOT_STARTED', statusView: 'Not started', class: 'status-initiated' },

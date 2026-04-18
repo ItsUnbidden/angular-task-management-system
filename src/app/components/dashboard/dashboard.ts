@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, effect, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
@@ -20,6 +20,7 @@ import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { getChipColor, getChipText } from '../../utils';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
+import { UserService } from '../../service/user.service';
 
 interface TableState {
   pageIndex: number;
@@ -37,6 +38,8 @@ interface TableState {
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
+  private userService = inject(UserService);
+
   readonly isLoadingMyProjects = signal(false);
   readonly isLoadingTasks = signal(false);
   readonly isLoadingPublicProjects = signal(false);
@@ -46,12 +49,14 @@ export class Dashboard {
   readonly publicProjectsError = signal<string | null>(null);
   
   readonly myProjectsTableState = signal<TableState>({ pageIndex: 0, pageSize: 10, sortActive: 'name', sortDirection: 'asc' });
-  readonly myTasksTableState = signal<TableState>({ pageIndex: 0, pageSize: 1, sortActive: 'name', sortDirection: 'asc' });
+  readonly myTasksTableState = signal<TableState>({ pageIndex: 0, pageSize: 10, sortActive: 'name', sortDirection: 'asc' });
   readonly publicProjectsTableState = signal<TableState>({ pageIndex: 0, pageSize: 25, sortActive: 'name', sortDirection: 'asc' });
 
   readonly myProjectTotalElements = signal(0);
   readonly myTasksTotalElements = signal(0);
   readonly publicProjectTotalElements = signal(0);
+
+  readonly isManager = this.userService.isManager;
 
   projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
   publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
@@ -77,37 +82,6 @@ export class Dashboard {
               private taskService: TaskService,
               private dialog: MatDialog,
               private router: Router) {
-    effect(() => {
-      const isLoadingMyProjects = this.isLoadingMyProjects();
-      const myProjectsError = this.myProjectsError();
-
-      if (isLoadingMyProjects || myProjectsError) {
-        this.myProjectsFilterForm.disable({ emitEvent: false });
-      } else {
-        this.myProjectsFilterForm.enable({ emitEvent: false });
-      }
-    });
-    effect(() => {
-      const isLoadingTasks = this.isLoadingTasks();
-      const myTasksError = this.myTasksError();
-
-      if (isLoadingTasks || myTasksError) {
-        this.myTasksFilterForm.disable({ emitEvent: false });
-      } else {
-        this.myTasksFilterForm.enable({ emitEvent: false });
-      }
-    });
-    effect(() => {
-      const isLoadingPublicProjects = this.isLoadingPublicProjects();
-      const publicProjectsError = this.publicProjectsError();
-
-      if (isLoadingPublicProjects || publicProjectsError) {
-        this.publicProjectsFilterForm.disable({ emitEvent: false });
-      } else {
-        this.publicProjectsFilterForm.enable({ emitEvent: false });
-      }
-    });
-
     effect(() => {
       this.myProjectsTableState();
       this.loadMyProjects();

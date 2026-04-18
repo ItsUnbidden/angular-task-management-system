@@ -1,10 +1,9 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, UserResponse } from '../models';
+import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest } from '../models';
 import { environment } from '../../environments/environment';
 import { UserService } from './user.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 @Injectable({
   providedIn: 'root',
@@ -124,15 +123,8 @@ export class ProjectService {
     }));
   }
 
-  removeUserFromProject(projectId: number, userId: number) : Observable<ProjectResponse> {
-    return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`).pipe(tap({
-      next: p => {
-        this.project.set(p);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+  removeUserFromProject(projectId: number, userId: number) : Observable<ProjectDeleteResponse> {
+    return this.http.delete<ProjectDeleteResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`);
   }
 
   quitProject(projectId: number) : Observable<void> {
@@ -150,9 +142,9 @@ export class ProjectService {
     }));
   }
 
-  deleteProject(projectId: number) : Observable<void> {
+  deleteProject(projectId: number) : Observable<ProjectDeleteResponse> {
     this.isLoading.set(true);
-    return this.http.delete<void>(`${environment.apiUrl}/api/projects/${projectId}`).pipe(tap({
+    return this.http.delete<ProjectDeleteResponse>(`${environment.apiUrl}/api/projects/${projectId}`).pipe(tap({
       next: () => {
         if (this.project()?.id === projectId) {
           this.project.set(null);

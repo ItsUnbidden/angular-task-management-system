@@ -9,6 +9,7 @@ import { AuthService } from '../../service/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Observer } from 'rxjs';
 import { UserResponse } from '../../models';
+import { passwordMatchValidator } from '../../utils';
 
 @Component({
     selector: 'app-auth',
@@ -51,12 +52,6 @@ export class Auth {
         email: new FormControl('', [
             Validators.required,
             Validators.email
-        ]),
-        firstName: new FormControl('', [
-            Validators.required
-        ]),
-        lastName: new FormControl('', [
-            Validators.required
         ])
     }, { validators: passwordMatchValidator() });
 
@@ -85,9 +80,7 @@ export class Auth {
             username: this.registrationForm.value.username || '',
             password: this.registrationForm.value.password || '',
             repeatPassword: this.registrationForm.value.repeatPassword || '',
-            email: this.registrationForm.value.email || '',
-            firstName: this.registrationForm.value.firstName || '',
-            lastName: this.registrationForm.value.lastName || ''
+            email: this.registrationForm.value.email || ''
         }).subscribe({
             next: () => {
                 console.log('Registration successful. Logging in...');
@@ -103,14 +96,5 @@ export class Auth {
 
     toggleRegistration() {
         this.isRegistering.update(r => !r);
-    }
-}
-
-export function passwordMatchValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-        const password = control.get('password')?.value;
-        const repeat = control.get('repeatPassword')?.value;
-
-        return password === repeat ? null : {passwordMismatch: true};
     }
 }

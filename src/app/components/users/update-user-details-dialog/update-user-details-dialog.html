@@ -1,0 +1,56 @@
+<h2 mat-dialog-title>Update user details</h2>
+
+@if (isLoading()) {
+    <div class="spinner-container">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Loading user...</span>
+    </div>
+}
+@else {
+    <div mat-dialog-content>
+        <form class="user-details-form" [formGroup]="userDetailsForm">
+            <mat-form-field>
+                <input matInput placeholder="Username" formControlName="username">
+                <mat-hint align="end">{{ userDetailsForm.value.username?.length }} / 25</mat-hint>
+                @if (userDetailsForm.hasError('minlength', 'username')) {
+                    <mat-error>A username must be at least 5 characters long.</mat-error>
+                }
+                @if (userDetailsForm.hasError('maxlength', 'username')) {
+                    <mat-error>A username cannot be longer than 25 characters.</mat-error>
+                }
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput placeholder="Email" formControlName="email">
+                @if (userDetailsForm.hasError('email', 'email')) {
+                    <mat-error>This must be an email.</mat-error>
+                }
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput type="password" placeholder="Password" formControlName="password">
+                <mat-hint align="end">{{ userDetailsForm.value.password?.length }} / 100</mat-hint>
+                @if (userDetailsForm.hasError('minlength', 'password')) {
+                    <mat-error>A password must be at least 8 characters long.</mat-error>
+                }
+                @else if (userDetailsForm.hasError('maxlength', 'password')) {
+                    <mat-error>A password cannot be longer than 100 characters.</mat-error>
+                }
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput type="password" placeholder="Repeat password" formControlName="repeatPassword">
+                <mat-hint align="end">{{ userDetailsForm.value.repeatPassword?.length }} / 100</mat-hint>              
+            </mat-form-field>
+            <mat-hint>If you don't want to change a field, leave it empty.</mat-hint>
+            @if (userDetailsForm.hasError('passwordMismatch')) {
+                <mat-error>Passwords must match.</mat-error>                  
+            }
+            @else if (userDetailsForm.hasError('atLeastOneRequired')) {
+                <mat-error>At least one field must have a value.</mat-error>                  
+            }
+        </form>
+    </div>
+    
+    <div mat-dialog-actions>
+        <button matButton="outlined" (click)="onClose()" [disabled]="isLoading()">Close</button>
+        <button matButton="filled" (click)="onSubmit()" [disabled]="isLoading() || userDetailsForm.invalid">Confirm</button>
+    </div>
+}

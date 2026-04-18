@@ -11,6 +11,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { toLocalDateString } from '../../../utils';
 
 @Component({
   selector: 'app-new-project-dialog',
@@ -22,8 +23,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './new-project-dialog.css',
 })
 export class NewProjectDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  readonly error = signal('');
+  readonly isSendingRequest = signal(false);
 
   projectControl = new FormGroup({
     name: new FormControl('', [
@@ -50,8 +51,8 @@ export class NewProjectDialog {
       const request: ProjectCreateRequest = {
         name: this.projectControl.get('name')?.value || '',
         description: this.projectControl.get('description')?.value || undefined,
-        startDate: this.toIsoDateString(this.projectControl.get('startDate')?.value ?? null),
-        endDate: this.toIsoDateString(this.projectControl.get('endDate')?.value ?? null),
+        startDate: toLocalDateString(this.projectControl.get('startDate')?.value ?? null),
+        endDate: toLocalDateString(this.projectControl.get('endDate')?.value ?? null),
         isPrivate: this.projectControl.get('isPrivate')?.value || false,
       };
       this.isSendingRequest.set(true);
@@ -73,9 +74,5 @@ export class NewProjectDialog {
         }
       });
     }
-  }
-
-  private toIsoDateString(date: Date | null): string | undefined {
-    return date ? date.toISOString().split('T')[0] : undefined;
   }
 }

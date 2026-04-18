@@ -63,6 +63,8 @@ export class Project {
   readonly isAdmin = this.projectService.isAdmin;
   readonly isContributor = this.projectService.isContributor;
 
+  readonly isManager = this.userService.isManager;
+
   readonly creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
   readonly admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
   readonly contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
