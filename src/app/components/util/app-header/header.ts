@@ -1,33 +1,37 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
 import { UserService } from '../../../service/user.service';
-import { ActivatedRoute, EventType, Router } from '@angular/router';
+import { EventType, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { GeneralApiError } from '../../../models';
+import { GeneralApiError, UserDeleteResponse } from '../../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { EMPTY, forkJoin, map, of, switchMap } from 'rxjs';
+import { MatMenuModule } from '@angular/material/menu';
+import { UpdateUserDetailsDialog } from '../../users/update-user-details-dialog/update-user-details-dialog';
+import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-account-dialog';
 
 @Component({
   selector: 'app-header',
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatMenuModule],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
 export class Header {
   private router = inject(Router);
-  private userService = inject(UserService);
   private oauth2Service = inject(OAuth2Service);
+  private userService = inject(UserService);
 
+  readonly user = this.userService.user;
   readonly isLoggedIn = computed(() => {
-    const user = this.userService.user();
+    const user = this.user();
 
     return user;
   });
@@ -37,6 +41,15 @@ export class Header {
     }
     return false;
   })), { initialValue: false });
+  readonly isOnControlPanel = toSignal(this.router.events.pipe(map(event => {
+    if (event.type === EventType.NavigationEnd) {
+      return this.router.url.includes('/manager-controls');
+    }
+    return false;
+  })), { initialValue: false });
+
+  readonly isManager = this.userService.isManager;
+  readonly isOwner = this.userService.isOwner;
 
   readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
   readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
@@ -78,7 +91,7 @@ export class Header {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
+              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
                 duration: 5000
               });
             }
@@ -110,7 +123,7 @@ export class Header {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
+              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
                 duration: 5000
               });
             }
@@ -130,30 +143,82 @@ export class Header {
       width: '420px'
     })
     .afterClosed()
+    .pipe(switchMap(confirmed => {
+      if (confirmed) {
+        return forkJoin([this.authService.logout(), this.authService.refreshCsrfToken()])
+      }
+      return EMPTY;
+    }))
     .subscribe({
-      next: confirmed => {
-        if (confirmed) {
-          this.authService.logout().subscribe({
-            next: () => {
-              this.snackBar.open('Logged out successfully.', 'Dismiss', {
-                duration: 3000
-              });
-              this.router.navigateByUrl('/auth');
-            }, 
-            error: (err: HttpErrorResponse) => {
-              const error = err.error as GeneralApiError;
+      next: () => {
+        this.router.navigateByUrl('/auth');
+        this.snackBar.open('Logged out successfully.', 'Dismiss', {
+          duration: 3000
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while logging out.', 'Dismiss', {
-                duration: 5000
-              });
-            }
-          });
-        }
+        this.snackBar.open((error) ? error.errors[0] : 'An unknown error occured while logging out.', 'Dismiss', {
+          duration: 5000
+        });
       }
     });
   }
 
   onToDashboard() {
     this.router.navigateByUrl('/dashboard');
+  }
+
+  onManagerActions() {
+    this.router.navigateByUrl('/manager-controls');
+  }
+
+  onChangeUserDetails() {
+    this.dialog.open(UpdateUserDetailsDialog, {
+      disableClose: true,
+      width: "420px"
+    });
+  }
+
+  onDeleteAccount() {
+    this.dialog.open(DeleteAccountDialog, {
+      disableClose: true,
+      width: "420px"
+    })
+    .afterClosed()
+    .subscribe((response: UserDeleteResponse) => {
+      console.log(response);
+      this.snackBar.open(this.getDeletionConfirmationMessage(response), 'Dismiss', {
+        duration: 10000
+      });
+      this.userService.clearUser();
+      this.router.navigateByUrl('/auth')
+    });
+  }
+
+  private getDeletionConfirmationMessage(response: UserDeleteResponse): string {
+    let message = `You account has been successfully deleted. 
+        Deleted ${response.totalDeletedProjects} projects and 
+        quitted ${response.totalProjectsQuit} projects. `;
+
+    const projectDropboxFoldersLeft = response.totalOwnProjectsWithDropbox - response.totalOwnProjectsWithDropboxFullyDeleted;
+    if (projectDropboxFoldersLeft) {
+      message += `${projectDropboxFoldersLeft} Dropbox folders could not be deleted. You might have to delete them manually. `;
+    }
+    const projectCalendarsLeft = response.totalOwnProjectsWithCalendar - response.totalOwnProjectsWithCalendarFullyDeleted;
+    if (projectCalendarsLeft) {
+      message += `${projectCalendarsLeft} Google calendars could not be deleted. You might have to delete them manually. `;
+    }
+    const dropboxFoldersStillShared = response.totalOtherProjectsWithDropbox - response.totalOtherProjectsWithDropboxQuit;
+    if (dropboxFoldersStillShared) {
+      message += `${dropboxFoldersStillShared} Dropbox folders from other users' projects are still shared with you. You should leave them manually.`;
+    }
+    const calendarsStillShared = response.totalOtherProjectsWithCalendar - response.totalOtherProjectsWithCalendarQuit;
+    if (calendarsStillShared) {
+      message += `${calendarsStillShared} Google Calendars from other users' projects are still shared with you. You should leave them manually.`;
+    }
+
+    return message;
   }
 }

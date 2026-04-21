@@ -1,7 +1,7 @@
 <mat-card class="tasks-card" appearance="outlined">
     <mat-card-header class="main-card-header">
         <mat-card-title>Tasks</mat-card-title>
-        @if (isAdmin()) {
+        @if (isAdmin() || isManager()) {
             <div>
                 <button mat-flat-button (click)="onCreateNewTask()" color="primary" [disabled]="isLoadingTasks()">Create task</button>
             </div>

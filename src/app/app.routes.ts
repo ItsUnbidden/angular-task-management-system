@@ -23,6 +23,11 @@ export const routes: Routes = [{
     canActivate: [AuthGuard]
 },
 {
+    path: 'manager-controls',
+    loadComponent: () => import('./components/util/manager-control-panel/manager-control-panel').then(m => m.ManagerControlPanel),
+    canActivate: [AuthGuard]
+},
+{
     path: 'projects/:projectId',
     loadComponent: () => import('./components/projects/project').then(m => m.Project),
     canActivate: [AuthGuard],

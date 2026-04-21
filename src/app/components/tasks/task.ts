@@ -79,6 +79,8 @@ export class Task {
   readonly isAdmin = this.projectService.isAdmin;
   readonly isContributor = this.projectService.isContributor;
 
+  readonly isManager = this.userService.isManager;
+
   nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
       validators: [
@@ -342,7 +344,7 @@ export class Task {
                     const error = err.error as GeneralApiError;
 
                     if (error) {
-                      this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while trying to load the project.', 'Dismiss', {
+                      this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while trying to load the project.', 'Dismiss', {
                         duration: 5000
                       });
                     }
@@ -352,7 +354,7 @@ export class Task {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
+                this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -413,7 +415,7 @@ export class Task {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading labels.', 'Dismiss', {
+        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while loading labels.', 'Dismiss', {
           duration: 5000
         })
         this.isLoadingLabels.set(false);
@@ -431,7 +433,7 @@ export class Task {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
+        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
           duration: 5000
         })
         this.isLoadingLabels.set(false);

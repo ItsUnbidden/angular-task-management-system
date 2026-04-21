@@ -1,8 +1,6 @@
 export interface RegistrationRequest {
   username: string;
   email: string;
-  firstName: string;
-  lastName: string;
   password: string;
   repeatPassword: string;
 }
@@ -10,10 +8,6 @@ export interface RegistrationRequest {
 export interface LoginRequest {
   username: string;
   password: string;
-}
-
-export interface LoginResponse {
-  token: string;
 }
 
 export interface ProjectResponse {
@@ -43,6 +37,11 @@ export interface ProjectUpdateRequest {
   startDate: string;
   endDate?: string;
   isPrivate?: boolean;
+}
+
+export interface ProjectDeleteResponse {
+  hasDeletedDropboxFolder: boolean;
+  hasDeletedCalendar: boolean;
 }
 
 export interface TaskResponse {
@@ -159,10 +158,33 @@ export interface EssentialUserResponse {
 
 export interface UserResponse extends EssentialUserResponse {
   email: string;
-  firstName: string;
-  lastName: string;
   isLocked: boolean;
   roles: UserRole[];
+}
+
+export interface UserUpdateRequest {
+  username: string;
+  email: string;
+  password?: string;
+  repeatPassword?: string;
+}
+
+export interface UserDeleteResponse {
+  totalDeletedProjects: number;
+  totalOwnProjectsWithDropbox: number;
+  totalOwnProjectsWithCalendar: number;
+  totalOwnProjectsWithDropboxFullyDeleted: number;
+  totalOwnProjectsWithCalendarFullyDeleted: number;
+  totalProjectsQuit: number;
+  totalOtherProjectsWithDropbox: number;
+  totalOtherProjectsWithCalendar: number;
+  totalOtherProjectsWithDropboxQuit: number;
+  totalOtherProjectsWithCalendarQuit: number;
+}
+
+export interface UserRemoveFromProjectResponse {
+  isDropboxDisconnected: boolean;
+  isCalendarDisconnected: boolean;
 }
 
 export interface Role {
@@ -179,7 +201,7 @@ export interface Page<T> {
 
 export interface GeneralApiError {
   timestamp: string;
-  error: string;
+  errors: string[];
 }
 
 export interface OAuth2StatusResponse {

@@ -5,6 +5,9 @@
             @if (isLoggedIn() && !isOnDashboard()) {
                 <button matButton="outlined" (click)="onToDashboard()">To dashboard</button>
             }
+            @if (isManager() && !isOnControlPanel()) {
+                <button matButton="filled" (click)="onManagerActions()">Manager control panel</button>
+            }
         </div>
     </div>
     <div class="right-side-container">
@@ -49,10 +52,23 @@
                     </button>
                 }
             }
-            <button matButton="elevated" (click)="onLogout()">
-                <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                Logout
-            </button>
+            <button matButton="filled" [matMenuTriggerFor]="menu">{{ user()?.username }}</button>
+            <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="onChangeUserDetails()">
+                    <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                    Edit user details
+                </button>
+                <button mat-menu-item (click)="onLogout()">
+                    <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                    Logout
+                </button>
+                @if (!isOwner()) {
+                    <button mat-menu-item (click)="onDeleteAccount()">
+                        <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                        Delete account
+                    </button>
+                }
+            </mat-menu>
         }
     </div>
 </div>

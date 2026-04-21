@@ -25,7 +25,12 @@
             }
             @else {
                 <mat-card-header>
-                    <mat-card-title class="card-title">Overview</mat-card-title>
+                    <mat-card-title>
+                        Overview
+                        @if (isManager()) {
+                            (Manager privilege)
+                        }
+                    </mat-card-title>
                 </mat-card-header>
     
                 <mat-divider></mat-divider>
@@ -50,7 +55,7 @@
                             <h2>
                                 {{ project()?.name }}                       
                             </h2>
-                            @if (isAdmin()) {
+                            @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectNameEdit()">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                 </button>
@@ -82,7 +87,7 @@
                             @else {
                                 <p class="description-field">No description</p>
                             }
-                            @if (isAdmin()) {
+                            @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDescriptionEdit()">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                 </button>   
@@ -121,7 +126,7 @@
                             <mat-chip [ngClass]="getChipColorLocal(project()?.status ?? null)">
                                 {{ getChipTextLocal(project()?.status ?? null) }}
                             </mat-chip>      
-                            @if (isAdmin()) {
+                            @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDatesEdit()">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                 </button>
@@ -140,7 +145,7 @@
                                     <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
                                 </mat-panel-description>
                             </mat-expansion-panel-header>
-                            @if (isAdmin()) {
+                            @if (isAdmin() || isManager()) {
                                 <button matButton="elevated" (click)="onAddUser()">
                                     <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
                                     Add user
@@ -151,7 +156,7 @@
                                 @for (admin of admins(); track admin.userId) {
                                     <div class="row">
                                         <p>{{ admin.username }}</p>
-                                        @if (isCreator()) {
+                                        @if (isCreator() || isManager()) {
                                             <button matButton="elevated" (click)="onTransferOwnership(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
                                                 Make owner
@@ -161,7 +166,7 @@
                                                 Remove admin
                                             </button>
                                         }     
-                                        @if (isAdmin() && currentUser()?.id !== admin.userId) {
+                                        @if ((isAdmin() || isManager()) && currentUser()?.id !== admin.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                                 Remove
@@ -175,13 +180,13 @@
                                 @for (contributor of contributors(); track contributor.userId) {
                                     <div class="row">
                                         <p>{{ contributor.username }}</p>
-                                        @if (isCreator()) {
+                                        @if (isCreator() || isManager()) {
                                             <button matButton="elevated" (click)="onMakeAdmin(contributor)">
                                                 <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
                                                 Make admin
                                             </button>
                                         }
-                                        @if (isAdmin() && currentUser()?.id !== contributor.userId) {
+                                        @if ((isAdmin() || isManager()) && currentUser()?.id !== contributor.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(contributor)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                                 Remove
@@ -200,12 +205,12 @@
                         Private
                     </mat-slide-toggle>
                     <div class="project-buttons-container">
-                        @if (!isCreator()) {
-                            <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
+                        @if (isCreator() || isManager()) {
+                            <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>                           
                         }
-                        @else {
-                            <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>
-                        }               
+                        @if (!isCreator() && isContributor()) {
+                            <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
+                        }            
                         @if (isUserConnectedToDropbox()) {
                             @if (isCreator()) {
                                 @if (project()?.isDropboxConnected) {
@@ -221,31 +226,29 @@
                                     </button>
                                 }
                             }
-                        }
-                        @else {
-                            @if (!isCreator() && project()?.isDropboxConnected) {
+                            @else if (project()?.isDropboxConnected) {
                                 <button matButton="elevated" (click)="onJoinDropbox()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Dropbox
-                                </button>
+                                </button>                               
                             }
                         }
-                        @if (isCreator() && isUserConnectedToCalendar()) {
-                            @if (project()?.isCalendarConnected) {
-                                <button matButton="elevated" (click)="onDisconnectCalendar()">
-                                    <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                                    Disconnect Calendar
-                                </button>
+                        @if (isUserConnectedToCalendar()) {
+                            @if (isCreator()) {
+                                @if (project()?.isCalendarConnected) {
+                                    <button matButton="elevated" (click)="onDisconnectCalendar()">
+                                        <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
+                                        Disconnect Calendar
+                                    </button>
+                                }
+                                @else {
+                                    <button matButton="elevated" (click)="onConnectCalendar()">
+                                        <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                        Connect Calendar
+                                    </button>
+                                }
                             }
-                            @else {
-                                <button matButton="elevated" (click)="onConnectCalendar()">
-                                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                    Connect Calendar
-                                </button>
-                            }
-                        }
-                        @else {
-                            @if (!isCreator() && project()?.isCalendarConnected) {
+                            @else if (project()?.isCalendarConnected) {
                                 <button matButton="elevated" (click)="onJoinCalendar()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Calendar

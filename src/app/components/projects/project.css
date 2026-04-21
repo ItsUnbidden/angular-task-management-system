@@ -20,7 +20,7 @@
     gap: 8px;
 }
 
-.card-title {
+.overview-card mat-card-header {
     margin-bottom: 10px;
 }
 

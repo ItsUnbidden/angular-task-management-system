@@ -65,7 +65,7 @@ export class AttachmentList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while uploading a file.', 'Dismiss', {
+          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while uploading a file.', 'Dismiss', {
           duration: 5000
         });
         }
@@ -86,7 +86,7 @@ export class AttachmentList {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while downloading an attachment.', 'Dismiss', {
+        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while downloading an attachment.', 'Dismiss', {
           duration: 5000
         });
       }
@@ -116,7 +116,7 @@ export class AttachmentList {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while deleting an attachment.', 'Dismiss', {
+            this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting an attachment.', 'Dismiss', {
               duration: 5000
             });
           }

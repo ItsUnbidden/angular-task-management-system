@@ -46,7 +46,7 @@
                         <mat-card-title>{{ task()?.name }}</mat-card-title>                                      
                     }
                 </div>
-                @if (isAdmin() && !isEditingName()) {
+                @if ((isAdmin() || isManager()) && !isEditingName()) {
                     <button mat-icon-button (click)="onTaskNameEdit()">
                         <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                     </button>
@@ -80,7 +80,7 @@
                         @else {
                             <p class="description-none">No description</p>
                         }
-                        @if (isAdmin()) {
+                        @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskDescriptionEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>                        
@@ -111,7 +111,7 @@
                         <mat-chip [ngClass]="getChipColorLocal(task()?.status ?? null)">
                             {{ getChipTextLocal(task()?.status ?? null) }}
                         </mat-chip>
-                        @if (isAdmin()) {
+                        @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskDueDateEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>
@@ -172,7 +172,7 @@
                                 </mat-chip>
                             }
                         </mat-chip-set>
-                        @if (isAdmin()) {
+                        @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskChipsEdit()">
                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                             </button>
@@ -199,7 +199,7 @@
                 }  
             </mat-card-actions>
             <mat-card-content>
-                @if (isDropboxConnected()) {
+                @if (isDropboxConnected() && isContributor()) {
                     @if (project()?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
                         <app-attachment-list></app-attachment-list>
                     }
@@ -218,6 +218,9 @@
                             Join Dropbox
                         </button>
                     }
+                }
+                @else if(!isContributor()) {
+                    <p>Only project members can access attachments.</p>
                 }
                 @else {
                     <p>You need to log into Dropbox in order to use attachments.</p>

@@ -1,3 +1,7 @@
+import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
+import { UserResponse } from "./models";
+import { error } from "console";
+
 export function toLocalDateString(date: Date | null): string | undefined {
     if (!date) {
         return undefined;
@@ -34,5 +38,42 @@ export function getChipText(status: string | null): string {
         case 'MEDIUM': return 'Medium';
         case 'HIGH': return 'High';
         default: return 'Unknown';
+    }
+}
+
+export function getUserRole(user: UserResponse) : string {
+    const roles = user.roles;
+
+    if (roles.includes('OWNER')) {
+        return 'Owner';
+    }
+    else if (roles.includes('MANAGER')) {
+        return 'Manager';
+    }
+    return 'User';
+}
+
+export function passwordMatchValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const passwordControl = control.get('password');
+        const repeatControl = control.get('repeatPassword');
+
+        if (!passwordControl || !repeatControl) {
+            console.warn('Password and/or repeatPassword fields are missing in a form where password matching is validated.');
+            return null;
+        }
+
+        if (passwordControl.value !== repeatControl.value) {
+            repeatControl.setErrors({ ...(repeatControl.errors ?? {}), passwordMismatch: true });
+            return { passwordMismatch: true };
+        } else {
+            if (repeatControl.hasError('passwordMismatch')) {
+                const errors = { ...(repeatControl.errors ?? {}) };
+                delete errors['passwordMismatch'];
+
+                repeatControl.setErrors(Object.keys(errors).length ? errors : null);
+            }
+            return null;
+        }
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
-import { AttachmentResponse, GeneralApiError } from '../models';
-import { Observable, tap } from 'rxjs';
-import { HttpClient, HttpErrorResponse, HttpEvent } from '@angular/common/http';
+import { AttachmentResponse, Page } from '../models';
+import { Observable } from 'rxjs';
+import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -16,15 +16,15 @@ export class AttachmentService {
   cacheAttachmentsForTask(taskId: number) {
     this.isLoading.set(true);
     this.getAttachmentsForTask(taskId).subscribe({
-      next: attachments => {
-        this.attachments.set(attachments);
+      next: page => {
+        this.attachments.set(page.content);
         this.isLoading.set(false);
       }
     });
   }
 
-  getAttachmentsForTask(taskId: number): Observable<AttachmentResponse[]> {
-    return this.http.get<AttachmentResponse[]>(`${environment.apiUrl}/api/attachments/tasks/${taskId}`);
+  getAttachmentsForTask(taskId: number): Observable<Page<AttachmentResponse>> {
+    return this.http.get<Page<AttachmentResponse>>(`${environment.apiUrl}/api/attachments/tasks/${taskId}`);
   }
 
   uploadFile(taskId: number, file: File) : Observable<HttpEvent<unknown>> {

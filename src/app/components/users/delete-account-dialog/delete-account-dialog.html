@@ -1,0 +1,32 @@
+<h2 mat-dialog-title>Delete account</h2>
+
+@if (isLoading()) {
+    <div class="spinner-container">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Loading user...</span>
+    </div>
+}
+@else {
+    <div mat-dialog-content>
+        <p>
+            Are you sure you want to delete your account? All of your projects will be deleted.
+            This action is not reversable and might take some time. Please provide your credentials to confirm.
+        </p>
+        <form class="user-credentials" [formGroup]="credentialsForm">
+            <mat-form-field>
+                <input matInput placeholder="Username" formControlName="username">               
+            </mat-form-field>
+            <mat-form-field>
+                <input matInput type="password" placeholder="Password" formControlName="password">            
+            </mat-form-field>
+            @if (error()) {
+                <mat-error>{{ error() }}</mat-error>                  
+            }           
+        </form>
+    </div>
+    
+    <div mat-dialog-actions>
+        <button matButton="outlined" (click)="onClose()" [disabled]="isLoading()">Close</button>
+        <button matButton="filled" (click)="onSubmit()" [disabled]="isLoading() || credentialsForm.invalid">Confirm</button>
+    </div>
+}

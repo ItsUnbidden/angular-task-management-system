@@ -1,4 +1,4 @@
-<main>
+<div class="main-container">
     <mat-card class="auth-card">
         @if (isRegistering()) {
             <mat-card-header>
@@ -9,36 +9,54 @@
                 <mat-form-field class="auth-field">
                     <mat-label>Username</mat-label>
                     <input matInput id="usernameRegistration" type="text" formControlName="username">
+                    <mat-hint align="end">{{ registrationForm.value.username?.length }} / 25</mat-hint>
+                    @if (registrationForm.hasError('required', 'username')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
+                    @if (registrationForm.hasError('minlength', 'username')) {
+                        <mat-error>Username must be at least 5 characters long.</mat-error>
+                    }
+                    @if (registrationForm.hasError('maxlength', 'username')) {
+                        <mat-error>Username cannot be longer than 25 characters.</mat-error>
+                    }
                 </mat-form-field>
-                <div class="password-fields">
-                    <mat-form-field class="auth-field">
-                        <mat-label>Password</mat-label>
-                        <input matInput id="passwordRegistration" type="password" formControlName="password">
-                    </mat-form-field>
-                    <mat-form-field class="auth-field">
-                        <mat-label>Repeat Password</mat-label>
-                        <input matInput id="passwordRepeat" type="password" formControlName="repeatPassword">
-                    </mat-form-field>
-                </div>
+                <mat-form-field class="auth-field">
+                    <mat-label>Password</mat-label>
+                    <input matInput id="passwordRegistration" type="password" formControlName="password">
+                    <mat-hint align="end">{{ registrationForm.value.password?.length }} / 100</mat-hint>
+                    @if (registrationForm.hasError('required', 'password')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
+                    @if (registrationForm.hasError('minlength', 'password')) {
+                        <mat-error>Password must be at least 8 characters long.</mat-error>
+                    }
+                    @if (registrationForm.hasError('maxlength', 'password')) {
+                        <mat-error>Password cannot be longer than 100 characters.</mat-error>
+                    }
+                </mat-form-field>
+                <mat-form-field class="auth-field">
+                    <mat-label>Repeat Password</mat-label>
+                    <input matInput id="passwordRepeat" type="password" formControlName="repeatPassword">
+                    <mat-hint align="end">{{ registrationForm.value.repeatPassword?.length }} / 100</mat-hint>
+                    @if (registrationForm.hasError('required', 'password')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
+                    @if (registrationForm.controls.repeatPassword.dirty && registrationForm.hasError('passwordMismatch', 'repeatPassword')) {
+                        <mat-error>Passwords do not match.</mat-error>
+                    }
+                </mat-form-field>
                 <mat-form-field class="auth-field">
                     <mat-label>Email</mat-label>
                     <input matInput id="emailRegistration" type="email" formControlName="email">
+                    @if (registrationForm.hasError('required', 'email')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
+                    @if (registrationForm.hasError('email', 'email')) {
+                        <mat-error>This doesn't look like an email.</mat-error>
+                    }
                 </mat-form-field>
-                <div class="name-fields">
-                    <mat-form-field class="auth-field name-field">
-                        <mat-label>First Name</mat-label>
-                        <input matInput id="firstNameRegistration" type="text" formControlName="firstName">
-                    </mat-form-field>
-                    <mat-form-field class="auth-field name-field">
-                        <mat-label>Last Name</mat-label>
-                        <input matInput id="lastNameRegistration" type="text" formControlName="lastName">
-                    </mat-form-field>
-                </div>
-                <button matButton="filled" class="submit-button" type="submit" [disabled]="!registrationForm.valid || !isSubmitEnabled()">Sign up</button>
+                <button matButton="filled" class="submit-button" type="submit" [disabled]="registrationForm.invalid || isLoading()">Sign up</button>
             </form>
-            @if (errorMessage()) {
-                <div class="error-label">{{ errorMessage() }}</div>
-            }
             <mat-divider/>
             <div class="mini-label">Already have an account?</div>
             <button matButton class="toggle-registration-button" (click)="toggleRegistration()">Sign in</button>
@@ -51,19 +69,31 @@
                 <mat-form-field class="auth-field">
                     <mat-label>Username</mat-label>
                     <input matInput id="usernameLogin" type="text" formControlName="username">
+                    @if (loginForm.hasError('required', 'username')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
                 </mat-form-field>
                 <mat-form-field class="auth-field">
                     <mat-label>Password</mat-label>
                     <input matInput id="passwordLogin" type="password" formControlName="password">
+                    @if (loginForm.hasError('required', 'password')) {
+                        <mat-error>This field is required.</mat-error>
+                    }
                 </mat-form-field>
-                <button matButton="filled" class="submit-button" type="submit" [disabled]="!loginForm.valid || !isSubmitEnabled()">Sign in</button>
+                <button matButton="filled" class="submit-button" type="submit" [disabled]="loginForm.invalid || isLoading()">Sign in</button>
             </form>
-            @if (errorMessage()) {
-                <div class="error-label">{{ errorMessage() }}</div>
-            }
             <mat-divider/>
             <div class="mini-label">Don't have an account?</div>
             <button matButton class="toggle-registration-button" (click)="toggleRegistration()">Sign up</button>
         }
+        @if (errorMessage()) {
+            <mat-error>{{ errorMessage() }}</mat-error>
+        }
+        @if (isLoading()) {
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Loading...</span>
+            </div>
+        }
     </mat-card>
-</main>
+</div>

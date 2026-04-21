@@ -29,8 +29,8 @@ export interface NewTaskDialogData {
   styleUrl: './new-task-dialog.css',
 })
 export class NewTaskDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  readonly error = signal('');
+  readonly isSendingRequest = signal(false);
 
   taskControl = new FormGroup({
     name: new FormControl('', [
@@ -80,7 +80,7 @@ export class NewTaskDialog {
           const error = err.error as GeneralApiError;
                     
           if (error) {
-            this.error.set(error.error);
+            this.error.set(error.errors[0]);
           }
           else {
             this.error.set('Unknown error')

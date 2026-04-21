@@ -33,4 +33,12 @@ export class AuthService {
   refreshToken(): Observable<void> {
     return this.http.post<void>(`${environment.apiUrl}/api/auth/refresh`, {});
   }
+
+  forceCsrfTokenResolve() : Observable<void> {
+    return this.http.get<void>(`${environment.apiUrl}/api/auth/csrf`);
+  }
+
+  refreshCsrfToken() : Observable<void> {
+    return this.http.get<void>(`${environment.apiUrl}/api/auth/csrf/refresh`);
+  }
 }

@@ -99,7 +99,7 @@ export class LabelManagementDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
+          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);
@@ -130,7 +130,7 @@ export class LabelManagementDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
+          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);
@@ -158,11 +158,11 @@ export class LabelManagementDialog {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
+        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
           duration: 5000
         })
         this.isLoading.set(false);
       }
-    })
+    });
   }
 }
