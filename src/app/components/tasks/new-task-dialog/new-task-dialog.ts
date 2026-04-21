@@ -80,7 +80,7 @@ export class NewTaskDialog {
           const error = err.error as GeneralApiError;
                     
           if (error) {
-            this.error.set(error.error);
+            this.error.set(error.errors[0]);
           }
           else {
             this.error.set('Unknown error')

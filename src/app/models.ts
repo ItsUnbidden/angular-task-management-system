@@ -201,7 +201,7 @@ export interface Page<T> {
 
 export interface GeneralApiError {
   timestamp: string;
-  error: string;
+  errors: string[];
 }
 
 export interface OAuth2StatusResponse {

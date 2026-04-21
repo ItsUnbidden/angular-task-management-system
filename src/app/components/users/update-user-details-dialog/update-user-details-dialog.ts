@@ -71,7 +71,7 @@ export class UpdateUserDetailsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.error : 'Unknown error occured while trying to update user details.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while trying to update user details.', 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);

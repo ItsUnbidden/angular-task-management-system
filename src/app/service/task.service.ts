@@ -36,7 +36,7 @@ export class TaskService {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.selectedTaskLoadingError.set(error ? error.error : 'Unknown error occured while loading the selected task.');
+          this.selectedTaskLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading the selected task.');
         }
       }));
     }
@@ -53,7 +53,7 @@ export class TaskService {
       const error = (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.selectedTaskLoadingError.set(error ? error.error : 'Unknown error occured while updating the selected task.');
+        this.selectedTaskLoadingError.set(error ? error.errors[0] : 'Unknown error occured while updating the selected task.');
         this.isLoadingSelectedTask.set(false);
       }
 
@@ -78,7 +78,7 @@ export class TaskService {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.tasksLoadingError.set(error ? error.error : 'Unknown error occured while loading the task page.')
+        this.tasksLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading the task page.')
       },
       finalize: () => {
         this.isLoadingTasks.set(false);

@@ -50,7 +50,7 @@ export class OAuth2Service {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                console.error('Health check for Dropbox has failed.', error.error);
+                console.error('Health check for Dropbox has failed.', error.errors[0]);
                 this.isDropboxConnected.set(false);
                 this.isCheckingDropbox.set(false);
               }
@@ -82,7 +82,7 @@ export class OAuth2Service {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                console.error('Health check for Google Calendar has failed.', error.error);
+                console.error('Health check for Google Calendar has failed.', error.errors[0]);
                 this.isCalendarConnected.set(false);
                 this.isCheckingCalendar.set(false);
               }

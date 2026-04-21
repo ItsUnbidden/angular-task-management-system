@@ -237,7 +237,7 @@ export class Dashboard {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
         
-        this.myProjectsError.set(error ? error.error : 'An unknown error occured while loading my projects.');
+        this.myProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading my projects.');
         this.isLoadingMyProjects.set(false);
       }
     });
@@ -263,7 +263,7 @@ export class Dashboard {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
         
-        this.myTasksError.set(error ? error.error : 'An unknown error occured while loading my tasks.');
+        this.myTasksError.set(error ? error.errors[0] : 'An unknown error occured while loading my tasks.');
         this.isLoadingTasks.set(false);
       }
     });
@@ -289,7 +289,7 @@ export class Dashboard {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.publicProjectsError.set(error ? error.error : 'An unknown error occured while loading public projects.');
+        this.publicProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading public projects.');
         this.isLoadingPublicProjects.set(false);
       }
     });

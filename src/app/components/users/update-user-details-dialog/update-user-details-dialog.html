@@ -37,13 +37,13 @@
             </mat-form-field>
             <mat-form-field>
                 <input matInput type="password" placeholder="Repeat password" formControlName="repeatPassword">
-                <mat-hint align="end">{{ userDetailsForm.value.repeatPassword?.length }} / 100</mat-hint>              
+                <mat-hint align="end">{{ userDetailsForm.value.repeatPassword?.length }} / 100</mat-hint>     
+                @if (userDetailsForm.hasError('passwordMismatch', 'repeatPassword')) {
+                    <mat-error>Passwords must match.</mat-error>                  
+                }         
             </mat-form-field>
             <mat-hint>If you don't want to change a field, leave it empty.</mat-hint>
-            @if (userDetailsForm.hasError('passwordMismatch')) {
-                <mat-error>Passwords must match.</mat-error>                  
-            }
-            @else if (userDetailsForm.hasError('atLeastOneRequired')) {
+            @if (userDetailsForm.hasError('atLeastOneRequired')) {
                 <mat-error>At least one field must have a value.</mat-error>                  
             }
         </form>

@@ -63,7 +63,7 @@ export class DeleteAccountDialog {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.error.set(error.error);
+              this.error.set(error.errors[0]);
               this.isLoading.set(false);
             }
           });

@@ -41,7 +41,7 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.error : 'Unknown error occured while updating user role.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while updating user role.', 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);
@@ -64,7 +64,7 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.error : 'Unknown error occured while locking the user.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while locking the user.', 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);

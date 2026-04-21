@@ -1,8 +1,7 @@
-main {
+.main-container {
     display: flex;
     justify-content: center;
-    align-items: center;
-    height: 100vh;
+    margin: 170px;
 }
 
 .auth-card {
@@ -11,7 +10,6 @@ main {
     align-items: center;
     width: 600px;
     padding: 10px;
-    margin: auto;
 }
 
 .auth-form {
@@ -23,7 +21,7 @@ main {
 
 .auth-field {
     margin-top: 15px;
-    width: 250px;
+    width: 350px;
 }
 
 .submit-button {
@@ -44,15 +42,4 @@ main {
 .auth-card-title {
     font-size: 40px;
     margin: 10px 0 30px 0;
-}
-
-.password-fields {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-}
-
-.error-label {
-    color: red;
-    margin-top: 10px;
 }

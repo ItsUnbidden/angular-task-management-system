@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
 import { UserService } from '../../../service/user.service';
@@ -13,7 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { EMPTY, forkJoin, map, of, switchMap } from 'rxjs';
 import { MatMenuModule } from '@angular/material/menu';
 import { UpdateUserDetailsDialog } from '../../users/update-user-details-dialog/update-user-details-dialog';
 import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-account-dialog';
@@ -91,7 +91,7 @@ export class Header {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
+              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
                 duration: 5000
               });
             }
@@ -123,7 +123,7 @@ export class Header {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
+              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
                 duration: 5000
               });
             }
@@ -143,25 +143,25 @@ export class Header {
       width: '420px'
     })
     .afterClosed()
+    .pipe(switchMap(confirmed => {
+      if (confirmed) {
+        return forkJoin([this.authService.logout(), this.authService.refreshCsrfToken()])
+      }
+      return EMPTY;
+    }))
     .subscribe({
-      next: confirmed => {
-        if (confirmed) {
-          this.authService.logout().subscribe({
-            next: () => {
-              this.snackBar.open('Logged out successfully.', 'Dismiss', {
-                duration: 3000
-              });
-              this.router.navigateByUrl('/auth');
-            }, 
-            error: (err: HttpErrorResponse) => {
-              const error = err.error as GeneralApiError;
+      next: () => {
+        this.router.navigateByUrl('/auth');
+        this.snackBar.open('Logged out successfully.', 'Dismiss', {
+          duration: 3000
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while logging out.', 'Dismiss', {
-                duration: 5000
-              });
-            }
-          });
-        }
+        this.snackBar.open((error) ? error.errors[0] : 'An unknown error occured while logging out.', 'Dismiss', {
+          duration: 5000
+        });
       }
     });
   }

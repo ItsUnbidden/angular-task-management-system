@@ -17,8 +17,10 @@
     </mat-card>
     
     @if (isLoadingComments()) {
-        <mat-spinner></mat-spinner>
-        <span>Loading comments...</span>
+        <div class="spinner-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading comments...</span>
+        </div>
     }
     @else {
         <mat-list>

@@ -55,7 +55,7 @@ export class ProjectService {
         
         const error = err.error as GeneralApiError;
 
-        this.error.set(error ? error.error : 'Unknown error occured while loading the project.');
+        this.error.set(error ? error.errors[0] : 'Unknown error occured while loading the project.');
       }
     }));
   }
@@ -73,7 +73,7 @@ export class ProjectService {
         
         const error = err.error as GeneralApiError;
 
-        this.error.set(error ? error.error : 'Unknown error occured while updating the project.');
+        this.error.set(error ? error.errors[0] : 'Unknown error occured while updating the project.');
       }
     }));
   }

@@ -84,7 +84,7 @@ export class ManagerControlPanel {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.usersLoadingError.set(error ? error.error : 'Unknown error occured while loading users.');
+          this.usersLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading users.');
         }
       });
   }

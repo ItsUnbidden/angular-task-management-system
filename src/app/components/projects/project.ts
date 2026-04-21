@@ -288,7 +288,7 @@ export class Project {
               const error = err.error as GeneralApiError;
 
               if (error) {
-                this.snackBar.open(`Error: ${error.error}`, 'Dismiss', {
+                this.snackBar.open(`Error: ${error.errors[0]}`, 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -491,7 +491,7 @@ export class Project {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
       
-                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
+                this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -522,7 +522,7 @@ export class Project {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
+                this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -556,7 +556,7 @@ export class Project {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
+                this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -590,7 +590,7 @@ export class Project {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while joining Calendar in this project.', 'Dismiss', {
+                this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while joining Calendar in this project.', 'Dismiss', {
                   duration: 5000
                 });
               }
@@ -620,7 +620,7 @@ export class Project {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Dropbox.', 'Dismiss', {
+              this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while disconnecting the project from Dropbox.', 'Dismiss', {
                 duration: 5000
               });
             }
@@ -649,7 +649,7 @@ export class Project {
             error: (err: HttpErrorResponse) => {
               const error = err.error as GeneralApiError;
 
-              this.snackBar.open(error ? `Error: ${error.error}` : 'Unknown error occured while disconnecting the project from Calendar.', 'Dismiss', {
+              this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while disconnecting the project from Calendar.', 'Dismiss', {
                 duration: 5000
               });
             }

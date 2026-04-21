@@ -105,7 +105,7 @@ export class TaskGrid {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading project labels.', 'Dismiss', {
+            this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading project labels.', 'Dismiss', {
               duration: 5000
             });
           }
@@ -227,7 +227,7 @@ export class TaskGrid {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
   
-          this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading project tasks.', 'Dismiss', {
+          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading project tasks.', 'Dismiss', {
             duration: 5000
           });
         }

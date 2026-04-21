@@ -98,7 +98,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading comments.', 'Dismiss', {
+          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading comments.', 'Dismiss', {
             duration: 5000
           })
         }
@@ -134,7 +134,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while editing a message.', 'Dismiss', {
+          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while editing a message.', 'Dismiss', {
             duration: 5000
           })
         }
@@ -169,7 +169,7 @@ export class MessageList {
               error: (err: HttpErrorResponse) => {
                 const error = err.error as GeneralApiError;
 
-                this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while deleting a message.', 'Dismiss', {
+                this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while deleting a message.', 'Dismiss', {
                   duration: 5000
                 })
               }
@@ -311,7 +311,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
           
-          this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading comments.', 'Dismiss', {
+          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading comments.', 'Dismiss', {
           duration: 5000,
         })
         }
@@ -326,7 +326,7 @@ export class MessageList {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
         
-        this.snackBar.open((error) ? `Error: ${error.error}` : 'An unknown error occured while loading replies.', 'Dismiss', {
+        this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading replies.', 'Dismiss', {
         duration: 5000,
       })
       }

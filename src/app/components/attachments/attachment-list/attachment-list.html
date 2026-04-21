@@ -11,8 +11,10 @@
         }
     </div>
     @if (isLoadingAttachments()) {
-        <mat-spinner diameter="30"></mat-spinner>
-        <span>Loading attachmets...</span>
+        <div class="spinner-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading attachments...</span>
+        </div>
     } 
     @else {  
         <div class="attachments-grid">
