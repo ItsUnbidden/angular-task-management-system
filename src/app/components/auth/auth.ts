@@ -100,6 +100,7 @@ export class Auth {
                 switchMap(() => this.authService.login({ username, password }))
             ).subscribe({
                 next: () => {
+                    this.router.navigateByUrl(this.returnUrl);
                     this.isLoading.set(false);
                 },
                 error: (err: HttpErrorResponse) => {

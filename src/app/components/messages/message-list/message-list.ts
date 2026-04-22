@@ -15,6 +15,7 @@ import { MatIcon } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
+import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-message-list',
@@ -158,25 +159,25 @@ export class MessageList {
         }
       })
       .afterClosed()
+      .pipe(switchMap(confirmed => {
+        if (confirmed) {
+          return this.messageService.deleteMessage(message.id);
+        }         
+        return EMPTY;
+      }))
       .subscribe({
-        next: confirmed => {
-          if (confirmed) {
-            this.messageService.deleteMessage(message.id).subscribe({
-              next: () => {
-                this.messageService.clearComments();
-                this.loadComments(0);
-              },
-              error: (err: HttpErrorResponse) => {
-                const error = err.error as GeneralApiError;
+        next: () => {
+          this.messageService.clearComments();
+          this.loadComments(0);
+        },
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
 
-                this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while deleting a message.', 'Dismiss', {
-                  duration: 5000
-                })
-              }
-            })
-          }         
+          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while deleting a message.', 'Dismiss', {
+            duration: 5000
+          });
         }
-      })
+      });
     }
   }
 
@@ -212,20 +213,19 @@ export class MessageList {
       this.setExpandComment(message.id, true);
       this.setLoadingReplies(message.id, true);
     }
-    this.messageService.replyToMessage(message.id, { text: this.newReplyForm.value.reply ?? '' }).subscribe({
-      next: reply => {
-        if (this.isComment(message)) {
-          this.messageService.clearRepliesForComment(message.id);
-          this.messageService.loadMoreRepliesForComment(message.id, 0).subscribe();
-          this.setLoadingReplies(message.id, false);
-        }
-        if (superParent) {
-          this.messageService.clearRepliesForComment(superParent.id);
-          this.messageService.loadMoreRepliesForComment(superParent.id, 0).subscribe();
-        }
-        this.disableReplying();
+    this.messageService.replyToMessage(message.id, { text: this.newReplyForm.value.reply ?? '' }).pipe(switchMap(reply => {
+      if (this.isComment(message)) {
+        this.setLoadingReplies(message.id, false);
+        this.messageService.clearRepliesForComment(message.id);
+        return this.messageService.loadMoreRepliesForComment(message.id, 0);
       }
-    })
+      if (superParent) {
+        this.messageService.clearRepliesForComment(superParent.id);
+        return this.messageService.loadMoreRepliesForComment(superParent.id, 0);
+      }
+      this.disableReplying();
+      return EMPTY;
+    })).subscribe();
   }
 
   onReply(message: MessageResponse) {
@@ -321,8 +321,6 @@ export class MessageList {
 
   private loadReplies(commentId: number, page: number) {
     this.messageService.loadMoreRepliesForComment(commentId, page).subscribe({
-      next: messages => {      
-      },
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
         

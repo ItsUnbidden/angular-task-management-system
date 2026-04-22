@@ -16,8 +16,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './add-user-dialog.css',
 })
 export class AddUserDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  readonly error = signal('');
+  readonly isSendingRequest = signal(false);
 
   addUserForm = new FormGroup({
     username: new FormControl('', {
@@ -39,7 +39,7 @@ export class AddUserDialog {
       if (username) {
         this.isSendingRequest.set(true);
         this.projectService.addUserToProject(this.data, username).subscribe({
-          next: p => {
+          next: () => {
             this.dialogRef.close(true);
             this.isSendingRequest.set(false);
           },

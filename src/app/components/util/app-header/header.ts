@@ -13,7 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { EMPTY, forkJoin, map, of, switchMap } from 'rxjs';
+import { EMPTY, forkJoin, map, switchMap } from 'rxjs';
 import { MatMenuModule } from '@angular/material/menu';
 import { UpdateUserDetailsDialog } from '../../users/update-user-details-dialog/update-user-details-dialog';
 import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-account-dialog';
@@ -199,26 +199,9 @@ export class Header {
 
   private getDeletionConfirmationMessage(response: UserDeleteResponse): string {
     let message = `You account has been successfully deleted. 
-        Deleted ${response.totalDeletedProjects} projects and 
-        quitted ${response.totalProjectsQuit} projects. `;
-
-    const projectDropboxFoldersLeft = response.totalOwnProjectsWithDropbox - response.totalOwnProjectsWithDropboxFullyDeleted;
-    if (projectDropboxFoldersLeft) {
-      message += `${projectDropboxFoldersLeft} Dropbox folders could not be deleted. You might have to delete them manually. `;
-    }
-    const projectCalendarsLeft = response.totalOwnProjectsWithCalendar - response.totalOwnProjectsWithCalendarFullyDeleted;
-    if (projectCalendarsLeft) {
-      message += `${projectCalendarsLeft} Google calendars could not be deleted. You might have to delete them manually. `;
-    }
-    const dropboxFoldersStillShared = response.totalOtherProjectsWithDropbox - response.totalOtherProjectsWithDropboxQuit;
-    if (dropboxFoldersStillShared) {
-      message += `${dropboxFoldersStillShared} Dropbox folders from other users' projects are still shared with you. You should leave them manually.`;
-    }
-    const calendarsStillShared = response.totalOtherProjectsWithCalendar - response.totalOtherProjectsWithCalendarQuit;
-    if (calendarsStillShared) {
-      message += `${calendarsStillShared} Google Calendars from other users' projects are still shared with you. You should leave them manually.`;
-    }
-
+        Deleted ${response.deletedProjects.length} projects and 
+        quitted ${response.quittedProjects.length} projects. `;
+    // TODO: Make a nice message for when not everything is disconnected properly.
     return message;
   }
 }

@@ -170,21 +170,20 @@ export interface UserUpdateRequest {
 }
 
 export interface UserDeleteResponse {
-  totalDeletedProjects: number;
-  totalOwnProjectsWithDropbox: number;
-  totalOwnProjectsWithCalendar: number;
-  totalOwnProjectsWithDropboxFullyDeleted: number;
-  totalOwnProjectsWithCalendarFullyDeleted: number;
-  totalProjectsQuit: number;
-  totalOtherProjectsWithDropbox: number;
-  totalOtherProjectsWithCalendar: number;
-  totalOtherProjectsWithDropboxQuit: number;
-  totalOtherProjectsWithCalendarQuit: number;
+  deletedProjects: ProjectDeleteResponse[];
+  quittedProjects: UserRemoveFromProjectResponse[];
 }
 
 export interface UserRemoveFromProjectResponse {
-  isDropboxDisconnected: boolean;
-  isCalendarDisconnected: boolean;
+  project: ProjectResponse;
+  dropboxDisconnected: ThirdPartyOperationResult;
+  calendarDisconnected: ThirdPartyOperationResult;
+}
+
+export interface UserAddToProjectResponse {
+  project: ProjectResponse;
+  dropboxConnected: ThirdPartyOperationResult;
+  calendarConnected: ThirdPartyOperationResult;
 }
 
 export interface Role {
@@ -212,6 +211,17 @@ export interface OAuth2StatusResponse {
 export interface ThirdPartyTestResponse {
   result: string;
 }
+
+export interface ThirdPartyProjectDisconnectionResponse {
+  isDropboxFolderDeleted?: boolean;
+  isCalendarDeleted?: boolean;
+}
+
+export interface ThirdPartyOperationResult {
+  status: ThirdPartyOperationStatus;
+}
+
+export type ThirdPartyOperationStatus = 'SUCCESS' | 'SKIPPED' | 'NOT_APPLICABLE' | 'FAILED';
 
 export type ProjectStatus = 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
 

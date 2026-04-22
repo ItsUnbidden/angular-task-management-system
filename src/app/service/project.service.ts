@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
-import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest } from '../models';
+import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
 import { environment } from '../../environments/environment';
 import { UserService } from './user.service';
 
@@ -111,11 +111,11 @@ export class ProjectService {
     return this.http.put<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}`, request);
   }
 
-  addUserToProject(projectId: number, username: string) : Observable<ProjectResponse> {
+  addUserToProject(projectId: number, username: string) : Observable<UserAddToProjectResponse> {
     this.isLoading.set(true);
-    return this.http.post<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${username}/add`, {}).pipe(tap({
-      next: p => {
-        this.project.set(p);
+    return this.http.post<UserAddToProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${username}/add`, {}).pipe(tap({
+      next: response => {
+        this.project.set(response.project);
       },
       finalize: () => {
         this.isLoading.set(false);
@@ -123,12 +123,19 @@ export class ProjectService {
     }));
   }
 
-  removeUserFromProject(projectId: number, userId: number) : Observable<ProjectDeleteResponse> {
-    return this.http.delete<ProjectDeleteResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`);
+  removeUserFromProject(projectId: number, userId: number) : Observable<UserRemoveFromProjectResponse> {
+    return this.http.delete<UserRemoveFromProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`).pipe(tap({
+      next: response => {
+        this.project.set(response.project);
+      },
+      finalize: () => {
+        this.isLoading.set(false);
+      }
+    }));
   }
 
-  quitProject(projectId: number) : Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/api/projects/${projectId}/quit`);
+  quitProject(projectId: number) : Observable<UserRemoveFromProjectResponse> {
+    return this.http.delete<UserRemoveFromProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/quit`);
   }
 
   changeMemberRole(projectId: number, userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectResponse> {
@@ -188,28 +195,12 @@ export class ProjectService {
     return this.http.patch<void>(`${environment.apiUrl}/api/projects/${projectId}/calendar/join`, {});
   }
 
-  disconnectDropbox(projectId: number) : Observable<ProjectResponse> {
-    this.isLoading.set(true);
-    return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/disconnect`).pipe(tap({
-      next: (project) => {
-        this.project.set(project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }))
+  disconnectDropbox(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {
+    return this.http.delete<ThirdPartyProjectDisconnectionResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/disconnect`);
   }
 
-  disconnectCalendar(projectId: number) : Observable<ProjectResponse> {
-    this.isLoading.set(true);
-    return this.http.delete<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/google/disconnect`).pipe(tap({
-      next: (project) => {
-        this.project.set(project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }))
+  disconnectCalendar(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {
+    return this.http.delete<ThirdPartyProjectDisconnectionResponse>(`${environment.apiUrl}/api/projects/${projectId}/google/disconnect`);
   }
 
   getProjectCreator(project: ProjectResponse) : EssentialUserResponse {
