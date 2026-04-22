@@ -1,7 +1,7 @@
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { GeneralApiError, Page, TaskCreateRequest, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
+import { GeneralApiError, Page, TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
 import { Observable, of, tap } from 'rxjs';
 
 @Injectable({
@@ -134,6 +134,10 @@ export class TaskService {
 
   updateTaskStatus(taskId: number, request: TaskUpdateStatusRequest) : Observable<TaskResponse> {
     return this.http.patch<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}/status`, request);
+  }
+
+  deleteTask(taskId: number) : Observable<TaskDeleteResponse> {
+    return this.http.delete<TaskDeleteResponse>(`${environment.apiUrl}/api/tasks/${taskId}`);
   }
 
   private isStatusUpdateRequest(request: TaskUpdateRequest | TaskUpdateStatusRequest) : request is TaskUpdateStatusRequest {

@@ -90,6 +90,12 @@ export interface TaskFilter {
   labelIds?: number[];
 }
 
+export interface TaskDeleteResponse {
+  taskName: string;
+  dropboxFolderDeleted: ThirdPartyOperationResult;
+  calendarFolderDeleted: ThirdPartyOperationResult;
+}
+
 export interface ProjectRoleResponse {
   userId: number;
   username: string;

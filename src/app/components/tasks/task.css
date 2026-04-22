@@ -65,6 +65,7 @@
     display: flex;
     justify-content: right;
     margin-right: 10px;
+    gap: 10px;
 }
 
 .error-actions-container {

@@ -8,10 +8,10 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { GeneralApiError, LabelResponse, TaskPriority, TaskStatus, TaskUpdateRequest, TaskUpdateStatusRequest } from '../../models';
+import { GeneralApiError, LabelResponse, TaskDeleteResponse, TaskPriority, TaskStatus, TaskUpdateRequest, TaskUpdateStatusRequest } from '../../models';
 import { TaskService } from '../../service/task.service';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { map } from 'rxjs';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { EMPTY, map, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
@@ -30,6 +30,7 @@ import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
 import { getChipColor, getChipText, toLocalDateString } from '../../utils';
 import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
+import { title } from 'process';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -118,7 +119,7 @@ export class Task {
     { priority: 'HIGH', priorityView: 'High' }
   ];
 
-  constructor(private snackBar: MatSnackBar, private dialog: MatDialog) {
+  constructor(private snackBar: MatSnackBar, private dialog: MatDialog, private router: Router) {
     effect(() => {
       const taskId = this.taskId();
 
@@ -365,6 +366,44 @@ export class Task {
     }
   }
 
+  onTaskDelete() {
+    const task = this.task();
+
+    if (task) {
+      this.dialog.open(ConfirmDialog, {
+        data: {
+          title: 'Delete task',
+          message: `Are you sure you want to delete task <strong>${task.name}</strong>?`
+        },
+        disableClose: true,
+        width: '480px'
+      })
+      .afterClosed().pipe(switchMap(confirmed => {
+        if (confirmed) {
+          this.isTaskLoading.set(true);
+          return this.taskService.deleteTask(task.id);
+        }
+        return EMPTY;
+      }))
+      .subscribe({
+        next: response => {
+          this.snackBar.open(this.getTaskDeleteMessage(response), 'Dismiss', {
+            duration: 10000
+          });
+          this.isTaskLoading.set(false);
+          this.task.set(null);
+          this.router.navigateByUrl(`/projects/${task.projectId}`);
+        },
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(error ? error.errors[0] : `Unknown error occured while attempting to delete task ${task.name}.`);
+          this.isTaskLoading.set(false);
+        }
+      });
+    }
+  }
+
   onCloseEditing() {
     this.isEditingDate.set(false);
     this.isEditingName.set(false);
@@ -439,5 +478,20 @@ export class Task {
         this.isLoadingLabels.set(false);
       }
     })
+  }
+
+  private getTaskDeleteMessage(response: TaskDeleteResponse) : string {
+    let message = `Task ${response.taskName} has been successfully deleted.`;
+    if (response.dropboxFolderDeleted.status === 'SKIPPED') {
+      message += ' An error occured while deleting the task\'s Dropbox folder. You might have to delete it manually.';
+    } else if (response.dropboxFolderDeleted.status === 'FAILED') {
+      message += ' Was not able to delete the task\'s Dropbox folder, because your account is not connected to Dropbox. It should be deleted manually.'
+    }
+    if (response.dropboxFolderDeleted.status === 'SKIPPED') {
+      message += ' An error occured while deleting the task\'s Calendar events. You might have to delete them manually.';
+    } else if (response.dropboxFolderDeleted.status === 'FAILED') {
+      message += ' Was not able to delete the task\'s Calendar events, because your account is not connected to Dropbox. They should be deleted manually.'
+    }
+    return message;
   }
 }

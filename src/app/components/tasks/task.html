@@ -182,6 +182,12 @@
             </mat-card-content>
     
             <mat-card-actions class="task-actions-container">
+                @if (isAdmin() || isManager()) {
+                    <button matButton="outlined" (click)="onTaskDelete()">
+                        <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                        Delete
+                    </button>
+                }
                 @if (task()?.assigneeId === currentUser()?.id) {
                     @if (task()?.status === 'IN_PROGRESS') {
                         <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
@@ -198,6 +204,7 @@
                     }                  
                 }  
             </mat-card-actions>
+
             <mat-card-content>
                 @if (isDropboxConnected() && isContributor()) {
                     @if (project()?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
