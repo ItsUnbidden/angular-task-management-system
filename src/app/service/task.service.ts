@@ -2,7 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { GeneralApiError, Page, TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
-import { Observable, of, tap } from 'rxjs';
+import { EMPTY, Observable, of, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +16,7 @@ export class TaskService {
   readonly selectedTaskLoadingError = signal<string | null>(null);
   readonly totalTasks = signal(0);
 
-  constructor(private http: HttpClient) { }
+  constructor(private readonly http: HttpClient) { }
 
   cacheSelectedTask(taskId: number) : Observable<TaskResponse> {
     const tasks = this.tasks();
@@ -42,7 +42,7 @@ export class TaskService {
     }
   }
 
-  updateCachedTask(request: TaskUpdateRequest | TaskUpdateStatusRequest) : Observable<TaskResponse> | null {
+  updateCachedTask(request: TaskUpdateRequest | TaskUpdateStatusRequest) : Observable<TaskResponse> {
     const selectedTask = this.selectedTask();
 
     if (selectedTask) {
@@ -64,7 +64,7 @@ export class TaskService {
       }
       return this.updateTask(selectedTask.id, request).pipe(tap({ next, error }));
     }
-    return null;
+    return EMPTY;
   }
 
   cacheProjectTasksPage(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {

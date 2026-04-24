@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
+import { map, Observable, switchMap, tap } from 'rxjs';
 import { CommentResponse, MessageCreateRequest, MessageResponse, Page, ReplyResponse } from '../models';
 import { environment } from '../../environments/environment';
 
@@ -39,7 +39,7 @@ export class MessageService {
 
   readonly itemsPageSize = 2;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   loadMoreCommentsForTask(taskId: number, page: number) : Observable<Page<CommentResponse>> {
     this.isLoadingComments.set(true);
@@ -62,9 +62,8 @@ export class MessageService {
           return newMessageStates;
         })
         this.totalComments.set(commentsPage.totalElements);
-        this.isLoadingComments.set(false);
       },
-      error: (err: HttpErrorResponse) => {
+      finalize: () => {
         this.isLoadingComments.set(false);
       }
     }));
@@ -99,10 +98,9 @@ export class MessageService {
           })
           return newMessageStates;
         })
-        this.setLoadingReplies(commentId, false);
       },
-      error: (err: HttpErrorResponse) => {
-        this.setLoadingReplies(commentId, false);
+      finalize: () => {
+        this.isLoadingComments.set(false);
       }
     }));
   }
@@ -229,12 +227,16 @@ export class MessageService {
   }
 
   leaveComment(taskId: number, request: MessageCreateRequest) : Observable<CommentResponse> {
-    return this.http.post<CommentResponse>(`${environment.apiUrl}/api/messages/comments/tasks/${taskId}`, request).pipe(tap({
-      next: message => {
-        this.clearComments();
-        this.loadMoreCommentsForTask(taskId, 0).subscribe();
-      }
-    }));
+    return this.http.post<CommentResponse>(`${environment.apiUrl}/api/messages/comments/tasks/${taskId}`, request).pipe(
+      tap({
+        next: message => {
+          this.clearComments();
+        }
+      }),
+      switchMap(message => {
+        return this.loadMoreCommentsForTask(taskId, 0).pipe(map(() => message));
+      })
+    );
   }
 
   replyToMessage(messageId: number, request: MessageCreateRequest) : Observable<ReplyResponse> {

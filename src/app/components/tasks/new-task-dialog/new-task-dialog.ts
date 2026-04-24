@@ -32,7 +32,7 @@ export class NewTaskDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  taskControl = new FormGroup({
+  readonly taskControl = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -48,13 +48,15 @@ export class NewTaskDialog {
     assignee: new FormControl<UserResponse | null>(null)
   });
 
-  priorityOptions: TaskPriorityOption[] = [
+  readonly priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low' },
     { priority: 'MEDIUM', priorityView: 'Medium' },
     { priority: 'HIGH', priorityView: 'High' },
   ]
 
-  constructor(private dialogRef: MatDialogRef<NewTaskDialog, boolean>, private taskService: TaskService, @Inject(MAT_DIALOG_DATA) public data: NewTaskDialogData) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewTaskDialog, boolean>,
+              private readonly taskService: TaskService,
+              @Inject(MAT_DIALOG_DATA) public readonly data: NewTaskDialogData) {}
 
   close(): void {
     this.dialogRef.close();
@@ -79,12 +81,8 @@ export class NewTaskDialog {
         error: (err) => {
           const error = err.error as GeneralApiError;
                     
-          if (error) {
-            this.error.set(error.errors[0]);
-          }
-          else {
-            this.error.set('Unknown error')
-          }
+          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new task.');
+
           this.isSendingRequest.set(false);
         }
       })

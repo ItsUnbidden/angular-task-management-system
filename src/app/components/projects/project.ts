@@ -41,10 +41,10 @@ import { getChipColor, getChipText, toLocalDateString } from '../../utils';
   styleUrl: './project.css',
 })
 export class Project {
-  private route = inject(ActivatedRoute);
-  private projectService = inject(ProjectService);
-  private userService = inject(UserService);
-  private oauth2Service = inject(OAuth2Service);
+  private readonly route = inject(ActivatedRoute);
+  private readonly projectService = inject(ProjectService);
+  private readonly userService = inject(UserService);
+  private readonly oauth2Service = inject(OAuth2Service);
 
   readonly project = this.projectService.project;
   readonly currentUser = this.userService.user;
@@ -94,7 +94,9 @@ export class Project {
 
   readonly isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
-  constructor(private dialog: MatDialog, private snackBar: MatSnackBar, private router: Router) {
+  constructor(private readonly dialog: MatDialog,
+              private readonly snackBar: MatSnackBar,
+              private readonly router: Router) {
     effect(() => {
       const id = this.projectId();
 

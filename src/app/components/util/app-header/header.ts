@@ -25,9 +25,9 @@ import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-ac
   styleUrl: './header.css',
 })
 export class Header {
-  private router = inject(Router);
-  private oauth2Service = inject(OAuth2Service);
-  private userService = inject(UserService);
+  private readonly router = inject(Router);
+  private readonly oauth2Service = inject(OAuth2Service);
+  private readonly userService = inject(UserService);
 
   readonly user = this.userService.user;
   readonly isLoggedIn = computed(() => {
@@ -57,7 +57,9 @@ export class Header {
   readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
   readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
 
-  constructor(private authService: AuthService, private snackBar: MatSnackBar, private dialog: MatDialog) {}
+  constructor(private readonly authService: AuthService,
+              private readonly snackBar: MatSnackBar,
+              private readonly dialog: MatDialog) {}
 
   onConnectDropbox() {
     const returnUrl = this.router.url;
@@ -78,25 +80,22 @@ export class Header {
       disableClose: true,
       width: '420px'
     })
-    .afterClosed()
+    .afterClosed().pipe(switchMap(confirmed => {
+      if (confirmed) return this.oauth2Service.logoutFromDropbox();
+      return EMPTY;
+    }))
     .subscribe({
-      next: confirmed => {
-        if (confirmed) {
-          this.oauth2Service.logoutFromDropbox().subscribe({
-            next: () => {
-              this.snackBar.open('Dropbox disconnected successfully.', 'Dismiss', {
-                duration: 3000
-              });
-            },
-            error: (err: HttpErrorResponse) => {
-              const error = err.error as GeneralApiError;
+      next: () => {
+        this.snackBar.open('Dropbox disconnected successfully.', 'Dismiss', {
+          duration: 3000
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
-                duration: 5000
-              });
-            }
-          });
-        }
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
+          duration: 5000
+        });
       }
     });
   }
@@ -110,25 +109,22 @@ export class Header {
       disableClose: true,
       width: '420px'
     })
-    .afterClosed()
+    .afterClosed().pipe(switchMap(confirmed => {
+      if (confirmed) return this.oauth2Service.logoutFromCalendar();
+      return EMPTY;
+    }))
     .subscribe({
-      next: confirmed => {
-        if (confirmed) {
-          this.oauth2Service.logoutFromCalendar().subscribe({
-            next: () => {
-              this.snackBar.open('Google Calendar disconnected successfully.', 'Dismiss', {
-                duration: 3000
-              });
-            },
-            error: (err: HttpErrorResponse) => {
-              const error = err.error as GeneralApiError;
+      next: () => {
+        this.snackBar.open('Google Calendar disconnected successfully.', 'Dismiss', {
+          duration: 3000
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
 
-              this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
-                duration: 5000
-              });
-            }
-          });
-        }
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
+          duration: 5000
+        });
       }
     });
   }
@@ -159,7 +155,7 @@ export class Header {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open((error) ? error.errors[0] : 'An unknown error occured while logging out.', 'Dismiss', {
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while logging out.', 'Dismiss', {
           duration: 5000
         });
       }
@@ -188,12 +184,13 @@ export class Header {
     })
     .afterClosed()
     .subscribe((response: UserDeleteResponse) => {
-      console.log(response);
-      this.snackBar.open(this.getDeletionConfirmationMessage(response), 'Dismiss', {
-        duration: 10000
-      });
-      this.userService.clearUser();
-      this.router.navigateByUrl('/auth')
+      if (response) {
+        this.snackBar.open(this.getDeletionConfirmationMessage(response), 'Dismiss', {
+          duration: 10000
+        });
+        this.userService.clearUser();
+        this.router.navigateByUrl('/auth')
+      }
     });
   }
 

@@ -15,7 +15,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './user-actions-dialog.css',
 })
 export class UserActionsDialog {
-  private userService = inject(UserService);
+  private readonly userService = inject(UserService);
 
   readonly isOwner = this.userService.isOwner;
   readonly loadedUser = signal<UserResponse | null>(null);
@@ -23,7 +23,9 @@ export class UserActionsDialog {
 
   private hasChanged = false;
 
-  constructor(private dialogRef: MatDialogRef<UserActionsDialog, boolean>, private snackBar: MatSnackBar, @Inject(MAT_DIALOG_DATA) data: UserResponse) {
+  constructor(private readonly dialogRef: MatDialogRef<UserActionsDialog, boolean>,
+              private readonly snackBar: MatSnackBar,
+              @Inject(MAT_DIALOG_DATA) readonly data: UserResponse) {
     this.loadedUser.set(data);
   }
 

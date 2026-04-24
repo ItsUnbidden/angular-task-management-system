@@ -22,12 +22,12 @@ interface NewLabelData {
   styleUrl: './new-label-dialog.css',
 })
 export class NewLabelDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  readonly error = signal('');
+  readonly isSendingRequest = signal(false);
 
-  paletteItems = ['blue', 'green', 'red', 'yellow'];
+  readonly paletteItems = ['blue', 'green', 'red', 'yellow'];
 
-  labelForm = new FormGroup({
+  readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
       Validators.required
     ]}),
@@ -36,7 +36,9 @@ export class NewLabelDialog {
     ]})
   })
 
-  constructor(private dialogRef: MatDialogRef<NewLabelDialog, boolean>, private labelService: LabelService, @Inject(MAT_DIALOG_DATA) private data: NewLabelData) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewLabelDialog, boolean>,
+    private readonly labelService: LabelService,
+    @Inject(MAT_DIALOG_DATA) private readonly data: NewLabelData) {}
   
   close(): void {
       this.dialogRef.close();
@@ -59,12 +61,8 @@ export class NewLabelDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
           
-          if (error) {
-            this.error.set(error.errors[0]);
-          }
-          else {
-            this.error.set('Unknown error')
-          }
+          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new label.');
+
           this.isSendingRequest.set(false);
         }
       });

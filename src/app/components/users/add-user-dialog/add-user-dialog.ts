@@ -19,7 +19,7 @@ export class AddUserDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  addUserForm = new FormGroup({
+  readonly addUserForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -30,7 +30,9 @@ export class AddUserDialog {
     })
   })
 
-  constructor(private dialogRef: MatDialogRef<AddUserDialog, boolean>, private projectService: ProjectService, @Inject(MAT_DIALOG_DATA) private data: number) {}
+  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>,
+              private readonly projectService: ProjectService,
+              @Inject(MAT_DIALOG_DATA) private readonly data: number) {}
 
   submit() {
     if (this.addUserForm.valid) {
@@ -45,12 +47,8 @@ export class AddUserDialog {
           },
           error: (err) => {
             const error = err.error as GeneralApiError;
-            if (error) {
-              this.error.set(error.errors[0]);
-            }
-            else {
-              this.error.set('Unknown error')
-            }
+            
+            this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to add a new user to the project.');
             this.isSendingRequest.set(false);
           }
         });

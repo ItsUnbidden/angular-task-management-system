@@ -8,14 +8,14 @@ import { MatListModule } from '@angular/material/list';
 import { TaskService } from '../../../service/task.service';
 import { MessageService, ReplyCache } from '../../../service/message.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CommentResponse, GeneralApiError, MessageResponse, ReplyResponse } from '../../../models';
+import { CommentResponse, GeneralApiError, MessageResponse, Page, ReplyResponse } from '../../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { UserService } from '../../../service/user.service';
 import { MatIcon } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
-import { EMPTY, switchMap } from 'rxjs';
+import { EMPTY, Observable, pipe, switchMap, tap } from 'rxjs';
 
 @Component({
   selector: 'app-message-list',
@@ -24,9 +24,9 @@ import { EMPTY, switchMap } from 'rxjs';
   styleUrl: './message-list.css',
 })
 export class MessageList {
-  private taskService = inject(TaskService);
-  private messageService = inject(MessageService);
-  private userService = inject(UserService);
+  private readonly taskService = inject(TaskService);
+  private readonly messageService = inject(MessageService);
+  private readonly userService = inject(UserService);
 
   readonly task = this.taskService.selectedTask;
   readonly comments = this.messageService.comments;
@@ -41,7 +41,7 @@ export class MessageList {
 
   currentCommentsPage = 0;
 
-  newCommentForm = new FormGroup({
+  readonly newCommentForm = new FormGroup({
     comment: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -51,7 +51,7 @@ export class MessageList {
     })
   });
 
-  editMessageForm = new FormGroup({
+  readonly editMessageForm = new FormGroup({
     message: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -61,7 +61,7 @@ export class MessageList {
     })
   });
 
-  newReplyForm = new FormGroup({
+  readonly newReplyForm = new FormGroup({
     reply: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -71,9 +71,17 @@ export class MessageList {
     })
   });
 
-  constructor(private snackBar: MatSnackBar, private dialog: MatDialog) {
+  constructor(private readonly snackBar: MatSnackBar, private readonly dialog: MatDialog) {
     effect(() => {
-      this.loadComments(0);
+      this.loadComments(0).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while loading comments.', 'Dismiss', {
+            duration: 5000
+          });
+        }
+      });
     });
   }
 
@@ -83,7 +91,7 @@ export class MessageList {
 
     if (message && task) {
       this.messageService.leaveComment(task.id, { text: message }).subscribe({
-        next: message => {
+        next: () => {
           this.task.update(t => {
             if (t) {
               t.amountOfMessages++;
@@ -99,7 +107,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading comments.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while loading comments.', 'Dismiss', {
             duration: 5000
           })
         }
@@ -121,21 +129,23 @@ export class MessageList {
     const messageText = this.editMessageForm.value.message;
 
     if (task && messageText && messageText !== message.text) {
-      this.messageService.updateMessage(message.id, { text: messageText }).subscribe({
-        next: () => {
-          if (this.isComment(message)) {
+      this.messageService.updateMessage(message.id, { text: messageText }).pipe(
+        switchMap(response => {
+          if (this.isComment(response)) {
             this.messageService.clearComments();
-            this.loadComments(0);
+            return this.loadComments(0);
           }
           else if (parent) {
             this.messageService.clearRepliesForComment(parent.id);
-            this.loadReplies(parent.id, 0);
+            return this.loadReplies(parent.id, 0);
           }
-        },
+          return EMPTY;
+        }
+      )).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while editing a message.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while editing a message.', 'Dismiss', {
             duration: 5000
           })
         }
@@ -159,21 +169,23 @@ export class MessageList {
         }
       })
       .afterClosed()
-      .pipe(switchMap(confirmed => {
-        if (confirmed) {
-          return this.messageService.deleteMessage(message.id);
-        }         
-        return EMPTY;
-      }))
-      .subscribe({
-        next: () => {
+      .pipe(
+        switchMap(confirmed => {
+          if (confirmed) {
+            return this.messageService.deleteMessage(message.id);
+          }         
+          return EMPTY;
+        }),
+        switchMap(() => {
           this.messageService.clearComments();
-          this.loadComments(0);
-        },
+          return this.loadComments(0);
+        })
+      )
+      .subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while deleting a message.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while deleting a message.', 'Dismiss', {
             duration: 5000
           });
         }
@@ -182,7 +194,15 @@ export class MessageList {
   }
 
   onMoreComments() {
-    this.loadComments(++this.currentCommentsPage);
+    this.loadComments(++this.currentCommentsPage).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while loading more comments.', 'Dismiss', {
+          duration: 5000
+        });
+      }
+    });
   }
 
   onMoreReplies(commentId: number) {
@@ -198,7 +218,15 @@ export class MessageList {
     const currentReplyCache = this.messageService.replies().get(commentId);
 
     if (currentReplyCache) {
-      this.loadReplies(commentId, currentReplyCache.page)
+      this.loadReplies(commentId, currentReplyCache.page).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while loading more replies.', 'Dismiss', {
+            duration: 5000
+          });
+        }
+      })
     }
   }
 
@@ -213,19 +241,29 @@ export class MessageList {
       this.setExpandComment(message.id, true);
       this.setLoadingReplies(message.id, true);
     }
-    this.messageService.replyToMessage(message.id, { text: this.newReplyForm.value.reply ?? '' }).pipe(switchMap(reply => {
-      if (this.isComment(message)) {
-        this.setLoadingReplies(message.id, false);
-        this.messageService.clearRepliesForComment(message.id);
-        return this.messageService.loadMoreRepliesForComment(message.id, 0);
+    this.messageService.replyToMessage(message.id, { text: this.newReplyForm.value.reply ?? '' }).pipe(
+      switchMap(reply => {
+        if (this.isComment(message)) {
+          this.setLoadingReplies(message.id, false);
+          this.messageService.clearRepliesForComment(message.id);
+          return this.messageService.loadMoreRepliesForComment(message.id, 0);
+        }
+        if (superParent) {
+          this.messageService.clearRepliesForComment(superParent.id);
+          return this.messageService.loadMoreRepliesForComment(superParent.id, 0);
+        }
+        this.disableReplying();
+        return EMPTY;
       }
-      if (superParent) {
-        this.messageService.clearRepliesForComment(superParent.id);
-        return this.messageService.loadMoreRepliesForComment(superParent.id, 0);
+    )).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while submitting a new reply.', 'Dismiss', {
+          duration: 5000
+        });
       }
-      this.disableReplying();
-      return EMPTY;
-    })).subscribe();
+    });
   }
 
   onReply(message: MessageResponse) {
@@ -235,7 +273,15 @@ export class MessageList {
   onHideComments() {
     this.messageService.clearComments();
     this.currentCommentsPage = 0;
-    this.loadComments(0);
+    this.loadComments(0).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while deleting a message.', 'Dismiss', {
+          duration: 5000
+        });
+      }
+    });
   }
 
   onHideReplies(commentId: number) {
@@ -300,34 +346,20 @@ export class MessageList {
     return "amountOfReplies" in message;
   }
 
-  private loadComments(page: number) {
+  private loadComments(page: number) : Observable<Page<CommentResponse>> {
     const task = this.task();
 
     if (task) {
-      this.messageService.loadMoreCommentsForTask(task.id, page).subscribe({
-        next: messages => {
+      return this.messageService.loadMoreCommentsForTask(task.id, page).pipe(tap({
+        next: () => {
           this.isLastCommentsPage.set((this.currentCommentsPage + 1) * this.messageService.itemsPageSize >= this.messageService.totalComments());
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-          
-          this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading comments.', 'Dismiss', {
-          duration: 5000,
-        })
         }
-      })
+      }));
     }
+    return EMPTY;
   }
 
-  private loadReplies(commentId: number, page: number) {
-    this.messageService.loadMoreRepliesForComment(commentId, page).subscribe({
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-        
-        this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading replies.', 'Dismiss', {
-        duration: 5000,
-      })
-      }
-    })
+  private loadReplies(commentId: number, page: number) : Observable<Page<ReplyResponse>> {
+    return this.messageService.loadMoreRepliesForComment(commentId, page);
   }
 }

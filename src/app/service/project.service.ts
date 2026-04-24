@@ -9,7 +9,7 @@ import { UserService } from './user.service';
   providedIn: 'root',
 })
 export class ProjectService {
-  private userService = inject(UserService);
+  private readonly userService = inject(UserService);
 
   readonly project = signal<ProjectResponse | null>(null);
   readonly isLoading = signal(false);
@@ -39,7 +39,7 @@ export class ProjectService {
     return (projectRole) ? projectRole.roleType === 'CONTRIBUTOR' || projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
   });
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   loadProjectToCache(projectId: number) : Observable<ProjectResponse> {
     this.error.set(null);

@@ -22,7 +22,7 @@ export class UserService {
   });
   private inFlight$?: Observable<UserResponse | null>;
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   ensureUserLoaded(): Observable<UserResponse | null> {
     const cached = this.user();

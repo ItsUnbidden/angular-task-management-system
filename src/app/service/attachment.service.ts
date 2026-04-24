@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { AttachmentResponse, Page } from '../models';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 
@@ -11,16 +11,16 @@ export class AttachmentService {
   readonly attachments = signal<AttachmentResponse[]>([]);
   readonly isLoading = signal(false);
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
-  cacheAttachmentsForTask(taskId: number) {
+  cacheAttachmentsForTask(taskId: number) : Observable<Page<AttachmentResponse>> {
     this.isLoading.set(true);
-    this.getAttachmentsForTask(taskId).subscribe({
+    return this.getAttachmentsForTask(taskId).pipe(tap({
       next: page => {
         this.attachments.set(page.content);
         this.isLoading.set(false);
       }
-    });
+    }));
   }
 
   getAttachmentsForTask(taskId: number): Observable<Page<AttachmentResponse>> {

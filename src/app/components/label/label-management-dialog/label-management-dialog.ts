@@ -12,6 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatIcon } from "@angular/material/icon";
+import { Observable, switchMap, tap } from 'rxjs';
 
 interface LabelManagementDialogData {
   projectId: number;
@@ -25,24 +26,23 @@ interface LabelManagementDialogData {
   styleUrl: './label-management-dialog.css',
 })
 export class LabelManagementDialog {
-  displayedColumns = ['chip', 'edit', 'delete'];
-  dataSource = new MatTableDataSource<LabelResponse>([]);
-  selectedLabel = signal<LabelResponse | null>(null);
-  error = signal('');
-  isLoading = signal(false);
-  isEditing = signal(false);
-  isDeleting = signal(false);
+  readonly displayedColumns = ['chip', 'edit', 'delete'];
+  readonly dataSource = new MatTableDataSource<LabelResponse>([]);
+  readonly selectedLabel = signal<LabelResponse | null>(null);
+  readonly error = signal('');
+  readonly isLoading = signal(false);
+  readonly isEditing = signal(false);
+  readonly isDeleting = signal(false);
 
-  hasChangedLabels = false;
-  numberOfAffectedTasks = computed(() => {
+  readonly numberOfAffectedTasks = computed(() => {
     const label = this.selectedLabel();
 
     return (label) ? label.taskIds.filter(tId => tId !== this.data.taskId).length : 0;
   })
 
-  paletteItems = ['blue', 'green', 'red', 'yellow'];
+  readonly paletteItems = ['blue', 'green', 'red', 'yellow'];
 
-  labelForm = new FormGroup({
+  readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
       Validators.required
     ]}),
@@ -51,8 +51,12 @@ export class LabelManagementDialog {
     ]})
   })
 
-  constructor(private dialogRef: MatDialogRef<LabelManagementDialog, boolean>, private snackBar: MatSnackBar,
-              private labelService: LabelService, @Inject(MAT_DIALOG_DATA) public data: LabelManagementDialogData) {
+  private hasChangedLabels = false;
+
+  constructor(private readonly dialogRef: MatDialogRef<LabelManagementDialog, boolean>,
+              private readonly snackBar: MatSnackBar,
+              private readonly labelService: LabelService,
+              @Inject(MAT_DIALOG_DATA) public readonly data: LabelManagementDialogData) {
     effect(() => {
       const label = this.selectedLabel();
 
@@ -68,7 +72,7 @@ export class LabelManagementDialog {
   }
 
   ngOnInit() {
-    this.loadLabelsForProject(this.data.projectId);
+    this.loadLabelsForProject(this.data.projectId).subscribe();
   }
 
   onEditLabel(label: LabelResponse) {
@@ -86,23 +90,22 @@ export class LabelManagementDialog {
 
     if (label) {
       this.isLoading.set(true);
-      this.labelService.deleteLabel(label.id).subscribe({
+      this.labelService.deleteLabel(label.id).pipe(
+        switchMap(() => this.loadLabelsForProject(this.data.projectId))
+      ).subscribe({
         next: () => {                        
-          this.isLoading.set(false);
           this.hasChangedLabels = true;
           this.snackBar.open(`Label ${label.id} has been deleted.`, 'Dismiss', {
             duration: 3000
-          })
-          this.loadLabelsForProject(this.data.projectId);
+          });
           this.onBack();
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while deleting a label.', 'Dismiss', {
             duration: 5000
           });
-          this.isLoading.set(false);
         }
       });
     }
@@ -117,23 +120,22 @@ export class LabelManagementDialog {
         name: this.labelForm.value.name ?? '',
         color: this.labelForm.value.color ?? '',
         taskIds: label.taskIds
-      }).subscribe({
+      }).pipe(
+        switchMap(() => this.loadLabelsForProject(this.data.projectId))
+      ).subscribe({
         next: () => {                        
-          this.isLoading.set(false);
           this.hasChangedLabels = true;
           this.snackBar.open(`Label ${label.id} has been changed.`, 'Dismiss', {
             duration: 3000
-          })
-          this.loadLabelsForProject(this.data.projectId);
+          });
           this.onBack();
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting a label.', 'Dismiss', {
+          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while deleting a label.', 'Dismiss', {
             duration: 5000
           });
-          this.isLoading.set(false);
         }
       });
     }
@@ -148,21 +150,15 @@ export class LabelManagementDialog {
     this.dialogRef.close(this.hasChangedLabels);
   }
 
-  private loadLabelsForProject(projectId: number) {
+  private loadLabelsForProject(projectId: number) : Observable<LabelResponse[]> {
     this.isLoading.set(true);
-    this.labelService.getLabelsForProject(projectId).subscribe({
+    return this.labelService.getLabelsForProject(projectId).pipe(tap({
       next: labels => {
         this.dataSource.data = labels;
-        this.isLoading.set(false);
       },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while loading project labels.', 'Dismiss', {
-          duration: 5000
-        })
+      finalize: () => {
         this.isLoading.set(false);
       }
-    });
+    }));
   }
 }

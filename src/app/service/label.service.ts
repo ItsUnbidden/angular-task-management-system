@@ -8,7 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class LabelService {
-  constructor(private http: HttpClient) {};
+  constructor(private readonly http: HttpClient) {};
 
   getLabelsForProject(projectId: number) : Observable<LabelResponse[]> {
     return this.http.get<LabelResponse[]>(`${environment.apiUrl}/api/labels/projects/${projectId}`);

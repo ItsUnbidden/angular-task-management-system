@@ -18,13 +18,13 @@ import { UserService } from '../../../service/user.service';
   styleUrl: './update-user-details-dialog.css',
 })
 export class UpdateUserDetailsDialog {
-  private userService = inject(UserService);
+  private readonly userService = inject(UserService);
 
   readonly user = this.userService.user;
   readonly isLoading = signal(false);
   readonly isEmpty = signal(false);
 
-  userDetailsForm = new FormGroup({
+  readonly userDetailsForm = new FormGroup({
     username: new FormControl('', [
       Validators.minLength(5),
       Validators.maxLength(25)
@@ -42,7 +42,8 @@ export class UpdateUserDetailsDialog {
     ])
   }, { validators: [ passwordMatchValidator(), emptyFormValidator() ] });
 
-  constructor(private dialogRef: MatDialogRef<UpdateUserDetailsDialog, boolean>, private snackBar: MatSnackBar) {}
+  constructor(private readonly dialogRef: MatDialogRef<UpdateUserDetailsDialog, boolean>,
+              private readonly snackBar: MatSnackBar) {}
 
   onSubmit() {
     const user = this.user();
@@ -67,6 +68,7 @@ export class UpdateUserDetailsDialog {
           this.snackBar.open('User details have been updated.', 'Dismiss', {
             duration: 3000
           });
+          this.dialogRef.close();
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;

@@ -9,7 +9,7 @@ import { UserService } from './user.service';
   providedIn: 'root',
 })
 export class AuthService {
-  constructor(private http: HttpClient, private userService: UserService) {}
+  constructor(private readonly http: HttpClient, private readonly userService: UserService) {}
 
   register(body: RegistrationRequest): Observable<void> {
     return this.http.post<void>(`${environment.apiUrl}/api/auth/register`, body);

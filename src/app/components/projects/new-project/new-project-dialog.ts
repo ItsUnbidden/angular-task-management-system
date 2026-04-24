@@ -26,7 +26,7 @@ export class NewProjectDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  projectControl = new FormGroup({
+  readonly projectControl = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -40,7 +40,8 @@ export class NewProjectDialog {
     isPrivate: new FormControl(false)
   });
 
-  constructor(private dialogRef: MatDialogRef<NewProjectDialog, boolean>, private projectService: ProjectService) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewProjectDialog, boolean>,
+              private readonly projectService: ProjectService) {}
 
   close(): void {
     this.dialogRef.close();
@@ -64,12 +65,7 @@ export class NewProjectDialog {
         error: (err) => {
           const error = err.error as GeneralApiError;
           
-          if (error) {
-            this.error.set(error.errors[0]);
-          }
-          else {
-            this.error.set('Unknown error')
-          }
+          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new project.');
           this.isSendingRequest.set(false);
         }
       });

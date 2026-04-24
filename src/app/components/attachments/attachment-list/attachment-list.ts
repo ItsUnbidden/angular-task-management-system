@@ -12,6 +12,7 @@ import { MatSliderModule } from '@angular/material/slider'
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
+import { EMPTY, switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-attachment-list',
@@ -20,7 +21,7 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
   styleUrl: './attachment-list.css',
 })
 export class AttachmentList {
-  private attachmentService = inject(AttachmentService);
+  private readonly attachmentService = inject(AttachmentService);
 
   private readonly maxFileSize = 157_286_400;
 
@@ -28,12 +29,14 @@ export class AttachmentList {
   readonly isLoadingAttachments = this.attachmentService.isLoading;
   readonly isProgressBarActive = signal(false);
 
-  constructor(private taskService: TaskService, private snackBar: MatSnackBar, private dialog: MatDialog) {
+  constructor(private readonly taskService: TaskService,
+              private readonly snackBar: MatSnackBar,
+              private readonly dialog: MatDialog) {
     effect(() => {
       const task = taskService.selectedTask();
 
       if (task) {
-        this.attachmentService.cacheAttachmentsForTask(task.id);
+        this.attachmentService.cacheAttachmentsForTask(task.id).subscribe();
       }
     });
   }
@@ -50,24 +53,24 @@ export class AttachmentList {
         });
         return;
       }
-      this.attachmentService.uploadFile(task.id, file).subscribe({
-        next: event => {
-          switch(event.type) {
-            case HttpEventType.Sent: 
-              this.isProgressBarActive.set(true);
-              break;
-            case HttpEventType.Response:
-              this.isProgressBarActive.set(false);
-              this.attachmentService.cacheAttachmentsForTask(task.id);
-              break;
-          }
-        },
+      this.attachmentService.uploadFile(task.id, file).pipe(switchMap(event => {
+        switch(event.type) {
+          case HttpEventType.Sent: 
+            this.isProgressBarActive.set(true);
+            break;
+          case HttpEventType.Response:
+            this.isProgressBarActive.set(false);
+            return this.attachmentService.cacheAttachmentsForTask(task.id);
+        }
+        return EMPTY;
+      }))
+      .subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while uploading a file.', 'Dismiss', {
-          duration: 5000
-        });
+            duration: 5000
+          });
         }
       });
     }
@@ -102,24 +105,23 @@ export class AttachmentList {
       disableClose: true,
       width: '420px'
     })
-    .afterClosed()
-    .subscribe(confirmed => {
-      if (confirmed) {
-        this.attachmentService.deleteAttachment(attachment.id).subscribe({
-          next: () => {
-            const task = this.taskService.selectedTask();
+    .afterClosed().pipe(switchMap(confirmed => {
+      if (confirmed) return this.attachmentService.deleteAttachment(attachment.id);
+      return EMPTY;
+    }))
+    .subscribe({
+      next: () => {
+        const task = this.taskService.selectedTask();
 
-            if (task) {
-              this.attachmentService.cacheAttachmentsForTask(task.id);
-            }
-          },
-          error: (err: HttpErrorResponse) => {
-            const error = err.error as GeneralApiError;
+        if (task) {
+          this.attachmentService.cacheAttachmentsForTask(task.id);
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
 
-            this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting an attachment.', 'Dismiss', {
-              duration: 5000
-            });
-          }
+        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting an attachment.', 'Dismiss', {
+          duration: 5000
         });
       }
     });

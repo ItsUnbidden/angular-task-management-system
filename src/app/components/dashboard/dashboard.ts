@@ -9,14 +9,14 @@ import { MatTableDataSource, MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs'
 import { ProjectService } from '../../service/project.service';
 import { TaskService } from '../../service/task.service';
-import { GeneralApiError, ProjectResponse, TaskResponse } from '../../models';
+import { GeneralApiError, Page, ProjectResponse, TaskResponse } from '../../models';
 import { MatDialog } from '@angular/material/dialog';
 import { NewProjectDialog } from '../projects/new-project/new-project-dialog';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, EMPTY, Observable, switchMap, tap } from 'rxjs';
 import { getChipColor, getChipText } from '../../utils';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
@@ -38,7 +38,7 @@ interface TableState {
   styleUrl: './dashboard.css',
 })
 export class Dashboard {
-  private userService = inject(UserService);
+  private readonly userService = inject(UserService);
 
   readonly isLoadingMyProjects = signal(false);
   readonly isLoadingTasks = signal(false);
@@ -58,90 +58,127 @@ export class Dashboard {
 
   readonly isManager = this.userService.isManager;
 
-  projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
-  publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
-  taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
+  readonly projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
+  readonly publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
+  readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
 
-  myProjectsDS = new MatTableDataSource<ProjectResponse>([]);
-  myTasksDS = new MatTableDataSource<TaskResponse>([]);
-  publicProjectsDS = new MatTableDataSource<ProjectResponse>([]);
+  readonly myProjectsDS = new MatTableDataSource<ProjectResponse>([]);
+  readonly myTasksDS = new MatTableDataSource<TaskResponse>([]);
+  readonly publicProjectsDS = new MatTableDataSource<ProjectResponse>([]);
 
-  myProjectsFilterForm = new FormGroup({
+  readonly myProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
 
-  myTasksFilterForm = new FormGroup({
+  readonly myTasksFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
 
-  publicProjectsFilterForm = new FormGroup({
+  readonly publicProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
 
-  constructor(public projectService: ProjectService,
-              private taskService: TaskService,
-              private dialog: MatDialog,
-              private router: Router) {
+  private readonly myProjectsLoadingErrorAction = (err: HttpErrorResponse) => {
+    const error = err.error as GeneralApiError;
+    
+    this.myProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading my projects.');
+    this.isLoadingMyProjects.set(false);
+  };
+
+  private readonly myTasksLoadingErrorAction = (err: HttpErrorResponse) => {
+    const error = err.error as GeneralApiError;
+    
+    this.myTasksError.set(error ? error.errors[0] : 'An unknown error occured while loading my tasks.');
+    this.isLoadingTasks.set(false);
+  };
+
+  private readonly publicProjectsLoadingErrorAction = (err: HttpErrorResponse) => {
+    const error = err.error as GeneralApiError;
+
+    this.publicProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading public projects.');
+    this.isLoadingPublicProjects.set(false);
+  };
+  
+  constructor(public readonly projectService: ProjectService,
+              private readonly taskService: TaskService,
+              private readonly dialog: MatDialog,
+              private readonly router: Router) {
     effect(() => {
       this.myProjectsTableState();
-      this.loadMyProjects();
+      this.loadMyProjects().subscribe({
+        error: this.myProjectsLoadingErrorAction
+      });
     });
 
     effect(() => {
       this.myTasksTableState();
-      this.loadMyTasks();
+      this.loadMyTasks().subscribe({
+        error: this.myTasksLoadingErrorAction
+      });
     });
 
     effect(() => {
       this.publicProjectsTableState();
-      this.loadPublicProjects();
+      this.loadPublicProjects().subscribe({
+        error: this.publicProjectsLoadingErrorAction
+      });
     });
     
     this.myProjectsFilterForm.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      const state = this.myProjectsTableState();
+      distinctUntilChanged(),
+      switchMap(() => {
+        const state = this.myProjectsTableState();
 
-      if (state.pageIndex === 0) {
-        this.loadMyProjects();
-      } else {
-        this.myProjectsTableState.update(state => {
-          return { ...state, pageIndex: 0 };
-        });
-      }
+        if (state.pageIndex === 0) {
+          return this.loadMyProjects();
+        } else {
+          this.myProjectsTableState.update(state => {
+            return { ...state, pageIndex: 0 };
+          });
+        }
+        return EMPTY;
+      })
+    ).subscribe({
+      error: this.myProjectsLoadingErrorAction
     });
     
     this.myTasksFilterForm.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      const state = this.myTasksTableState();
+      distinctUntilChanged(),
+      switchMap(() => {
+        const state = this.myTasksTableState();
 
-      if (state.pageIndex === 0) {
-        this.loadMyTasks();
-      } else {
-        this.myTasksTableState.update(state => {
-          state.pageIndex = 0;
-          return state;
-        });
-      }
+        if (state.pageIndex === 0) {
+          return this.loadMyTasks();
+        } else {
+          this.myTasksTableState.update(state => {
+            return { ...state, pageIndex: 0 };
+          });
+        }
+        return EMPTY;
+      })
+    ).subscribe({
+      error: this.myTasksLoadingErrorAction
     });
     
     this.publicProjectsFilterForm.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      const state = this.publicProjectsTableState();
+      distinctUntilChanged(),
+      switchMap(() => {
+        const state = this.publicProjectsTableState();
 
-      if (state.pageIndex === 0) {
-        this.loadPublicProjects();
-      } else {
-        this.publicProjectsTableState.update(state => {
-          state.pageIndex = 0;
-          return state;
-        });
-      }
+        if (state.pageIndex === 0) {
+          return this.loadPublicProjects();
+        } else {
+          this.publicProjectsTableState.update(state => {
+            return { ...state, pageIndex: 0 };
+          });
+        }
+        return EMPTY;
+      })
+    ).subscribe({
+      error: this.publicProjectsLoadingErrorAction
     });
   }
 
@@ -217,81 +254,63 @@ export class Dashboard {
     return getChipText(value);
   }
   
-  private loadMyProjects() {
+  private loadMyProjects() : Observable<Page<ProjectResponse>> {
     this.isLoadingMyProjects.set(true);
     this.myProjectsError.set(null);
 
     const state = this.myProjectsTableState();
 
-    this.projectService.getMyProjects(this.myProjectsFilterForm.value.filter?.trim() ?? '',
+    return this.projectService.getMyProjects(this.myProjectsFilterForm.value.filter?.trim() ?? '',
       state.pageIndex,
       state.pageSize,
       state.sortActive,
-      state.sortDirection)
-    .subscribe({
-      next: page => {
-        this.myProjectsDS.data = page.content;
-        this.myProjectTotalElements.set(page.totalElements);
-        this.isLoadingMyProjects.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-        
-        this.myProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading my projects.');
-        this.isLoadingMyProjects.set(false);
-      }
-    });
+      state.sortDirection).pipe(tap({
+        next: (page: Page<ProjectResponse>) => {
+          this.myProjectsDS.data = page.content;
+          this.myProjectTotalElements.set(page.totalElements);
+          this.isLoadingMyProjects.set(false);
+        }
+      })
+    );
   }
 
-  private loadMyTasks() {
+  private loadMyTasks() : Observable<Page<TaskResponse>> {
     this.isLoadingTasks.set(true);
     this.myTasksError.set(null);
 
     const state = this.myTasksTableState();
 
-    this.taskService.getMyTasks(this.myTasksFilterForm.value.filter?.trim() ?? '',
+    return this.taskService.getMyTasks(this.myTasksFilterForm.value.filter?.trim() ?? '',
       state.pageIndex,
       state.pageSize,
       state.sortActive,
-      state.sortDirection)
-    .subscribe({
-      next: page => {
-        this.myTasksDS.data = page.content;
-        this.myTasksTotalElements.set(page.totalElements);
-        this.isLoadingTasks.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-        
-        this.myTasksError.set(error ? error.errors[0] : 'An unknown error occured while loading my tasks.');
-        this.isLoadingTasks.set(false);
-      }
-    });
+      state.sortDirection).pipe(tap({
+        next: (page: Page<TaskResponse>) => {
+          this.myTasksDS.data = page.content;
+          this.myTasksTotalElements.set(page.totalElements);
+          this.isLoadingTasks.set(false);
+        }
+      })
+    );
   }
 
-  private loadPublicProjects() {
+  private loadPublicProjects() : Observable<Page<ProjectResponse>> {
     this.isLoadingPublicProjects.set(true);
     this.publicProjectsError.set(null);
 
     const state = this.publicProjectsTableState();
 
-    this.projectService.searchProjectsByName(this.publicProjectsFilterForm.value.filter?.trim() ?? '',
+    return this.projectService.searchProjectsByName(this.publicProjectsFilterForm.value.filter?.trim() ?? '',
       state.pageIndex,
       state.pageSize,
       state.sortActive,
-      state.sortDirection)
-    .subscribe({
-      next: page => {
-        this.publicProjectsDS.data = page.content;
-        this.publicProjectTotalElements.set(page.totalElements);
-        this.isLoadingPublicProjects.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.publicProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading public projects.');
-        this.isLoadingPublicProjects.set(false);
-      }
-    });
+      state.sortDirection).pipe(tap({
+        next: (page: Page<ProjectResponse>) => {
+          this.publicProjectsDS.data = page.content;
+          this.publicProjectTotalElements.set(page.totalElements);
+          this.isLoadingPublicProjects.set(false);
+        }
+      })
+    );
   }
 }
