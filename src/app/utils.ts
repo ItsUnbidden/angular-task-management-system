@@ -90,7 +90,7 @@ export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
         return 'An unkown error has occured.';
     }
     if (environment.logErrors) {
-        console.error(error);
+        console.error('An error has occured.', error);
     }
     switch (error.type) {
         case ErrorType.GENERAL_FIELD_VALIDATION: return 'Some of the submitted data is invalid.';
@@ -115,6 +115,6 @@ export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
         case ErrorType.REGISTRATION_EMAIL_TAKEN: return 'This email is already in use by a different user.';
         case ErrorType.EXTERNAL_INTERRUPTED: return 'The server is currently shutting down. Please try again later.';
         case ErrorType.INTERNAL: return 'An unknown internal error has occured. The issue is being investigated. Please try again later.';
-        default: return 'An unkown error has occured.';
+        default: return 'An unknown error has occured.';
     }
 }
