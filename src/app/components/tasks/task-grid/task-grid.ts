@@ -1,35 +1,34 @@
-import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EssentialUserResponse, GeneralApiError, LabelResponse, Page, TaskFilter, TaskPriority, TaskResponse, TaskStatus } from '../../../models';
-import { ProjectService } from '../../../service/project.service';
-import { TaskService } from '../../../service/task.service';
+import { EssentialUserResponse, Page, TaskPriority, TaskResponse, TaskStatus } from '../../../models';
 import { MatDialog } from '@angular/material/dialog';
 import { NewTaskDialog } from '../new-task-dialog/new-task-dialog';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
-import { UserService } from '../../../service/user.service';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatSelectModule } from '@angular/material/select';
 import { FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
-import { LabelService } from '../../../service/label.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIconModule } from "@angular/material/icon";
-import { toLocalDateString } from '../../../utils';
-import { EMPTY, Observable, switchMap, tap } from 'rxjs';
+import { getChipColor, getChipText, toLocalDateString } from '../../../utils';
+import { EMPTY, forkJoin, map, Observable, switchMap, tap } from 'rxjs';
+import { ProjectStore } from '../../../cache/project.store';
+import { TaskStore } from '../../../cache/task.store';
+import { UserStore } from '../../../cache/user.store';
+import { LabelStore } from '../../../cache/label.store';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 interface TaskStatusOption {
   status: TaskStatus;
   statusView: string;
   class: string;
-
 }
+
 interface TaskPriorityOption {
   priority: TaskPriority;
   priorityView: string;
@@ -38,38 +37,40 @@ interface TaskPriorityOption {
 
 @Component({
   selector: 'app-task-grid',
-  imports: [CommonModule, MatCardModule, MatDividerModule, MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule, MatButtonModule, MatSelectModule, ReactiveFormsModule, MatDatepickerModule, MatNativeDateModule, MatIconModule],
+  imports: [CommonModule, MatCardModule, MatDividerModule,
+            MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule,
+            MatButtonModule, MatSelectModule, ReactiveFormsModule,
+            MatDatepickerModule, MatNativeDateModule, MatIconModule],
   templateUrl: './task-grid.html',
   styleUrl: './task-grid.css',
 })
 export class TaskGrid {
-  private readonly userService = inject(UserService);
-  private readonly projectService = inject(ProjectService);
-  private readonly taskService = inject(TaskService);
-  private readonly labelService = inject(LabelService);
+  private static readonly DEFAULT_GRID_SIZE = 6;
+
+  private readonly userStore = inject(UserStore);
+  private readonly projectStore = inject(ProjectStore);
+  private readonly taskStore = inject(TaskStore);
+  private readonly labelStore = inject(LabelStore);
+
+  private readonly route = inject(ActivatedRoute);
   
-  readonly project = this.projectService.project;
+  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
   readonly projectUsers = computed(() => {
-    const project = this.project();
+    const project = this.selectedProjectCache().item;
     
     return (project) ? project.projectRoles.map<EssentialUserResponse>(pr => {
       return { id: pr.userId, username: pr.username };
     }) : null;
   });
-  readonly projectLabels = signal<LabelResponse[]>([]);
-  readonly tasks = this.taskService.tasks;
-  readonly currentUser = this.userService.user;
-  readonly isLoadingTasks = this.taskService.isLoadingTasks;
+  readonly tasks = this.taskStore.cache.asReadonly();
+  readonly projectLabels = this.labelStore.cache.asReadonly();
 
-  readonly tasksLoadingError = this.taskService.tasksLoadingError;
+  readonly isAdmin = this.projectStore.isAdmin;
+  readonly isManager = this.userStore.isManager;
 
-  readonly taskPageIndex = signal(0);
-  readonly taskPageSize = signal(6);
-  readonly totalTasks = this.taskService.totalTasks;
-  readonly taskFilter = signal<TaskFilter>({});
-
-  readonly isAdmin = this.projectService.isAdmin;
-  readonly isManager = this.userService.isManager;
+  readonly projectId = toSignal(
+    this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
+  );
 
   readonly statusOptions: TaskStatusOption[] = [
     { status: 'NOT_STARTED', statusView: 'Not started', class: 'status-initiated' },
@@ -93,67 +94,54 @@ export class TaskGrid {
     labelIds: new FormControl<number[]>([])
   });
 
-  constructor(private readonly dialog: MatDialog, private readonly snackBar: MatSnackBar, private readonly router: Router) {
+  constructor(private readonly dialog: MatDialog,
+              private readonly router: Router) {
     effect(() => {
-      const project = this.project();
+      const projectId = this.projectId();
 
-      if (project) {
-        this.handleCacheProjectTasks().subscribe();
-        this.labelService.getLabelsForProject(project.id).subscribe({
-          next: labels => {
-            this.projectLabels.set(labels);
-          },
-          error: (err: HttpErrorResponse) => {
-            const error = err.error as GeneralApiError;
-
-            this.snackBar.open((error) ? `Error: ${error.errors[0]}` : 'An unknown error occured while loading project labels.', 'Dismiss', {
-              duration: 5000
-            });
-          }
+      if (projectId) {
+        untracked(() => {
+          this.taskStore.cacheProjectTasks(projectId, this.taskStore.currentProjectId === projectId ? this.tasks().pageIndex : 0, 6).subscribe();
+          this.labelStore.cacheLabelsForProject(projectId).subscribe();
         });
       }
     });
-    
+
     effect(() => {
-      const isLoadingTasks = this.isLoadingTasks();
+      const tasks = this.tasks();
 
       untracked(() => {
-        if (isLoadingTasks) {
+        if (tasks.isLoading) {
           this.filterForm.disable({ emitEvent: false });
         } else {
           this.filterForm.enable({ emitEvent: false });
         }
       });
     });
+    const projectId = this.projectId();
 
-    this.filterForm.valueChanges.pipe(
-      tap({
-        next: () => {
-          const formValue = this.filterForm.value;
-
-          this.taskFilter.set({
-            assigneeId: formValue.assigneeId ?? undefined,
-            status: formValue.status ?? undefined,
-            priority: formValue.priority ?? undefined,
-            dueDateFrom: toLocalDateString(formValue.dueDateFrom ?? null),
-            dueDateTo: toLocalDateString(formValue.dueDateTo ?? null),
-            labelIds: formValue.labelIds ?? undefined
-          });
-        }
-      }),
-      switchMap(() => this.handleCacheProjectTasks())
-    ).subscribe();
+    if (projectId) {
+      this.filterForm.valueChanges.pipe(
+        switchMap(() => this.taskStore.cacheProjectTasks(projectId, 0, this.tasks().pageSize, {
+          assigneeId: this.filterForm.value.assigneeId ?? undefined,
+          status: this.filterForm.value.status ?? undefined,
+          priority: this.filterForm.value.priority ?? undefined,
+          dueDateFrom: toLocalDateString(this.filterForm.value.dueDateFrom ?? null),
+          dueDateTo: toLocalDateString(this.filterForm.value.dueDateTo ?? null),
+          labelIds: this.filterForm.value.labelIds ?? undefined
+        }))
+      ).subscribe();
+    }
   }
 
   onTaskPage(event: PageEvent) {
-    this.taskPageIndex.set(event.pageIndex);
-    this.taskPageSize.set(event.pageSize);
+    const project = this.selectedProjectCache()?.item;
 
-    this.handleCacheProjectTasks().subscribe();
+    if (project) this.taskStore.cacheProjectTasks(project.id, event.pageIndex, event.pageSize).subscribe();
   }
 
   onCreateNewTask() {
-    const project = this.project();
+    const project = this.selectedProjectCache()?.item;
 
     if (project) {
       this.dialog.open(NewTaskDialog, {
@@ -167,7 +155,7 @@ export class TaskGrid {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.handleCacheProjectTasks(); 
+        if (confirmed) return this.cacheProjectTasks();
         return EMPTY;
       })).subscribe();
     }
@@ -178,7 +166,6 @@ export class TaskGrid {
   }
   
   onClearFilters() {
-    this.taskFilter.set({});
     this.filterForm.patchValue({
       assigneeId: null,
       status: null,
@@ -187,47 +174,29 @@ export class TaskGrid {
       dueDateTo: null,
       labelIds: []
     });
-    this.handleCacheProjectTasks().subscribe();
+    const project = this.selectedProjectCache()?.item;
+
+    if (project) this.taskStore.cacheProjectTasks(project.id, this.tasks().pageIndex, this.tasks().pageSize, {}).subscribe();
   }
 
   onTryAgain() {
-    this.handleCacheProjectTasks().subscribe();
+    const project = this.selectedProjectCache()?.item;
+
+    if (project) this.taskStore.cacheProjectTasks(project.id, 0, TaskGrid.DEFAULT_GRID_SIZE, {}).subscribe();
   }
 
-  parseEnumColor(key: string | null): string {
-    switch (key) {
-      case 'INITIATED': return 'status-initiated';
-      case 'NOT_STARTED': return 'status-initiated';
-      case 'IN_PROGRESS': return 'status-in-progress';
-      case 'COMPLETED': return 'status-completed';
-      case 'OVERDUE': return 'status-overdue';
-      case 'LOW': return 'priority-low';
-      case 'MEDIUM': return 'priority-medium';
-      case 'HIGH': return 'priority-high';
-      default: return '';
-    }
-  }
+  cacheProjectTasks() : Observable<Page<TaskResponse>> {
+    const project = this.selectedProjectCache().item;
 
-  parseEnumText(key: string | null): string {
-    switch (key) {
-      case 'INITIATED': return 'Initiated';
-      case 'NOT_STARTED': return 'Not started';
-      case 'IN_PROGRESS': return 'In Progress';
-      case 'COMPLETED': return 'Completed';
-      case 'OVERDUE': return 'Overdue';
-      case 'LOW': return 'Low';
-      case 'MEDIUM': return 'Medium';
-      case 'HIGH': return 'High';
-      default: return '';
-    }
-  }
-
-  private handleCacheProjectTasks() : Observable<Page<TaskResponse>> {
-    const project = this.project();
-
-    if (project) {
-      return this.taskService.cacheProjectTasksPage(project.id, this.taskFilter(), this.taskPageIndex(), this.taskPageSize());
-    }
+    if (project) return this.taskStore.cacheProjectTasks(project.id);
     return EMPTY;
+  }
+
+  getChipColorLocal(status: string | null): string {
+    return getChipColor(status);
+  }
+
+  getChipTextLocal(status: string | null): string {
+    return getChipText(status);
   }
 }

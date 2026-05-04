@@ -3,51 +3,54 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
-import { AttachmentResponse, GeneralApiError } from '../../../models';
-import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
+import { AttachmentResponse } from '../../../models';
+import { HttpEventType } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { TaskService } from '../../../service/task.service';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider'
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, switchMap } from 'rxjs';
+import { AttachmentStore } from '../../../cache/attachment.store';
+import { TaskStore } from '../../../cache/task.store';
 
 @Component({
   selector: 'app-attachment-list',
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule],
   templateUrl: './attachment-list.html',
   styleUrl: './attachment-list.css',
+  providers: [
+    AttachmentStore
+  ]
 })
 export class AttachmentList {
-  private readonly attachmentService = inject(AttachmentService);
+  private static readonly MAX_FILE_SIZE = 157_286_400;
 
-  private readonly maxFileSize = 157_286_400;
+  private readonly attachmentStore = inject(AttachmentStore);
 
-  readonly attachments = this.attachmentService.attachments;
-  readonly isLoadingAttachments = this.attachmentService.isLoading;
+  readonly attachmentsCache = this.attachmentStore.cache.asReadonly();
+
   readonly isProgressBarActive = signal(false);
-
-  constructor(private readonly taskService: TaskService,
+  
+  constructor(private readonly attachmentService: AttachmentService, 
+              private readonly taskStore: TaskStore,
               private readonly snackBar: MatSnackBar,
               private readonly dialog: MatDialog) {
     effect(() => {
-      const task = taskService.selectedTask();
+      const task = taskStore.selectedTaskCache()?.item;
 
-      if (task) {
-        this.attachmentService.cacheAttachmentsForTask(task.id).subscribe();
-      }
+      if (task) this.attachmentStore.cacheAttachmentsForTask(task.id).subscribe();
     });
   }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
-    const task = this.taskService.selectedTask();
+    const task = this.taskStore.selectedTaskCache()?.item;
 
     if (file && task) {
-      if (file.size >= this.maxFileSize) {
+      if (file.size >= AttachmentList.MAX_FILE_SIZE) {
         this.snackBar.open('The selected file is too large. Max file size is 150 MB.', 'Dismiss', {
           duration: 5000
         });
@@ -60,19 +63,11 @@ export class AttachmentList {
             break;
           case HttpEventType.Response:
             this.isProgressBarActive.set(false);
-            return this.attachmentService.cacheAttachmentsForTask(task.id);
+            return this.attachmentStore.cacheAttachmentsForTask(task.id);
         }
         return EMPTY;
       }))
-      .subscribe({
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while uploading a file.', 'Dismiss', {
-            duration: 5000
-          });
-        }
-      });
+      .subscribe();
     }
   }
 
@@ -85,13 +80,6 @@ export class AttachmentList {
         a.download = attachment.filename;
         a.click();
         window.URL.revokeObjectURL(url);
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while downloading an attachment.', 'Dismiss', {
-          duration: 5000
-        });
       }
     });
   }
@@ -105,25 +93,18 @@ export class AttachmentList {
       disableClose: true,
       width: '420px'
     })
-    .afterClosed().pipe(switchMap(confirmed => {
-      if (confirmed) return this.attachmentService.deleteAttachment(attachment.id);
-      return EMPTY;
-    }))
-    .subscribe({
-      next: () => {
-        const task = this.taskService.selectedTask();
+    .afterClosed().pipe(
+      switchMap(confirmed => {
+        if (confirmed) return this.attachmentService.deleteAttachment(attachment.id);
+        return EMPTY;
+      }),
+      switchMap(() => {
+        const task = this.taskStore.selectedTaskCache()?.item;
 
-        if (task) {
-          this.attachmentService.cacheAttachmentsForTask(task.id);
-        }
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while deleting an attachment.', 'Dismiss', {
-          duration: 5000
-        });
-      }
-    });
+        if (task) return this.attachmentStore.cacheAttachmentsForTask(task.id);
+        return EMPTY;
+      })
+    )
+    .subscribe();
   }
 }

@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { LabelCreateRequest, LabelResponse, LabelUpdateRequest } from '../models';
+import { LabelCreateRequest, LabelResponse, LabelUpdateRequest, Page } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -10,16 +10,16 @@ import { environment } from '../../environments/environment';
 export class LabelService {
   constructor(private readonly http: HttpClient) {};
 
-  getLabelsForProject(projectId: number) : Observable<LabelResponse[]> {
-    return this.http.get<LabelResponse[]>(`${environment.apiUrl}/api/labels/projects/${projectId}`);
+  getLabelsForProject(projectId: number) : Observable<Page<LabelResponse>> {
+    return this.http.get<Page<LabelResponse>>(`${environment.apiUrl}/api/labels/projects/${projectId}`);
   }
 
   getLabelById(labelId: number) : Observable<LabelResponse> {
     return this.http.get<LabelResponse>(`${environment.apiUrl}/api/labels/${labelId}`);
   }
 
-  getLabelsForTask(taskId: number) : Observable<LabelResponse[]> {
-    return this.http.get<LabelResponse[]>(`${environment.apiUrl}/api/labels/tasks/${taskId}`);
+  getLabelsForTask(taskId: number) : Observable<Page<LabelResponse>> {
+    return this.http.get<Page<LabelResponse>>(`${environment.apiUrl}/api/labels/tasks/${taskId}`);
   }
 
   createLabel(request: LabelCreateRequest) : Observable<LabelResponse> {

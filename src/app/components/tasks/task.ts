@@ -9,7 +9,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { GeneralApiError, LabelResponse, TaskDeleteResponse, TaskPriority, TaskStatus, TaskUpdateRequest } from '../../models';
-import { TaskService } from '../../service/task.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EMPTY, forkJoin, map, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -17,9 +16,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
-import { UserService } from '../../service/user.service';
 import { ProjectService } from '../../service/project.service';
-import { LabelService } from '../../service/label.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
@@ -28,8 +25,12 @@ import { LabelManagementDialog } from '../label/label-management-dialog/label-ma
 import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, getDefaultErrorMessageForType, toLocalDateString } from '../../utils';
 import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
+import { ProjectStore } from '../../cache/project.store';
+import { TaskStore } from '../../cache/task.store';
+import { UserStore } from '../../cache/user.store';
+import { LabelStore } from '../../cache/label.store';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -47,39 +48,33 @@ interface TaskPriorityOption {
   styleUrl: './task.css',
 })
 export class Task {
-  private readonly projectService = inject(ProjectService);
-  private readonly taskService = inject(TaskService);
-  private readonly userService = inject(UserService);
-  private readonly labelService = inject(LabelService);
+  private readonly projectStore = inject(ProjectStore);
+  private readonly taskStore = inject(TaskStore);
+  private readonly userStore = inject(UserStore);
+  private readonly labelStore = inject(LabelStore);
   private readonly oauth2Service = inject(OAuth2Service);
 
   readonly route = inject(ActivatedRoute);
 
   readonly taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
 
-  readonly project = this.projectService.project;
-  readonly task = this.taskService.selectedTask;
-  readonly labels = signal<LabelResponse[]>([]);
-  readonly projectLabels = signal<LabelResponse[]>([]);
-  readonly currentUser = this.userService.user;
-  readonly currentProjectRole = this.projectService.currentProjectRole;
-  readonly isTaskLoading = this.taskService.isLoadingSelectedTask;
-  readonly isLoadingLabels = signal(false);
-  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
-
-  readonly projectLoadingError = this.projectService.error;
-  readonly taskLoadingError = this.taskService.selectedTaskLoadingError;
+  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
+  readonly selectedTaskCache = this.taskStore.selectedTaskCache.asReadonly();
+  readonly projectLabels = this.labelStore.cache.asReadonly();
+  readonly currentUserCache = this.userStore.userCache.asReadonly();
+  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected.asReadonly();
+  readonly currentProjectRole = this.projectStore.currentProjectRole;
 
   readonly isEditingName = signal(false);
   readonly isEditingDescription = signal(false);
   readonly isEditingDate = signal(false);
   readonly isEditingChips = signal(false);
 
-  readonly isCreator = this.projectService.isCreator;
-  readonly isAdmin = this.projectService.isAdmin;
-  readonly isContributor = this.projectService.isContributor;
+  readonly isCreator = this.projectStore.isCreator;
+  readonly isAdmin = this.projectStore.isAdmin;
+  readonly isContributor = this.projectStore.isContributor;
 
-  readonly isManager = this.userService.isManager;
+  readonly isManager = this.userStore.isManager;
 
   readonly nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
@@ -118,36 +113,26 @@ export class Task {
     { priority: 'HIGH', priorityView: 'High' }
   ];
 
-  constructor(private readonly snackBar: MatSnackBar, private readonly dialog: MatDialog, private readonly router: Router) {
+  constructor(private readonly projectService: ProjectService,
+              private readonly snackBar: MatSnackBar,
+              private readonly dialog: MatDialog,
+              private readonly router: Router) {
     effect(() => {
       const taskId = this.taskId();
 
-      this.taskService.cacheSelectedTask(taskId).subscribe();
+      untracked(() => {
+        this.taskStore.cacheSelectedTask(taskId).subscribe();
+      })
     });
 
     effect(() => {
-      const task = this.task();
+      const task = this.selectedTaskCache()?.item;
 
       if (task) {
-        this.isLoadingLabels.set(true);        
-        this.labelService.getLabelsForTask(task.id).subscribe({
-          next: labels => {
-            this.labels.set(labels);
-            this.isLoadingLabels.set(false);
-          },
-          error: (err: HttpErrorResponse) => {
-            const error = err.error as GeneralApiError;
-
-            this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while loading labels.', 'Dismiss', {
-              duration: 5000
-            });
-            this.isLoadingLabels.set(false);
-          }
-        });
-
         untracked(() => {
-          if (this.projectService.project()?.id !== task.projectId) {
-            this.projectService.loadProjectToCache(task.projectId).subscribe();
+          if (this.selectedProjectCache().item?.id !== task.projectId) {
+            this.projectStore.cacheSelectedProject(task.projectId).subscribe();
+            this.labelStore.cacheLabelsForProject(task.projectId).subscribe();
           }
 
           if (!this.nameEditForm.dirty) {
@@ -172,32 +157,10 @@ export class Task {
         });
       }
     });
-
-    effect(() => {
-      const project = this.project();
-
-      if (project) {
-        this.isLoadingLabels.set(true);
-        this.labelService.getLabelsForProject(project.id).subscribe({
-          next: labels => {
-            this.projectLabels.set(labels);
-            this.isLoadingLabels.set(false);
-          },
-          error: (err: HttpErrorResponse) => {
-            const error = err.error as GeneralApiError;
-
-            this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while loading project labels.', 'Dismiss', {
-              duration: 5000
-            });
-            this.isLoadingLabels.set(false);
-          }
-        });
-      }
-    })
   };
 
   onSubmitTaskName() {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
     const newName = this.nameEditForm.value.taskName;
 
     if (task && newName && task.name !== newName) {
@@ -205,7 +168,7 @@ export class Task {
 
       if (request) {
         request.name = newName;
-        this.taskService.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe();
       }
     }
     this.isEditingName.set(false);
@@ -219,7 +182,7 @@ export class Task {
   }
 
   onSubmitTaskDescription() {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
     const newDescription = this.descriptionEditForm.value.taskDescription;
 
     if (task && newDescription !== task.description) {
@@ -227,7 +190,7 @@ export class Task {
 
       if (request) {
         request.description = newDescription ?? undefined;
-        this.taskService.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe();
       }
     }
     this.isEditingDescription.set(false);
@@ -241,7 +204,7 @@ export class Task {
   }
 
   onSubmitTaskDueDate() {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
     const newDueDate = toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
 
     if (task && newDueDate !== task.dueDate) {
@@ -249,7 +212,7 @@ export class Task {
 
       if (request) {
         request.dueDate = newDueDate;
-        this.taskService.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe();
       }
     }
     this.isEditingDate.set(false);
@@ -271,7 +234,7 @@ export class Task {
       if (request) {
         request.priority = newPriority as TaskPriority;
         request.labelIds = this.chipsEditForm.value.labels ?? [];
-        this.taskService.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe();
       }
     }
     this.isEditingChips.set(false);
@@ -286,18 +249,18 @@ export class Task {
   }
 
   onStatusChange(newStatus: TaskStatus) {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
 
     if (task) {
       const request = { newStatus: newStatus };
       
-      this.taskService.updateCachedTask(request).subscribe();
+      this.taskStore.updateCachedTask(request).subscribe();
     }
   }
 
   onAddNewLabel() {
-    const project = this.project();
-    const task = this.task();
+    const project = this.selectedProjectCache()?.item;
+    const task = this.selectedTaskCache()?.item;
 
     if (project && task) {
       this.dialog.open(NewLabelDialog, {
@@ -310,34 +273,20 @@ export class Task {
       })
       .afterClosed().pipe(switchMap(confirmed => {
         if (confirmed) {
-          this.isLoadingLabels.set(true);
           return forkJoin([
-            this.taskService.cacheSelectedTask(task.id),
-            this.labelService.getLabelsForProject(project.id)
+            this.taskStore.cacheSelectedTask(task.id),
+            this.labelStore.cacheLabelsForProject(project.id)
           ]);
         }        
         return EMPTY;
       }))
-      .subscribe({
-        next: forkResult => {
-          this.projectLabels.set(forkResult[1]);
-          this.isLoadingLabels.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while loading the task and project labels.', 'Dismiss', {
-            duration: 5000
-          });
-          this.isLoadingLabels.set(false);
-        }
-      })
+      .subscribe();
     }
   }
 
   onOpenLabelManagement() {
-    const project = this.project();
-    const task = this.task();
+    const project = this.selectedProjectCache()?.item;
+    const task = this.selectedTaskCache()?.item;
 
     if (project && task) {
       this.dialog.open(LabelManagementDialog, {
@@ -349,35 +298,15 @@ export class Task {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(hasChangedLabels => {
-        if (hasChangedLabels) {
-          this.isLoadingLabels.set(true);
-          return forkJoin([
-            this.labelService.getLabelsForTask(task.id),
-            this.labelService.getLabelsForProject(project.id)
-          ]);
-        }
+        if (hasChangedLabels) return this.labelStore.cacheLabelsForProject(project.id);
         return EMPTY;
       }))
-      .subscribe({
-        next: forkResult => {
-          this.isLoadingLabels.set(false);
-          this.labels.set(forkResult[0]);
-          this.projectLabels.set(forkResult[1]);
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while loading task and project labels.', 'Dismiss', {
-            duration: 5000
-          });
-          this.isLoadingLabels.set(false);
-        }
-      })
+      .subscribe()
     }
   }
 
   onJoinDropbox() {
-    const project = this.project();
+    const project = this.selectedProjectCache()?.item;
 
     if (project) {         
       this.dialog.open(ConfirmDialog, {
@@ -393,24 +322,22 @@ export class Task {
           if (confirmed) return this.projectService.joinDropbox(project.id);
           return EMPTY;
         }),
-        switchMap(() => this.projectService.loadProjectToCache(project.id))
+        switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
       )
       .subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          if (error) {
-            this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while trying to join Dropbox.', 'Dismiss', {
-              duration: 5000
-            });
-          }
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+            duration: 5000
+          });
         }
       });
     }
   }
 
   onTaskDelete() {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
 
     if (task) {
       this.dialog.open(ConfirmDialog, {
@@ -423,8 +350,7 @@ export class Task {
       })
       .afterClosed().pipe(switchMap(confirmed => {
         if (confirmed) {
-          this.isTaskLoading.set(true);
-          return this.taskService.deleteTask(task.id);
+          return this.taskStore.deleteTask(task.id);
         }
         return EMPTY;
       }))
@@ -433,15 +359,12 @@ export class Task {
           this.snackBar.open(this.getTaskDeleteMessage(response), 'Dismiss', {
             duration: 10000
           });
-          this.isTaskLoading.set(false);
-          this.task.set(null);
           this.router.navigateByUrl(`/projects/${task.projectId}`);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : `Unknown error occured while attempting to delete task ${task.name}.`);
-          this.isTaskLoading.set(false);
+          this.snackBar.open(getDefaultErrorMessageForType(error));
         }
       });
     }
@@ -457,7 +380,7 @@ export class Task {
   onTryAgain() {
     const taskId = this.taskId();
 
-    if (taskId) this.taskService.cacheSelectedTask(taskId).subscribe();
+    if (taskId) this.taskStore.cacheSelectedTask(taskId, true).subscribe();
   }
 
   getChipColorLocal(value: string | null): string {
@@ -468,8 +391,12 @@ export class Task {
     return getChipText(value);
   }
 
+  get getLabelsForTask() : LabelResponse[] {
+    return this.labelStore.getLabelsForTask(this.taskId());
+  }
+
   private makeTaskUpdateRequest() : TaskUpdateRequest | undefined {
-    const task = this.task();
+    const task = this.selectedTaskCache()?.item;
 
     if (!task) return undefined;
     

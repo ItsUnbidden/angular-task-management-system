@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButton } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -7,11 +7,11 @@ import { MatFormFieldModule } from '@angular/material/form-field'
 import { MatInputModule } from '@angular/material/input';
 import { AuthService } from '../../service/auth.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap } from 'rxjs';
-import { GeneralApiError } from '../../models';
-import { passwordMatchValidator } from '../../utils';
+import { finalize, switchMap } from 'rxjs';
+import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../utils';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SimpleApiError } from '../../models';
 
 @Component({
     selector: 'app-auth',
@@ -20,14 +20,16 @@ import { HttpErrorResponse } from '@angular/common/http';
     styleUrl: './auth.css'
 })
 export class Auth {
-  private returnUrl = '/dashboard';
+  private readonly authService = inject(AuthService);
+
+  readonly isLoading = signal<boolean>(false);
+  readonly error = signal<string | null>(null);
 
   readonly isRegistering = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isLoading = signal(false);
+  
+  private returnUrl = '/dashboard';
 
-  constructor(private readonly authService: AuthService,
-              private readonly route: ActivatedRoute,
+  constructor(private readonly route: ActivatedRoute,
               private readonly router: Router) {
     const ru = this.route.snapshot.queryParamMap.get('returnUrl');
     if (ru && ru.startsWith('/')) this.returnUrl = ru;
@@ -69,23 +71,15 @@ export class Auth {
     if (username && password) {
       this.isLoading.set(true);
       this.authService.login({ username, password }).pipe(
+        finalize(() => this.isLoading.set(false)),
         switchMap(() => this.authService.refreshCsrfToken())
       ).subscribe({
-        next: () => {
-          this.router.navigateByUrl(this.returnUrl);
-          this.isLoading.set(false);
-        },
+        next: () => this.router.navigateByUrl(this.returnUrl),
         error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-          
-          // TODO: Differenciate between token and login issues
-          const message = err.status === 401
-              ? 'There is no registered user with such credentials.'
-              : error.errors[0] ?? 'Unknown error occured while trying to log in.';
-          
-          this.errorMessage.set(message);
-          this.isLoading.set(false);
-        }      
+          const error = err.error as SimpleApiError;
+
+          this.error.set(getDefaultErrorMessageForType(error));
+        }
       });
     }
   }
@@ -99,24 +93,21 @@ export class Auth {
       if (username && password && repeatPassword && email) {
         this.isLoading.set(true);
         this.authService.register({ username, password, repeatPassword, email }).pipe(
+          finalize(() => this.isLoading.set(false)),
           switchMap(() => this.authService.login({ username, password }))
         ).subscribe({
-          next: () => {
-            this.router.navigateByUrl(this.returnUrl);
-            this.isLoading.set(false);
-          },
+          next: () => this.router.navigateByUrl(this.returnUrl),
           error: (err: HttpErrorResponse) => {
-            const error = err.error as GeneralApiError;
+            const error = err.error as SimpleApiError;
 
-            this.errorMessage.set(error.errors[0] || 'Unknown error occured while trying to register the user.');
-            this.isLoading.set(false);
+            this.error.set(getDefaultErrorMessageForType(error));
           }
         });
       }
   }
 
   toggleRegistration() {
-    this.errorMessage.set(null);
+    this.error.set(null);
     this.isRegistering.update(r => !r);
   }
 }

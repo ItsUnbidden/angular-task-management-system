@@ -1,12 +1,11 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ProjectService } from '../../../service/project.service';
-import { GeneralApiError } from '../../../models';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ProjectStore } from '../../../cache/project.store';
 
 @Component({
   selector: 'app-add-user-dialog',
@@ -16,8 +15,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './add-user-dialog.css',
 })
 export class AddUserDialog {
-  readonly error = signal('');
-  readonly isSendingRequest = signal(false);
+  private readonly projectStore = inject(ProjectStore);
+
+  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
 
   readonly addUserForm = new FormGroup({
     username: new FormControl('', {
@@ -30,26 +30,16 @@ export class AddUserDialog {
     })
   })
 
-  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>,
-              private readonly projectService: ProjectService,
-              @Inject(MAT_DIALOG_DATA) private readonly data: number) {}
+  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>) {}
 
   submit() {
     if (this.addUserForm.valid) {
       const username = this.addUserForm.value.username;
 
       if (username) {
-        this.isSendingRequest.set(true);
-        this.projectService.addUserToProject(this.data, username).subscribe({
+        this.projectStore.addUserToProject(username).subscribe({
           next: () => {
             this.dialogRef.close(true);
-            this.isSendingRequest.set(false);
-          },
-          error: (err) => {
-            const error = err.error as GeneralApiError;
-            
-            this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to add a new user to the project.');
-            this.isSendingRequest.set(false);
           }
         });
       }

@@ -1,12 +1,10 @@
-import { Component, effect, signal } from '@angular/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { GeneralApiError, Page, UserResponse } from '../../../models';
+import { Component, inject } from '@angular/core';
+import { MatTableModule } from '@angular/material/table';
+import { UserResponse } from '../../../models';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
-import { UserService } from '../../../service/user.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { debounceTime, distinctUntilChanged, EMPTY, Observable, switchMap, tap } from 'rxjs';
+import { debounceTime, distinctUntilChanged, EMPTY, switchMap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,6 +12,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatDialog } from '@angular/material/dialog';
 import { UserActionsDialog } from './user-actions-dialog/user-actions-dialog';
 import { getUserRole } from '../../../utils';
+import { UserStore } from '../../../cache/user.store';
 
 interface TableState {
   pageIndex: number;
@@ -29,79 +28,69 @@ interface TableState {
   styleUrl: './manager-control-panel.css',
 })
 export class ManagerControlPanel {
-  readonly isLoadingUsers = signal(false);
-  readonly usersLoadingError = signal<string | null>(null);
-  readonly usersTableState = signal<TableState>({ pageIndex: 0, pageSize: 25, sortActive: 'username', sortDirection: 'asc' });
-  readonly usersTotalElements = signal(0);
+  private readonly userStore = inject(UserStore);
+
+  readonly usersCache = this.userStore.cache;
 
   readonly userColumns = ['id', 'username', 'email', 'isLocked', 'role'];
-  readonly usersDS = new MatTableDataSource<UserResponse>([]);
 
   readonly usersFilterForm = new FormGroup({
     filter: new FormControl<string>('', { nonNullable: true }),
     type: new FormControl<'email' | 'username'>('username', { nonNullable: true })
   });
 
-  constructor(private readonly userService: UserService, private readonly dialog: MatDialog) {
-    effect(() => {
-      this.usersTableState();
-      this.loadUsers();
-    });
+  constructor(private readonly dialog: MatDialog) {
     this.usersFilterForm.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged(),
       switchMap(() => {
-        const state = this.usersTableState();
+        const cache = this.usersCache();
 
-        if (state.pageIndex === 0) {
-          return this.loadUsers();
-        } 
-        this.usersTableState.update(state => {
-          return { ...state, pageIndex: 0 };
+        return this.userStore.cacheUsers(
+          this.usersFilterForm.value.filter ?? '',
+          this.usersFilterForm.value.type ?? 'username', {
+          pageIndex: cache.pageIndex,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
         });
-        return EMPTY;
       })
-    ).subscribe({
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.usersLoadingError.set(error ? error.errors[0] : 'Unknown error occured while attempting to load the users.');
-      }
-    });
+    ).subscribe();
   }
 
   ngAfterViewInit() {
-    this.loadUsers();
-  }
-
-  loadUsers() : Observable<Page<UserResponse>> {
-    const filter = this.usersFilterForm.value.filter ?? '';
-    const type = this.usersFilterForm.value.type ?? 'username';
-
-    const state = this.usersTableState();
-      this.isLoadingUsers.set(true);
-      this.usersLoadingError.set(null);
-
-    return this.userService.searchUsers(filter, type, state.pageIndex, state.pageSize,
-        state.sortActive, state.sortDirection).pipe(tap({
-      next: page => {
-        this.usersDS.data = page.content;
-        this.isLoadingUsers.set(false);
-        this.usersTotalElements.set(page.totalElements);
-      }
-    }));
-  }
-
-  onUsersPage(event: PageEvent) {
-    this.usersTableState.update(state => {
-      return { ...state, pageIndex: event.pageIndex, pageSize: event.pageSize };
+    this.userStore.cacheUsers(this.usersFilterForm.value.filter ?? '', this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: 0,
+      pageSize: 25,
+      sortActive: 'username',
+      sortDirection: 'asc'
     });
   }
 
+  onUsersPage(event: PageEvent) {
+    const cache = this.usersCache();
+
+    this.userStore.cacheUsers(
+      this.usersFilterForm.value.filter ?? '',
+      this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: event.pageIndex,
+      pageSize: event.pageSize,
+      sortActive: cache.sort,
+      sortDirection: cache.direction
+    }).subscribe();
+  }
+
   onUsersSort(event: Sort) {
-    this.usersTableState.update(state => {
-      return { ...state, sortActive: event.direction !== '' ? event.active : 'username', sortDirection: event.direction !== '' ? event.direction : 'asc' };
-    })
+    const cache = this.usersCache();
+
+    this.userStore.cacheUsers(
+      this.usersFilterForm.value.filter ?? '',
+      this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: 0,
+      pageSize: cache.pageSize,
+      sortActive: event.active,
+      sortDirection: event.direction
+    }).subscribe();
   }
 
   onSelectUser(user: UserResponse) {
@@ -112,7 +101,16 @@ export class ManagerControlPanel {
     })
     .afterClosed().pipe(switchMap(hasChanged => {
       if (hasChanged) {
-        return this.loadUsers();
+        const cache = this.usersCache();
+
+        return this.userStore.cacheUsers(
+          this.usersFilterForm.value.filter ?? '',
+          this.usersFilterForm.value.type ?? 'username', {
+          pageIndex: cache.pageIndex,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        });
       }
       return EMPTY;
     }))

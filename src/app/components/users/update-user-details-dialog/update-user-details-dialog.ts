@@ -1,15 +1,15 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { passwordMatchValidator } from '../../../utils';
+import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../../utils';
 import { GeneralApiError } from '../../../models';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { UserService } from '../../../service/user.service';
+import { UserStore } from '../../../cache/user.store';
 
 @Component({
   selector: 'app-update-user-details-dialog',
@@ -18,11 +18,9 @@ import { UserService } from '../../../service/user.service';
   styleUrl: './update-user-details-dialog.css',
 })
 export class UpdateUserDetailsDialog {
-  private readonly userService = inject(UserService);
+  private readonly userStore = inject(UserStore);
 
-  readonly user = this.userService.user;
-  readonly isLoading = signal(false);
-  readonly isEmpty = signal(false);
+  readonly userCache = this.userStore.userCache;
 
   readonly userDetailsForm = new FormGroup({
     username: new FormControl('', [
@@ -46,7 +44,7 @@ export class UpdateUserDetailsDialog {
               private readonly snackBar: MatSnackBar) {}
 
   onSubmit() {
-    const user = this.user();
+    const user = this.userCache().item;
     const username = this.userDetailsForm.value.username?.trim();
     const email = this.userDetailsForm.value.email?.trim();
     const rawPassword = this.userDetailsForm.value.password?.trim();
@@ -56,15 +54,13 @@ export class UpdateUserDetailsDialog {
     const repeatPassword = rawRepeatPassword && rawRepeatPassword.length > 0 ? rawRepeatPassword : undefined;
 
     if (user && (username || email || password)) {
-      this.isLoading.set(true);
-      this.userService.updateUserDetails({
+      this.userStore.updateUserDetails({
         username: username ? username : user.username,
         email: email ? email : user.email,
         password,
         repeatPassword
       }).subscribe({
         next: () => {
-          this.isLoading.set(false);
           this.snackBar.open('User details have been updated.', 'Dismiss', {
             duration: 3000
           });
@@ -73,10 +69,9 @@ export class UpdateUserDetailsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while trying to update user details.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
-          this.isLoading.set(false);
         }
       });
     }

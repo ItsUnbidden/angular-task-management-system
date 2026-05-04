@@ -1,87 +1,14 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { computed, inject, Injectable, signal } from '@angular/core';
-import { Observable, tap } from 'rxjs';
-import { EssentialUserResponse, GeneralApiError, Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
 import { environment } from '../../environments/environment';
-import { UserService } from './user.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProjectService {
-  private readonly userService = inject(UserService);
-
-  readonly project = signal<ProjectResponse | null>(null);
-  readonly isLoading = signal(false);
-  readonly error = signal<string | null>(null);
-
-  readonly currentUser = this.userService.user;
-  readonly currentProjectRole = computed(() => {
-    const project = this.project();
-    const user = this.currentUser();
-
-    return (project && user) ? project.projectRoles.find(pr => pr.userId === user.id) ?? null : null;
-  });
-
-  readonly isCreator = computed(() => {
-    const projectRole = this.currentProjectRole();
-
-    return (projectRole) ? projectRole.roleType === 'CREATOR' : false;
-  });
-  readonly isAdmin = computed(() => {
-    const projectRole = this.currentProjectRole();
-
-    return (projectRole) ? projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
-  });
-  readonly isContributor = computed(() => {
-    const projectRole = this.currentProjectRole();
-
-    return (projectRole) ? projectRole.roleType === 'CONTRIBUTOR' || projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
-  });
-
   constructor(private readonly http: HttpClient) {}
-
-  loadProjectToCache(projectId: number) : Observable<ProjectResponse> {
-    this.error.set(null);
-    this.isLoading.set(true);
-    return this.getProjectById(projectId).pipe(tap({
-      next: (p) => {
-        this.project.set(p);
-        this.isLoading.set(false);
-      },
-      error: (err: HttpErrorResponse) => {      
-        this.project.set(null);
-        this.isLoading.set(false);
-        
-        const error = err.error as GeneralApiError;
-
-        this.error.set(error ? error.errors[0] : 'Unknown error occured while loading the project.');
-      }
-    }));
-  }
-
-  updateCachedProject(projectId: number, request: ProjectUpdateRequest) : Observable<ProjectResponse> {
-    this.error.set(null);
-    this.isLoading.set(true);
-    return this.updateProject(projectId, request).pipe(tap({
-      next: (p) => {
-        this.project.set(p)
-        this.isLoading.set(false)
-      },
-      error: (err) => {
-        this.isLoading.set(false)
-        
-        const error = err.error as GeneralApiError;
-
-        this.error.set(error ? error.errors[0] : 'Unknown error occured while updating the project.');
-      }
-    }));
-  }
-
-  clearCachedProject() {
-    this.error.set(null);
-    this.project.set(null);
-  }
 
   getProjectById(projectId: number) : Observable<ProjectResponse> {
     return this.http.get<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}`);
@@ -112,26 +39,11 @@ export class ProjectService {
   }
 
   addUserToProject(projectId: number, username: string) : Observable<UserAddToProjectResponse> {
-    this.isLoading.set(true);
-    return this.http.post<UserAddToProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${username}/add`, {}).pipe(tap({
-      next: response => {
-        this.project.set(response.project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.post<UserAddToProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${username}/add`, {});
   }
 
   removeUserFromProject(projectId: number, userId: number) : Observable<UserRemoveFromProjectResponse> {
-    return this.http.delete<UserRemoveFromProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`).pipe(tap({
-      next: response => {
-        this.project.set(response.project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.delete<UserRemoveFromProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/remove`);
   }
 
   quitProject(projectId: number) : Observable<UserRemoveFromProjectResponse> {
@@ -139,52 +51,19 @@ export class ProjectService {
   }
 
   changeMemberRole(projectId: number, userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectResponse> {
-    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/roles`, request).pipe(tap({
-      next: p => {
-        this.project.set(p);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/roles`, request);
   }
 
   deleteProject(projectId: number) : Observable<ProjectDeleteResponse> {
-    this.isLoading.set(true);
-    return this.http.delete<ProjectDeleteResponse>(`${environment.apiUrl}/api/projects/${projectId}`).pipe(tap({
-      next: () => {
-        if (this.project()?.id === projectId) {
-          this.project.set(null);
-        }
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.delete<ProjectDeleteResponse>(`${environment.apiUrl}/api/projects/${projectId}`);
   }
 
   connectProjectToDropbox(projectId: number): Observable<ProjectResponse> {
-    this.isLoading.set(true);
-    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/connect`, {}).pipe(tap({
-      next: project => {
-        this.project.set(project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/dropbox/connect`, {});
   }
 
   connectProjectToCalendar(projectId: number): Observable<ProjectResponse> {
-    this.isLoading.set(true);
-    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/calendar/connect`, {}).pipe(tap({
-      next: project => {
-        this.project.set(project);
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/calendar/connect`, {});
   }
 
   joinDropbox(projectId: number) : Observable<void> {
@@ -201,11 +80,5 @@ export class ProjectService {
 
   disconnectCalendar(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {
     return this.http.delete<ThirdPartyProjectDisconnectionResponse>(`${environment.apiUrl}/api/projects/${projectId}/google/disconnect`);
-  }
-
-  getProjectCreator(project: ProjectResponse) : EssentialUserResponse {
-    const projectRole = project.projectRoles.find(pr => pr.roleType === 'CREATOR');
-
-    return { id: projectRole?.userId ?? 0, username: projectRole?.username ?? 'UNKNOWN_USER' };
   }
 }

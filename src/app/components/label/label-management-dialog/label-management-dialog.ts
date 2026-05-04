@@ -1,7 +1,7 @@
-import { Component, computed, effect, Inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, Inject, signal } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { GeneralApiError, LabelResponse } from '../../../models';
+import { MatTableModule } from '@angular/material/table';
+import { LabelResponse, SimpleApiError } from '../../../models';
 import { LabelService } from '../../../service/label.service';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -12,7 +12,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatInputModule } from '@angular/material/input';
 import { MatIcon } from "@angular/material/icon";
-import { Observable, switchMap, tap } from 'rxjs';
+import { switchMap, tap } from 'rxjs';
+import { LabelStore } from '../../../cache/label.store';
+import { getDefaultErrorMessageForType } from '../../../utils';
 
 interface LabelManagementDialogData {
   projectId: number;
@@ -24,17 +26,24 @@ interface LabelManagementDialogData {
   imports: [MatTableModule, MatChipsModule, MatButtonModule, MatFormFieldModule, MatDialogModule, MatProgressSpinnerModule, ReactiveFormsModule, MatInputModule, MatIcon],
   templateUrl: './label-management-dialog.html',
   styleUrl: './label-management-dialog.css',
+  providers: [
+    LabelStore
+  ]
 })
 export class LabelManagementDialog {
+  private readonly labelStore = inject(LabelStore);
+
   readonly displayedColumns = ['chip', 'edit', 'delete'];
-  readonly dataSource = new MatTableDataSource<LabelResponse>([]);
+
+  readonly labelCache = this.labelStore.cache;
   readonly selectedLabel = signal<LabelResponse | null>(null);
-  readonly error = signal('');
-  readonly isLoading = signal(false);
+
   readonly isEditing = signal(false);
   readonly isDeleting = signal(false);
+  readonly isEditRequestRunning = signal<boolean>(false);
+  readonly editError = signal<string | null>(null);
 
-  readonly numberOfAffectedTasks = computed(() => {
+  readonly numberOfAffectedTasks = computed(() => { 
     const label = this.selectedLabel();
 
     return (label) ? label.taskIds.filter(tId => tId !== this.data.taskId).length : 0;
@@ -72,7 +81,7 @@ export class LabelManagementDialog {
   }
 
   ngOnInit() {
-    this.loadLabelsForProject(this.data.projectId).subscribe();
+    this.labelStore.cacheLabelsForProject(this.data.projectId).subscribe();
   }
 
   onEditLabel(label: LabelResponse) {
@@ -89,23 +98,25 @@ export class LabelManagementDialog {
     const label = this.selectedLabel();
 
     if (label) {
-      this.isLoading.set(true);
+      this.isEditRequestRunning.set(true);
       this.labelService.deleteLabel(label.id).pipe(
-        switchMap(() => this.loadLabelsForProject(this.data.projectId))
+        tap({
+          next: () => {
+            this.hasChangedLabels = true;
+            this.snackBar.open(`Label ${label.name} has been deleted.`, 'Dismiss', {
+              duration: 3000
+            });
+            this.isEditRequestRunning.set(false);
+            this.onBack();
+          }
+        }),
+        switchMap(() => this.labelStore.cacheLabelsForProject(this.data.projectId))
       ).subscribe({
-        next: () => {                        
-          this.hasChangedLabels = true;
-          this.snackBar.open(`Label ${label.id} has been deleted.`, 'Dismiss', {
-            duration: 3000
-          });
-          this.onBack();
-        },
         error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
+          const error = err.error as SimpleApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while deleting a label.', 'Dismiss', {
-            duration: 5000
-          });
+          this.isEditRequestRunning.set(false);
+          this.editError.set(getDefaultErrorMessageForType(error));
         }
       });
     }
@@ -115,27 +126,26 @@ export class LabelManagementDialog {
     const label = this.selectedLabel();
 
     if (label) {
-      this.isLoading.set(true);
+      this.isEditRequestRunning.set(true);
       this.labelService.updateLabel(label.id, {
         name: this.labelForm.value.name ?? '',
         color: this.labelForm.value.color ?? '',
         taskIds: label.taskIds
-      }).pipe(
-        switchMap(() => this.loadLabelsForProject(this.data.projectId))
-      ).subscribe({
-        next: () => {                        
+      }).subscribe({
+        next: label => {
           this.hasChangedLabels = true;
-          this.snackBar.open(`Label ${label.id} has been changed.`, 'Dismiss', {
+          this.snackBar.open(`Label ${label.name} has been changed.`, 'Dismiss', {
             duration: 3000
           });
+          this.isEditRequestRunning.set(false);
+          this.labelStore.replace(label);
           this.onBack();
         },
         error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
+          const error = err.error as SimpleApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while deleting a label.', 'Dismiss', {
-            duration: 5000
-          });
+          this.isEditRequestRunning.set(false);
+          this.editError.set(getDefaultErrorMessageForType(error));
         }
       });
     }
@@ -148,17 +158,5 @@ export class LabelManagementDialog {
 
   onClose() {
     this.dialogRef.close(this.hasChangedLabels);
-  }
-
-  private loadLabelsForProject(projectId: number) : Observable<LabelResponse[]> {
-    this.isLoading.set(true);
-    return this.labelService.getLabelsForProject(projectId).pipe(tap({
-      next: labels => {
-        this.dataSource.data = labels;
-      },
-      finalize: () => {
-        this.isLoading.set(false);
-      }
-    }));
   }
 }

@@ -9,6 +9,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatInputModule } from '@angular/material/input';
+import { getDefaultErrorMessageForType } from '../../../utils';
+import { finalize } from 'rxjs';
 
 interface NewLabelData {
   projectId: number,
@@ -53,17 +55,16 @@ export class NewLabelDialog {
         taskIds: [ this.data.taskId ]
       };
       this.isSendingRequest.set(true);
-      this.labelService.createLabel(request).subscribe({
+      this.labelService.createLabel(request).pipe(
+        finalize(() => this.isSendingRequest.set(false)))
+      .subscribe({
         next: () => {
-          this.isSendingRequest.set(false);
           this.dialogRef.close(true);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
           
-          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new label.');
-
-          this.isSendingRequest.set(false);
+          this.error.set(getDefaultErrorMessageForType(error));
         }
       });
     }

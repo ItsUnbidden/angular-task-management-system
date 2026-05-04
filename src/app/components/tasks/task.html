@@ -1,18 +1,18 @@
 <mat-card appearance="outlined" class="overview-card">
-    @if (isTaskLoading()) {
+    @if (selectedTaskCache().isLoading) {
         <div class="spinner-container">
             <mat-spinner diameter="30"></mat-spinner>
             <span>Loading task...</span>
         </div>
     }
     @else {
-        @if (projectLoadingError() || taskLoadingError()) {
+        @if (selectedProjectCache().error || selectedTaskCache().error) {
             <mat-card-header>
                 <mat-card-title class="error-card-title">Error</mat-card-title>
             </mat-card-header>
 
             <mat-card-content>
-                <p>{{ taskLoadingError() ? taskLoadingError() : projectLoadingError() }}</p>
+                <p>{{ selectedTaskCache().error ?? selectedProjectCache().error }}</p>
             </mat-card-content>
 
             <mat-card-actions class="error-actions-container">
@@ -43,7 +43,7 @@
                         </form>
                     }
                     @else {
-                        <mat-card-title>{{ task()?.name }}</mat-card-title>                                      
+                        <mat-card-title>{{ selectedTaskCache().item?.name }}</mat-card-title>                                      
                     }
                 </div>
                 @if ((isAdmin() || isManager()) && !isEditingName()) {
@@ -74,8 +74,8 @@
                 }
                 @else {
                     <div class="row">
-                        @if (task()?.description) {
-                            <p class="description-field">{{ task()?.description ?? "" }}</p>
+                        @if (selectedTaskCache().item?.description) {
+                            <p class="description-field">{{ selectedTaskCache().item?.description ?? "" }}</p>
                         } 
                         @else {
                             <p class="description-none">No description</p>
@@ -107,9 +107,9 @@
                 }
                 @else {
                     <div class="row">
-                        <p>{{ task()?.dueDate ? (task()?.dueDate | date:'mediumDate') : 'No due date' }}</p>
-                        <mat-chip [ngClass]="getChipColorLocal(task()?.status ?? null)">
-                            {{ getChipTextLocal(task()?.status ?? null) }}
+                        <p>{{ selectedTaskCache().item?.dueDate ? (selectedTaskCache().item?.dueDate | date:'mediumDate') : 'No due date' }}</p>
+                        <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.status ?? null)">
+                            {{ getChipTextLocal(selectedTaskCache().item?.status ?? null) }}
                         </mat-chip>
                         @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskDueDateEdit()">
@@ -132,7 +132,7 @@
                                 </mat-form-field>
     
                                 <mat-chip-listbox multiple formControlName="labels">
-                                    @for (label of projectLabels(); track label.id) {
+                                    @for (label of projectLabels().page?.content; track label.id) {
                                         <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">                                        
                                             {{ label.name }}                                                                          
                                         </mat-chip-option>
@@ -163,10 +163,10 @@
                 @else {
                     <div class="row">
                         <mat-chip-set>
-                            <mat-chip [ngClass]="getChipColorLocal(task()?.priority ?? null)">
-                                {{ getChipTextLocal(task()?.priority ?? null) }}
+                            <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.priority ?? null)">
+                                {{ getChipTextLocal(selectedTaskCache().item?.priority ?? null) }}
                             </mat-chip>
-                            @for (label of labels(); track label.id) {
+                            @for (label of getLabelsForTask; track label.id) {
                                 <mat-chip class="label-chip" [attr.data-color]="label.color">
                                     {{ label.name }}
                                 </mat-chip>
@@ -188,15 +188,15 @@
                         Delete
                     </button>
                 }
-                @if (task()?.assigneeId === currentUser()?.id) {
-                    @if (task()?.status === 'IN_PROGRESS') {
+                @if (selectedTaskCache().item?.assigneeId === currentUserCache().item?.id) {
+                    @if (selectedTaskCache().item?.status === 'IN_PROGRESS') {
                         <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
                         <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
                     }
-                    @else if (task()?.status === 'NOT_STARTED') {
+                    @else if (selectedTaskCache().item?.status === 'NOT_STARTED') {
                         <button matButton="filled" (click)="onStatusChange('IN_PROGRESS')">Start</button>
                     }
-                    @else if (task()?.status === 'OVERDUE') {
+                    @else if (selectedTaskCache().item?.status === 'OVERDUE') {
                         <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
                     }
                     @else {
@@ -207,10 +207,10 @@
 
             <mat-card-content>
                 @if (isDropboxConnected() && isContributor()) {
-                    @if (project()?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
+                    @if (selectedProjectCache().item?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
                         <app-attachment-list></app-attachment-list>
                     }
-                    @else if (!project()?.isDropboxConnected) {
+                    @else if (!selectedProjectCache().item?.isDropboxConnected) {
                         @if (isCreator()) {
                             <p>Connect the project to Dropbox to access attachments.</p>
                         }

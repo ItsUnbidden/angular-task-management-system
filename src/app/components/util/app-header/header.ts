@@ -1,7 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
-import { UserService } from '../../../service/user.service';
 import { EventType, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../service/auth.service';
@@ -17,6 +16,8 @@ import { EMPTY, forkJoin, map, switchMap } from 'rxjs';
 import { MatMenuModule } from '@angular/material/menu';
 import { UpdateUserDetailsDialog } from '../../users/update-user-details-dialog/update-user-details-dialog';
 import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-account-dialog';
+import { UserStore } from '../../../cache/user.store';
+import { getDefaultErrorMessageForType } from '../../../utils';
 
 @Component({
   selector: 'app-header',
@@ -27,13 +28,13 @@ import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-ac
 export class Header {
   private readonly router = inject(Router);
   private readonly oauth2Service = inject(OAuth2Service);
-  private readonly userService = inject(UserService);
+  private readonly userStore = inject(UserStore);
 
-  readonly user = this.userService.user;
+  readonly userCache = this.userStore.userCache;
   readonly isLoggedIn = computed(() => {
-    const user = this.user();
+    const user = this.userCache().item;
 
-    return user;
+    return user ? true : false;
   });
   readonly isOnDashboard = toSignal(this.router.events.pipe(map(event => {
     if (event.type === EventType.NavigationEnd) {
@@ -48,8 +49,8 @@ export class Header {
     return false;
   })), { initialValue: false });
 
-  readonly isManager = this.userService.isManager;
-  readonly isOwner = this.userService.isOwner;
+  readonly isManager = this.userStore.isManager;
+  readonly isOwner = this.userStore.isOwner;
 
   readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
   readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
@@ -93,7 +94,7 @@ export class Header {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while disconnecting Dropbox.', 'Dismiss', {
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
           duration: 5000
         });
       }
@@ -122,7 +123,7 @@ export class Header {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while disconnecting Calendar.', 'Dismiss', {
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
           duration: 5000
         });
       }
@@ -155,7 +156,7 @@ export class Header {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(error ? error.errors[0] : 'An unknown error occured while logging out.', 'Dismiss', {
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
           duration: 5000
         });
       }
@@ -188,7 +189,7 @@ export class Header {
         this.snackBar.open(this.getDeletionConfirmationMessage(response), 'Dismiss', {
           duration: 10000
         });
-        this.userService.clearUser();
+        this.userStore.clearUser();
         this.router.navigateByUrl('/auth')
       }
     });

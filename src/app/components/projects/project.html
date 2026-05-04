@@ -1,19 +1,19 @@
 <div class="main-container">
     <mat-card appearance="outlined" class="overview-card">
-        @if (isProjectLoading()) {
+        @if (projectCache().isLoading) {
             <div class="spinner-container">
                 <mat-spinner diameter="30"></mat-spinner>
                 <span>Loading project...</span>
             </div>
         }
         @else {
-            @if (projectLoadingError()) {
+            @if (projectCache().error) {
                 <mat-card-header>
                     <mat-card-title class="card-title">Error</mat-card-title>
                 </mat-card-header>
 
                 <mat-card-content>
-                    <p>{{ projectLoadingError() }}</p>
+                    <p>{{ projectCache().error }}</p>
                 </mat-card-content>
 
                 <mat-card-actions class="error-actions-container">
@@ -53,7 +53,7 @@
                     @else {
                         <div class="row">
                             <h2>
-                                {{ project()?.name }}                       
+                                {{ projectCache().item?.name }}                       
                             </h2>
                             @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectNameEdit()">
@@ -81,8 +81,8 @@
                     }
                     @else {
                         <div class="row">
-                            @if (project()?.description) {
-                                <p class="description-field">{{ project()?.description ?? "" }}</p>
+                            @if (projectCache().item?.description) {
+                                <p class="description-field">{{ projectCache().item?.description ?? "" }}</p>
                             } 
                             @else {
                                 <p class="description-field">No description</p>
@@ -118,13 +118,13 @@
                     @else {
                         <div class="row">
                             <div class = "muted">
-                                {{ project()?.startDate | date:'mediumDate' }}
+                                {{ projectCache().item?.startDate | date:'mediumDate' }}
                                 —
-                                {{ project()?.endDate ? (project()?.endDate | date:'mediumDate') : 'No end date'}}
+                                {{ projectCache().item?.endDate ? (projectCache().item?.endDate | date:'mediumDate') : 'No end date'}}
                             </div>
     
-                            <mat-chip [ngClass]="getChipColorLocal(project()?.status ?? null)">
-                                {{ getChipTextLocal(project()?.status ?? null) }}
+                            <mat-chip [ngClass]="getChipColorLocal(projectCache().item?.status ?? null)">
+                                {{ getChipTextLocal(projectCache().item?.status ?? null) }}
                             </mat-chip>      
                             @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDatesEdit()">
@@ -166,7 +166,7 @@
                                                 Remove admin
                                             </button>
                                         }     
-                                        @if ((isAdmin() || isManager()) && currentUser()?.id !== admin.userId) {
+                                        @if ((isAdmin() || isManager()) && currentUser().item?.id !== admin.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                                 Remove
@@ -186,7 +186,7 @@
                                                 Make admin
                                             </button>
                                         }
-                                        @if ((isAdmin() || isManager()) && currentUser()?.id !== contributor.userId) {
+                                        @if ((isAdmin() || isManager()) && currentUser().item?.id !== contributor.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(contributor)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
                                                 Remove
@@ -213,7 +213,7 @@
                         }            
                         @if (isUserConnectedToDropbox()) {
                             @if (isCreator()) {
-                                @if (project()?.isDropboxConnected) {
+                                @if (projectCache().item?.isDropboxConnected) {
                                     <button matButton="elevated" (click)="onDisconnectDropbox()">
                                         <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
                                         Disconnect Dropbox
@@ -226,7 +226,7 @@
                                     </button>
                                 }
                             }
-                            @else if (project()?.isDropboxConnected) {
+                            @else if (projectCache().item?.isDropboxConnected) {
                                 <button matButton="elevated" (click)="onJoinDropbox()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Dropbox
@@ -235,7 +235,7 @@
                         }
                         @if (isUserConnectedToCalendar()) {
                             @if (isCreator()) {
-                                @if (project()?.isCalendarConnected) {
+                                @if (projectCache().item?.isCalendarConnected) {
                                     <button matButton="elevated" (click)="onDisconnectCalendar()">
                                         <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
                                         Disconnect Calendar
@@ -248,7 +248,7 @@
                                     </button>
                                 }
                             }
-                            @else if (project()?.isCalendarConnected) {
+                            @else if (projectCache().item?.isCalendarConnected) {
                                 <button matButton="elevated" (click)="onJoinCalendar()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Calendar
@@ -260,7 +260,7 @@
             }
         }
     </mat-card>
-    @if (!projectLoadingError()) {
+    @if (!projectCache().error) {
         <router-outlet></router-outlet>
     }
 </div>

@@ -5,29 +5,21 @@ import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSortModule, Sort } from '@angular/material/sort';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { MatTabsModule } from '@angular/material/tabs'
+import { MatTableModule } from '@angular/material/table';
+import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs'
 import { ProjectService } from '../../service/project.service';
-import { TaskService } from '../../service/task.service';
-import { GeneralApiError, Page, ProjectResponse, TaskResponse } from '../../models';
+import { EssentialUserResponse, ProjectResponse, TaskResponse } from '../../models';
 import { MatDialog } from '@angular/material/dialog';
 import { NewProjectDialog } from '../projects/new-project/new-project-dialog';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { HttpErrorResponse } from '@angular/common/http';
 import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
-import { debounceTime, distinctUntilChanged, EMPTY, Observable, switchMap, tap } from 'rxjs';
-import { getChipColor, getChipText } from '../../utils';
+import { debounceTime, distinctUntilChanged, EMPTY, switchMap } from 'rxjs';
+import { getChipColor, getChipText, getProjectCreator } from '../../utils';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
-import { UserService } from '../../service/user.service';
-
-interface TableState {
-  pageIndex: number;
-  pageSize: number;
-  sortActive: string;
-  sortDirection: 'asc' | 'desc' | '';
-}
+import { DashboardStore } from '../../cache/dashboard.store';
+import { UserStore } from '../../cache/user.store';
 
 @Component({
   selector: 'app-dashboard',
@@ -35,36 +27,22 @@ interface TableState {
     MatButtonModule, MatPaginatorModule, MatSortModule, MatFormFieldModule,
     MatInputModule, MatProgressSpinnerModule, MatChipsModule, ReactiveFormsModule],
   templateUrl: './dashboard.html',
-  styleUrl: './dashboard.css',
+  styleUrl: './dashboard.css'
 })
 export class Dashboard {
-  private readonly userService = inject(UserService);
+  private readonly userStore = inject(UserStore);
+  private readonly dashboardStore = inject(DashboardStore);
 
-  readonly isLoadingMyProjects = signal(false);
-  readonly isLoadingTasks = signal(false);
-  readonly isLoadingPublicProjects = signal(false);
+  readonly projectsCache = this.dashboardStore.projectsCache.asReadonly();
+  readonly myTasksCache = this.dashboardStore.myTasksCache.asReadonly();
 
-  readonly myProjectsError = signal<string | null>(null);
-  readonly myTasksError = signal<string | null>(null);
-  readonly publicProjectsError = signal<string | null>(null);
-  
-  readonly myProjectsTableState = signal<TableState>({ pageIndex: 0, pageSize: 10, sortActive: 'name', sortDirection: 'asc' });
-  readonly myTasksTableState = signal<TableState>({ pageIndex: 0, pageSize: 10, sortActive: 'name', sortDirection: 'asc' });
-  readonly publicProjectsTableState = signal<TableState>({ pageIndex: 0, pageSize: 25, sortActive: 'name', sortDirection: 'asc' });
+  readonly currentTab = signal<number>(0);
 
-  readonly myProjectTotalElements = signal(0);
-  readonly myTasksTotalElements = signal(0);
-  readonly publicProjectTotalElements = signal(0);
-
-  readonly isManager = this.userService.isManager;
+  readonly isManager = this.userStore.isManager;
 
   readonly projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
   readonly publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
   readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
-
-  readonly myProjectsDS = new MatTableDataSource<ProjectResponse>([]);
-  readonly myTasksDS = new MatTableDataSource<TaskResponse>([]);
-  readonly publicProjectsDS = new MatTableDataSource<ProjectResponse>([]);
 
   readonly myProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
@@ -77,115 +55,79 @@ export class Dashboard {
   readonly publicProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
-
-  private readonly myProjectsLoadingErrorAction = (err: HttpErrorResponse) => {
-    const error = err.error as GeneralApiError;
-    
-    this.myProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading my projects.');
-    this.isLoadingMyProjects.set(false);
-  };
-
-  private readonly myTasksLoadingErrorAction = (err: HttpErrorResponse) => {
-    const error = err.error as GeneralApiError;
-    
-    this.myTasksError.set(error ? error.errors[0] : 'An unknown error occured while loading my tasks.');
-    this.isLoadingTasks.set(false);
-  };
-
-  private readonly publicProjectsLoadingErrorAction = (err: HttpErrorResponse) => {
-    const error = err.error as GeneralApiError;
-
-    this.publicProjectsError.set(error ? error.errors[0] : 'An unknown error occured while loading public projects.');
-    this.isLoadingPublicProjects.set(false);
-  };
   
   constructor(public readonly projectService: ProjectService,
-              private readonly taskService: TaskService,
               private readonly dialog: MatDialog,
               private readonly router: Router) {
     effect(() => {
-      this.myProjectsTableState();
-      this.loadMyProjects().subscribe({
-        error: this.myProjectsLoadingErrorAction
-      });
+      const currentTab = this.currentTab();
+
+      if (currentTab === 0) {
+        this.cacheMyProjectsDefault();
+      }
+      if (currentTab === 1) {
+        this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', {
+          pageIndex: 0,
+          pageSize: 50,
+          sortActive: '',
+          sortDirection: ''
+        }).subscribe();
+      }
     });
 
-    effect(() => {
-      this.myTasksTableState();
-      this.loadMyTasks().subscribe({
-        error: this.myTasksLoadingErrorAction
-      });
-    });
-
-    effect(() => {
-      this.publicProjectsTableState();
-      this.loadPublicProjects().subscribe({
-        error: this.publicProjectsLoadingErrorAction
-      });
-    });
-    
     this.myProjectsFilterForm.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged(),
       switchMap(() => {
-        const state = this.myProjectsTableState();
+        const cache = this.projectsCache();
 
-        if (state.pageIndex === 0) {
-          return this.loadMyProjects();
-        } else {
-          this.myProjectsTableState.update(state => {
-            return { ...state, pageIndex: 0 };
-          });
-        }
-        return EMPTY;
+        return this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', {
+          pageIndex: cache.pageIndex === 0 ? cache.pageIndex : 0,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        });
       })
-    ).subscribe({
-      error: this.myProjectsLoadingErrorAction
-    });
+    ).subscribe();
     
     this.myTasksFilterForm.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged(),
       switchMap(() => {
-        const state = this.myTasksTableState();
+        const cache = this.myTasksCache();
 
-        if (state.pageIndex === 0) {
-          return this.loadMyTasks();
-        } else {
-          this.myTasksTableState.update(state => {
-            return { ...state, pageIndex: 0 };
-          });
-        }
-        return EMPTY;
+        return this.dashboardStore.cacheMyTasks(this.myTasksFilterForm.value.filter ?? '', {
+          pageIndex: cache.pageIndex === 0 ? cache.pageIndex : 0,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        });
       })
-    ).subscribe({
-      error: this.myTasksLoadingErrorAction
-    });
+    ).subscribe();
     
     this.publicProjectsFilterForm.valueChanges.pipe(
       debounceTime(400),
       distinctUntilChanged(),
       switchMap(() => {
-        const state = this.publicProjectsTableState();
+        const cache = this.projectsCache();
 
-        if (state.pageIndex === 0) {
-          return this.loadPublicProjects();
-        } else {
-          this.publicProjectsTableState.update(state => {
-            return { ...state, pageIndex: 0 };
-          });
-        }
-        return EMPTY;
+        return this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', {
+          pageIndex: cache.pageIndex === 0 ? cache.pageIndex : 0,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        });
       })
-    ).subscribe({
-      error: this.publicProjectsLoadingErrorAction
-    });
+    ).subscribe();
   }
 
   ngAfterViewInit() {
-    this.loadMyProjects();
-    this.loadMyTasks();
-    this.loadPublicProjects();
+    this.dashboardStore.cacheMyTasks(this.myTasksFilterForm.value.filter ?? '', {
+      pageIndex: 0,
+      pageSize: 10,
+      sortActive: '',
+      sortDirection: ''
+    }).subscribe();
   }
 
   onOpenNewProjectDialog() {
@@ -194,11 +136,22 @@ export class Dashboard {
       disableClose: true
     });
 
-    ref.afterClosed().subscribe(confirmed => {
+    ref.afterClosed().pipe(switchMap(confirmed => {
       if (confirmed) {
-        this.loadMyProjects();
+        const cache = this.projectsCache();
+        const state = {
+          pageIndex: cache.pageIndex,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        };
+
+        return this.currentTab() === 0
+          ? this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', state)
+          : this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', state);
       }
-    });
+      return EMPTY;
+    })).subscribe();
   }
 
   onSelectProject(p: ProjectResponse) {
@@ -210,40 +163,79 @@ export class Dashboard {
   }
 
   onMyProjectsPage(event: PageEvent) {
-    this.myProjectsTableState.update(state => {
-      return { ...state, pageIndex: event.pageIndex, pageSize: event.pageSize };
-    });
+    const cache = this.projectsCache();
+    const state = {
+      pageIndex: event.pageIndex,
+      pageSize: event.pageSize,
+      sortActive: cache.sort,
+      sortDirection: cache.direction
+    };
+
+    this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
   onMyTasksPage(event: PageEvent) {
-    this.myTasksTableState.update(state => {
-      return { ...state, pageIndex: event.pageIndex, pageSize: event.pageSize };
-    });
+    const cache = this.myTasksCache();
+    const state = {
+      pageIndex: event.pageIndex,
+      pageSize: event.pageSize,
+      sortActive: cache.sort,
+      sortDirection: cache.direction
+    };
+
+    this.dashboardStore.cacheMyTasks(this.myTasksFilterForm.value.filter ?? '', state).subscribe();
   }
 
   onPublicProjectsPage(event: PageEvent) {
-    this.publicProjectsTableState.update(state => {
-      return { ...state, pageIndex: event.pageIndex, pageSize: event.pageSize };
-    });
+    const cache = this.projectsCache();
+    const state = {
+      pageIndex: event.pageIndex,
+      pageSize: event.pageSize,
+      sortActive: cache.sort,
+      sortDirection: cache.direction
+    };
+
+    this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
   onMyProjectsSort(event: Sort) {
-    this.myProjectsTableState.update(state => {
-      return { ...state, pageIndex: 0, sortActive: event.direction !== '' ? event.active : 'name', sortDirection: event.direction !== '' ? event.direction : 'asc' };
-    })
+    const cache = this.projectsCache();
+    const state = {
+      pageIndex: 0,
+      pageSize: cache.pageSize,
+      sortActive: event.direction !== '' ? event.active : 'name',
+      sortDirection: event.direction !== '' ? event.direction : 'asc'
+    };
+
+    this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
   onMyTasksSort(event: Sort) {
-    console.log(`Active: ${event.active}, direction: ${event.direction}`);
-    this.myTasksTableState.update(state => {
-      return { ...state, pageIndex: 0, sortActive: event.direction !== '' ? event.active : 'name', sortDirection: event.direction !== '' ? event.direction : 'asc' };
-    })
+    const cache = this.myTasksCache();
+    const state = {
+      pageIndex: 0,
+      pageSize: cache.pageSize,
+      sortActive: event.direction !== '' ? event.active : 'name',
+      sortDirection: event.direction !== '' ? event.direction : 'asc'
+    };
+
+    this.dashboardStore.cacheMyTasks(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
   onPublicProjectsSort(event: Sort) {
-    this.publicProjectsTableState.update(state => {
-      return { ...state, pageIndex: 0, sortActive: event.direction !== '' ? event.active : 'name', sortDirection: event.direction !== '' ? event.direction : 'asc' };
-    })
+    const cache = this.projectsCache();
+    const state = {
+      pageIndex: 0,
+      pageSize: cache.pageSize,
+      sortActive: event.direction !== '' ? event.active : 'name',
+      sortDirection: event.direction !== '' ? event.direction : 'asc'
+    };
+
+    this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', state).subscribe();
+  }
+
+  onTabChange(event: MatTabChangeEvent) {
+    this.currentTab.set(event.index);
   }
 
   getChipColorLocal(value: string | null): string {
@@ -253,64 +245,17 @@ export class Dashboard {
   getChipTextLocal(value: string | null): string {
     return getChipText(value);
   }
-  
-  private loadMyProjects() : Observable<Page<ProjectResponse>> {
-    this.isLoadingMyProjects.set(true);
-    this.myProjectsError.set(null);
 
-    const state = this.myProjectsTableState();
-
-    return this.projectService.getMyProjects(this.myProjectsFilterForm.value.filter?.trim() ?? '',
-      state.pageIndex,
-      state.pageSize,
-      state.sortActive,
-      state.sortDirection).pipe(tap({
-        next: (page: Page<ProjectResponse>) => {
-          this.myProjectsDS.data = page.content;
-          this.myProjectTotalElements.set(page.totalElements);
-          this.isLoadingMyProjects.set(false);
-        }
-      })
-    );
+  getProjectCreatorLocal(project: ProjectResponse) : EssentialUserResponse {
+    return getProjectCreator(project);
   }
 
-  private loadMyTasks() : Observable<Page<TaskResponse>> {
-    this.isLoadingTasks.set(true);
-    this.myTasksError.set(null);
-
-    const state = this.myTasksTableState();
-
-    return this.taskService.getMyTasks(this.myTasksFilterForm.value.filter?.trim() ?? '',
-      state.pageIndex,
-      state.pageSize,
-      state.sortActive,
-      state.sortDirection).pipe(tap({
-        next: (page: Page<TaskResponse>) => {
-          this.myTasksDS.data = page.content;
-          this.myTasksTotalElements.set(page.totalElements);
-          this.isLoadingTasks.set(false);
-        }
-      })
-    );
-  }
-
-  private loadPublicProjects() : Observable<Page<ProjectResponse>> {
-    this.isLoadingPublicProjects.set(true);
-    this.publicProjectsError.set(null);
-
-    const state = this.publicProjectsTableState();
-
-    return this.projectService.searchProjectsByName(this.publicProjectsFilterForm.value.filter?.trim() ?? '',
-      state.pageIndex,
-      state.pageSize,
-      state.sortActive,
-      state.sortDirection).pipe(tap({
-        next: (page: Page<ProjectResponse>) => {
-          this.publicProjectsDS.data = page.content;
-          this.publicProjectTotalElements.set(page.totalElements);
-          this.isLoadingPublicProjects.set(false);
-        }
-      })
-    );
+  private cacheMyProjectsDefault() {
+    this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', {
+      pageIndex: 0,
+      pageSize: 10,
+      sortActive: '',
+      sortDirection: ''
+    }).subscribe();
   }
 }

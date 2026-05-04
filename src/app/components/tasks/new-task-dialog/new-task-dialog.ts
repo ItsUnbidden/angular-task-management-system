@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from "@angular/material/select";
 import { TaskService } from '../../../service/task.service';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { getDefaultErrorMessageForType } from '../../../utils';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -81,7 +82,7 @@ export class NewTaskDialog {
         error: (err) => {
           const error = err.error as GeneralApiError;
                     
-          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new task.');
+          this.error.set(getDefaultErrorMessageForType(error));
 
           this.isSendingRequest.set(false);
         }

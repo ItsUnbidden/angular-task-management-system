@@ -52,7 +52,7 @@
                     </button>
                 }
             }
-            <button matButton="filled" [matMenuTriggerFor]="menu">{{ user()?.username }}</button>
+            <button matButton="filled" [matMenuTriggerFor]="menu">{{ userCache().item?.username }}</button>
             <mat-menu #menu="matMenu">
                 <button mat-menu-item (click)="onChangeUserDetails()">
                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>

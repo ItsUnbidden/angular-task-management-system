@@ -11,7 +11,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { toLocalDateString } from '../../../utils';
+import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-new-project-dialog',
@@ -57,18 +58,18 @@ export class NewProjectDialog {
         isPrivate: this.projectControl.get('isPrivate')?.value || false,
       };
       this.isSendingRequest.set(true);
-      this.projectService.createProject(request).subscribe({
-        next: () => {
-          this.isSendingRequest.set(false);
-          this.dialogRef.close(true);
-        },
-        error: (err) => {
-          const error = err.error as GeneralApiError;
-          
-          this.error.set(error ? error.errors[0] : 'Unknown error occured while attempting to create a new project.');
-          this.isSendingRequest.set(false);
-        }
-      });
+      this.projectService.createProject(request)
+        .pipe(finalize(() => this.isSendingRequest.set(false)))
+        .subscribe({
+          next: () => {
+            this.dialogRef.close(true);
+          },
+          error: (err) => {
+            const error = err.error as GeneralApiError;
+            
+            this.error.set(getDefaultErrorMessageForType(error));
+          }
+        });
     }
   }
 }

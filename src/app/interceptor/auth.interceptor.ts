@@ -3,15 +3,15 @@ import { AuthService } from "../service/auth.service";
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from "@angular/common/http";
 import { BehaviorSubject, catchError, filter, finalize, Observable, switchMap, take, throwError } from "rxjs";
 import { Router } from "@angular/router";
-import { UserService } from "../service/user.service";
 import { isPlatformBrowser } from "@angular/common";
+import { UserStore } from "../cache/user.store";
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
   private isRefreshDone = new BehaviorSubject<boolean | null>(null);
 
-  constructor(@Inject(PLATFORM_ID) private platformId: number, private auth: AuthService, private userService: UserService, private router: Router) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: number, private auth: AuthService, private userStore: UserStore, private router: Router) {}
   
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (!isPlatformBrowser(this.platformId)) return next.handle(req);
@@ -43,7 +43,7 @@ export class AuthInterceptor implements HttpInterceptor {
         }),
         catchError(err => {
           this.isRefreshDone.next(false);
-          this.userService.clearUser();
+          this.userStore.clearUser();
           return throwError(() => err);
         }),
         finalize(() => {

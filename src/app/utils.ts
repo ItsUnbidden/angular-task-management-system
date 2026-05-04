@@ -1,6 +1,7 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
-import { UserResponse } from "./models";
+import { ErrorType, EssentialUserResponse, GeneralApiError, ProjectResponse, UserResponse } from "./models";
 import { error } from "console";
+import { environment } from "../environments/environment";
 
 export function toLocalDateString(date: Date | null): string | undefined {
     if (!date) {
@@ -75,5 +76,45 @@ export function passwordMatchValidator(): ValidatorFn {
             }
             return null;
         }
+    }
+}
+
+export function getProjectCreator(project: ProjectResponse) : EssentialUserResponse {
+    const projectRole = project.projectRoles.find(pr => pr.roleType === 'CREATOR');
+
+    return { id: projectRole?.userId ?? 0, username: projectRole?.username ?? 'UNKNOWN_USER' };
+}
+
+export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
+    if (!error) {
+        return 'An unkown error has occured.';
+    }
+    if (environment.logErrors) {
+        console.error(error);
+    }
+    switch (error.type) {
+        case ErrorType.GENERAL_FIELD_VALIDATION: return 'Some of the submitted data is invalid.';
+        case ErrorType.GENERAL_MISFORMED_REQUEST: return 'Unable to parse request.';
+        case ErrorType.GENERAL_AUTHENTICATION_FAILURE: return 'Provided credentials are invalid.';
+        case ErrorType.PROJECT_NOT_FOUND: return 'The requested project was not found.';
+        case ErrorType.TASK_NOT_FOUND: return 'The requested task was not found.';
+        case ErrorType.LABEL_NOT_FOUND: return 'The requested label was not found.';
+        case ErrorType.USER_NOT_FOUND: return 'The requested user was not found.';
+        case ErrorType.ATTACHMENT_NOT_FOUND: return 'The requested attachment was not found.';
+        case ErrorType.ATTACHMENT_FILE_TOO_LARGE: return 'The uploaded file is too large. The maximum file size is currently 150 Mb';
+        case ErrorType.ATTACHMENT_UPLOAD_FAILURE: return 'An issue has occured during file upload. This usually means an internal Dropbox failure. Please try again later.';
+        case ErrorType.MESSAGE_NOT_FOUND: return 'The requested message was not found.';
+        case ErrorType.MESSAGE_COMMENT_NOT_FOUND: return 'The requested comment was not found.';
+        case ErrorType.MESSAGE_REPLY_NOT_FOUND: return 'The requested reply was not found.';
+        case ErrorType.OAUTH2_INTERNAL_FAILURE: return 'An internal issue has occured during the authorization process. Please try again later.';
+        case ErrorType.OAUTH2_EXTERNAL_ID_TAKEN: return 'This external account is already in use by a different user.';
+        case ErrorType.OAUTH2_ALREADY_AUTHORIZED: return 'You have already authorized the use of this service.';
+        case ErrorType.OAUTH2_NO_STATE_FOUND: return 'The authorization attempt took too long. Please try again.';
+        case ErrorType.OAUTH2_CALLBACK_FAILURE: return 'Failed to complete the authorization process. Please try again later.';
+        case ErrorType.REGISTRATION_USERNAME_TAKEN: return 'This username is already in use by a different user.';
+        case ErrorType.REGISTRATION_EMAIL_TAKEN: return 'This email is already in use by a different user.';
+        case ErrorType.EXTERNAL_INTERRUPTED: return 'The server is currently shutting down. Please try again later.';
+        case ErrorType.INTERNAL: return 'An unknown internal error has occured. The issue is being investigated. Please try again later.';
+        default: return 'An unkown error has occured.';
     }
 }

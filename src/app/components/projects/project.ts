@@ -23,9 +23,10 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { AddUserDialog } from '../users/add-user-dialog/add-user-dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
-import { UserService } from '../../service/user.service';
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, getDefaultErrorMessageForType, toLocalDateString } from '../../utils';
+import { ProjectStore } from '../../cache/project.store';
+import { UserStore } from '../../cache/user.store';
 
 @Component({
   selector: 'app-overview',
@@ -42,14 +43,12 @@ import { getChipColor, getChipText, toLocalDateString } from '../../utils';
 })
 export class Project {
   private readonly route = inject(ActivatedRoute);
-  private readonly projectService = inject(ProjectService);
-  private readonly userService = inject(UserService);
+  private readonly projectStore = inject(ProjectStore);
+  private readonly userStore = inject(UserStore);
   private readonly oauth2Service = inject(OAuth2Service);
 
-  readonly project = this.projectService.project;
-  readonly currentUser = this.userService.user;
-  readonly isProjectLoading = this.projectService.isLoading;
-  readonly projectLoadingError = this.projectService.error;
+  readonly projectCache = this.projectStore.selectedProjectCache;
+  readonly currentUser = this.userStore.userCache;
  
   readonly isEditingName = signal(false);
   readonly isEditingDescription = signal(false);
@@ -59,15 +58,15 @@ export class Project {
   readonly isUserConnectedToDropbox = this.oauth2Service.isDropboxConnected;
   readonly isUserConnectedToCalendar = this.oauth2Service.isCalendarConnected;
 
-  readonly isCreator = this.projectService.isCreator;
-  readonly isAdmin = this.projectService.isAdmin;
-  readonly isContributor = this.projectService.isContributor;
+  readonly isCreator = this.projectStore.isCreator;
+  readonly isAdmin = this.projectStore.isAdmin;
+  readonly isContributor = this.projectStore.isContributor;
 
-  readonly isManager = this.userService.isManager;
+  readonly isManager = this.userStore.isManager;
 
-  readonly creator = computed(() => this.project()?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
-  readonly admins = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
-  readonly contributors = computed(() => this.project()?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
+  readonly creator = computed(() => this.projectCache().item?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
+  readonly admins = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
+  readonly contributors = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
 
   readonly projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
@@ -96,21 +95,16 @@ export class Project {
 
   constructor(private readonly dialog: MatDialog,
               private readonly snackBar: MatSnackBar,
-              private readonly router: Router) {
+              private readonly router: Router,
+              private readonly projectService: ProjectService) {
     effect(() => {
       const id = this.projectId();
 
-      this.projectService.loadProjectToCache(id).subscribe({
-        error: (err: HttpErrorResponse) => {
-          if (err.status === 403) {
-            router.navigateByUrl('/forbidden');
-          }
-        }
-      });
+      this.projectStore.cacheSelectedProject(id).subscribe();
     });
 
     effect(() => {
-      const project = this.project();
+      const project = this.projectCache()?.item;
 
       if (project) {
         this.isPrivateCtrl.setValue(project?.isPrivate ?? false);
@@ -167,14 +161,14 @@ export class Project {
   }
 
   onSubmitProjectName() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project && this.nameEditForm.value.projectName && this.nameEditForm.value.projectName !== project.name) {
       const request = this.makeProjectUpdateRequest();
 
       if (request) {
         request.name = this.nameEditForm.value.projectName;
-        this.handleUpdateCachedProject(project.id, request);
+        this.projectStore.updateCachedProject(request).subscribe();
       }
     }
     this.isEditingName.set(false);
@@ -194,14 +188,14 @@ export class Project {
   }
 
   onSubmitProjectDescription() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project && this.descriptionEditForm.value.projectDescription !== project.description) {
       const request = this.makeProjectUpdateRequest();
 
       if (request) {
         request.description = this.descriptionEditForm.value.projectDescription ?? undefined;
-        this.handleUpdateCachedProject(project.id, request);
+        this.projectStore.updateCachedProject(request).subscribe();
       }
     }
     this.isEditingDescription.set(false);
@@ -221,12 +215,12 @@ export class Project {
     })
     .afterClosed()
     .pipe(switchMap(confirmed => {
-      const project = this.project();
+      const project = this.projectCache()?.item;
       const request = this.makeProjectUpdateRequest();
 
       if (confirmed && project && request) {
         request.isPrivate = isOn;
-        return this.projectService.updateCachedProject(project.id, request);
+        return this.projectStore.updateCachedProject(request);
       }
 
       this.isSavingPrivacy.set(false);
@@ -242,7 +236,7 @@ export class Project {
   }
 
   onSubmitProjectDates() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       const request = this.makeProjectUpdateRequest();
@@ -252,7 +246,7 @@ export class Project {
           request.startDate = toLocalDateString(this.datesEditForm.value.startDate) ?? '';
         }
         request.endDate = toLocalDateString(this.datesEditForm.value.endDate ?? null);
-        this.handleUpdateCachedProject(project.id, request);
+        this.projectStore.updateCachedProject(request).subscribe();
       }
     }
     this.isEditingDates.set(false);
@@ -260,7 +254,6 @@ export class Project {
 
   onAddUser() {
     this.dialog.open(AddUserDialog, {
-      data: this.projectId(),
       disableClose: true,
       width: '420px'
     })
@@ -273,7 +266,7 @@ export class Project {
   }
 
   onRemoveUser(projectRole: ProjectRoleResponse) {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -284,10 +277,10 @@ export class Project {
       })
       .afterClosed().pipe(
         switchMap(confirmed => {
-          if (confirmed) return this.projectService.removeUserFromProject(project.id, projectRole.userId);
+          if (confirmed) return this.projectStore.removeUserFromProject(projectRole.userId);
           return EMPTY;
         }),
-        switchMap(response => this.projectService.loadProjectToCache(project.id).pipe(map(() => response)))
+        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
       ).subscribe({
         next: response => {
           let message = `${projectRole.username} has been removed from this project. `;
@@ -295,7 +288,7 @@ export class Project {
             message += 'Dropbox was not disconnected properly. ';
           }
           if (response.calendarDisconnected.status === 'FAILED') {
-            message += 'Calendar was not disconnected properly. ';
+            message += 'Calendar was not disconnected properly.';
           }
           this.snackBar.open(message, 'Dismiss', {
             duration: 5000
@@ -305,7 +298,7 @@ export class Project {
           const error = err.error as GeneralApiError;
 
           if (error) {
-            this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while removing the user.', 'Dismiss', {
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
               duration: 5000
             });
           }
@@ -315,7 +308,7 @@ export class Project {
   }
 
   onQuitProject() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -327,7 +320,7 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.quitProject(project.id);
+        if (confirmed) return this.projectStore.quitProject();
         return EMPTY;
       })).subscribe({
         next: () => {
@@ -339,7 +332,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while quitting the project.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -348,7 +341,7 @@ export class Project {
   }
 
   onMakeAdmin(projectRole: ProjectRoleResponse) {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -360,7 +353,7 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'ADMIN'});
+        if (confirmed) return this.projectStore.changeMemberRole(projectRole.userId, { newRole: 'ADMIN'});
         return EMPTY;
       })).subscribe({
         next: () => {
@@ -371,7 +364,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while giving the admin role to the user.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -380,7 +373,7 @@ export class Project {
   }
 
   onRemoveAdmin(projectRole: ProjectRoleResponse) {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -392,7 +385,7 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'CONTRIBUTOR'});
+        if (confirmed) return this.projectStore.changeMemberRole(projectRole.userId, { newRole: 'CONTRIBUTOR'});
         return EMPTY;
       })).subscribe({
         next: () => {
@@ -403,7 +396,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while removing the admin role from the user.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -412,7 +405,7 @@ export class Project {
   }
 
   onTransferOwnership(projectRole: ProjectRoleResponse) {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -424,7 +417,7 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.changeMemberRole(project.id, projectRole.userId, { newRole: 'CREATOR'});
+        if (confirmed) return this.projectStore.changeMemberRole(projectRole.userId, { newRole: 'CREATOR'});
         return EMPTY;
       })).subscribe({
         next: () => {
@@ -435,7 +428,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while transfering ownership.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -444,7 +437,7 @@ export class Project {
   }
 
   onDeleteProject() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -456,7 +449,7 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.deleteProject(project.id);
+        if (confirmed) return this.projectStore.deleteProject();
         return EMPTY;
       })).subscribe({
         next: () => {
@@ -468,7 +461,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while deleting the project.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -477,7 +470,7 @@ export class Project {
   }
 
   onConnectDropbox() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -489,13 +482,13 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.connectProjectToDropbox(project.id);
+        if (confirmed) return this.projectStore.connectProjectToDropbox();
         return EMPTY;
       })).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while connecting the project to Dropbox.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -504,7 +497,7 @@ export class Project {
   }
 
   onConnectCalendar() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {      
       this.dialog.open(ConfirmDialog, {
@@ -516,13 +509,13 @@ export class Project {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) return this.projectService.connectProjectToCalendar(project.id);  
+        if (confirmed) return this.projectStore.connectProjectToCalendar();
         return EMPTY;
       })).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while connecting the project to Calendar.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -531,7 +524,7 @@ export class Project {
   }
 
   onJoinDropbox() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {         
       this.dialog.open(ConfirmDialog, {
@@ -547,12 +540,12 @@ export class Project {
           if (confirmed) return this.projectService.joinDropbox(project.id); 
           return EMPTY;   
         }),
-        switchMap(() => this.projectService.loadProjectToCache(project.id))
+        switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
       ).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while joining Dropbox in this project.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -561,7 +554,7 @@ export class Project {
   }
 
   onJoinCalendar() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {         
       this.dialog.open(ConfirmDialog, {
@@ -577,12 +570,12 @@ export class Project {
           if (confirmed) return this.projectService.joinCalendar(project.id);  
           return EMPTY;
         }),
-        switchMap(() => this.projectService.loadProjectToCache(project.id))
+        switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
       ).subscribe({       
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while joining Calendar in this project.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -591,7 +584,7 @@ export class Project {
   }
 
   onDisconnectDropbox() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -607,7 +600,7 @@ export class Project {
           if (confirmed) return this.projectService.disconnectDropbox(project.id);
           return EMPTY;
         }),
-        switchMap(response => this.projectService.loadProjectToCache(project.id).pipe(map(() => response)))
+        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
       ).subscribe({
         next: result => {
           if (result.isDropboxFolderDeleted !== undefined) this.snackBar.open(
@@ -620,7 +613,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while disconnecting the project from Dropbox.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -629,7 +622,7 @@ export class Project {
   }
 
   onDisconnectCalendar() {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (project) {
       this.dialog.open(ConfirmDialog, {
@@ -645,7 +638,7 @@ export class Project {
           if (confirmed) return this.projectService.disconnectCalendar(project.id);
           return EMPTY;
         }),
-        switchMap(response => this.projectService.loadProjectToCache(project.id).pipe(map(() => response)))
+        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
       ).subscribe({
         next: result => {
           if (result.isCalendarDeleted !== undefined) this.snackBar.open(
@@ -658,7 +651,7 @@ export class Project {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? `Error: ${error.errors[0]}` : 'Unknown error occured while disconnecting the project from Calendar.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -667,7 +660,7 @@ export class Project {
   }
 
   onReload() {
-    this.projectService.loadProjectToCache(this.projectId()).subscribe();
+    this.projectStore.cacheSelectedProject(this.projectId(), true).subscribe();
   }
 
   getChipColorLocal(value: string | null): string {
@@ -679,7 +672,7 @@ export class Project {
   }
 
   private makeProjectUpdateRequest() : ProjectUpdateRequest | undefined {
-    const project = this.project();
+    const project = this.projectCache()?.item;
 
     if (!project) return undefined;
     
@@ -688,9 +681,5 @@ export class Project {
             startDate: project.startDate ?? '',
             endDate: project.endDate,
             isPrivate: project.isPrivate };
-  }
-
-  private handleUpdateCachedProject(projectId: number, request: ProjectUpdateRequest) {
-    this.projectService.updateCachedProject(projectId, request).subscribe();
   }
 }

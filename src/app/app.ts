@@ -6,7 +6,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { registerIcons } from './app.config';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
-import { UserService } from './service/user.service';
+import { UserStore } from './cache/user.store';
 
 @Component({
     selector: 'app-root',
@@ -17,10 +17,10 @@ import { UserService } from './service/user.service';
 export class App implements OnInit {
     protected readonly title = signal('Task Management System');
 
-    constructor(private userService: UserService, private oauth2Service: OAuth2Service, private router: Router,
+    constructor(private userStore: UserStore, private oauth2Service: OAuth2Service, private router: Router,
             private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
         effect(() => {
-            const user = userService.user();
+            const user = userStore.userCache().item;
 
             if (user) {
                 this.oauth2Service.checkCalendarStatus().subscribe();
