@@ -56,7 +56,9 @@ export class Task {
 
   readonly route = inject(ActivatedRoute);
 
-  readonly taskId = toSignal(this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 });
+  readonly taskId = toSignal(
+    this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 }
+  );
 
   readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
   readonly selectedTaskCache = this.taskStore.selectedTaskCache.asReadonly();
@@ -132,8 +134,8 @@ export class Task {
         untracked(() => {
           if (this.selectedProjectCache().item?.id !== task.projectId) {
             this.projectStore.cacheSelectedProject(task.projectId).subscribe();
-            this.labelStore.cacheLabelsForProject(task.projectId).subscribe();
           }
+          this.labelStore.cacheLabelsForProject(task.projectId).subscribe();
 
           if (!this.nameEditForm.dirty) {
             this.nameEditForm.patchValue({
@@ -234,7 +236,9 @@ export class Task {
       if (request) {
         request.priority = newPriority as TaskPriority;
         request.labelIds = this.chipsEditForm.value.labels ?? [];
-        this.taskStore.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).pipe(switchMap((task) => {
+          return this.labelStore.cacheLabelsForProject(task.projectId, true);
+        })).subscribe();
       }
     }
     this.isEditingChips.set(false);
