@@ -278,10 +278,7 @@ export class Task {
       })
       .afterClosed().pipe(switchMap(confirmed => {
         if (confirmed) {
-          return forkJoin([
-            this.taskStore.cacheSelectedTask(task.id),
-            this.labelStore.cacheLabelsForProject(project.id)
-          ]);
+          return this.taskStore.cacheSelectedTask(task.id, true);
         }        
         return EMPTY;
       }))
@@ -303,7 +300,7 @@ export class Task {
         width: '420px'
       })
       .afterClosed().pipe(switchMap(hasChangedLabels => {
-        if (hasChangedLabels) return this.labelStore.cacheLabelsForProject(project.id);
+        if (hasChangedLabels) return this.labelStore.cacheLabelsForProject(project.id, true);
         return EMPTY;
       }))
       .subscribe()

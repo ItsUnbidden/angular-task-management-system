@@ -15,7 +15,7 @@ import { LabelStore } from '../../../cache/label.store';
 
 interface NewLabelData {
   projectId: number,
-  taskId: number
+  taskId?: number
 }
 
 @Component({
@@ -54,7 +54,7 @@ export class NewLabelDialog {
         name: this.labelForm.value.name ?? '',
         color: this.labelForm.value.color ?? '',
         projectId: this.data.projectId,
-        taskIds: [ this.data.taskId ]
+        taskIds: this.data.taskId ? [ this.data.taskId ] : []
       };
       this.isSendingRequest.set(true);
       this.labelService.createLabel(request).pipe(

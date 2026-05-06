@@ -68,6 +68,7 @@ export interface TaskCreateRequest {
   dueDate?: string;
   projectId: number;
   assigneeId?: number;
+  labelIds: number[];
 }
 
 export interface TaskUpdateRequest {

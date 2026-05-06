@@ -24,7 +24,7 @@
                 <mat-error>Task description cannot be longer than 500 characters.</mat-error>
             }
         </mat-form-field>
-        <div class="priority-assignee-container">
+        <div class="row-container">
             <mat-form-field class="form-field">
                 <mat-label>Priority</mat-label>
                 <mat-select formControlName="priority" >
@@ -45,22 +45,35 @@
                 </mat-select>
             </mat-form-field>
         </div>
-        <mat-form-field class="form-field">
-            <mat-label>Due date</mat-label>
-            <input matInput [matDatepicker]="picker" formControlName="dueDate">
-            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-            <mat-datepicker #picker></mat-datepicker>
-        </mat-form-field>
+        <div class="row-container">
+            <mat-form-field class="form-field">
+                <mat-label>Due date</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="dueDate">
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+            <button matButton="elevated" type="button" (click)="onAddNewLabel()">
+                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                Add a new label
+            </button>
+        </div>
+        <mat-chip-listbox multiple formControlName="labels">
+            @for (label of labelStore.cache().page?.content; track label.id) {
+                <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">                                        
+                    {{ label.name }}                                                                          
+                </mat-chip-option>
+            }
+        </mat-chip-listbox>
         @if (error()) {
             <mat-error>{{ error() }}</mat-error>
         }
-        @if (isSendingRequest()) {
-            <div class="spinner-container">
-                <mat-spinner diameter="30"></mat-spinner>
-                <span>Loading...</span>
-            </div>
-        }
     </form>
+    @if (isSendingRequest()) {
+        <div class="spinner-container">
+            <mat-spinner diameter="30"></mat-spinner>
+            <span>Loading...</span>
+        </div>
+    }
 </div>
 
 <div mat-dialog-actions align="end">
