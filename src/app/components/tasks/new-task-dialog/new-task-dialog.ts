@@ -33,7 +33,7 @@ export class NewTaskDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  readonly taskControl = new FormGroup({
+  readonly taskForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -42,7 +42,7 @@ export class NewTaskDialog {
     description: new FormControl('', [
       Validators.maxLength(500)
     ]),
-    priority: new FormControl('', [
+    priority: new FormControl('MEDIUM', [
       Validators.required
     ]),
     dueDate: new FormControl<Date | null>(null),
@@ -64,14 +64,14 @@ export class NewTaskDialog {
   }
 
   submit(): void {
-    if (this.taskControl.valid) {
+    if (this.taskForm.valid) {
       const request: TaskCreateRequest = {
-        name: this.taskControl.get('name')?.value || '',
-        description: this.taskControl.get('description')?.value || undefined,
-        priority: this.taskControl.get('priority')?.value as TaskPriority,
-        dueDate: this.toLocalDateString(this.taskControl.get('dueDate')?.value ?? null),
+        name: this.taskForm.get('name')?.value || '',
+        description: this.taskForm.get('description')?.value || undefined,
+        priority: this.taskForm.get('priority')?.value as TaskPriority,
+        dueDate: this.toLocalDateString(this.taskForm.get('dueDate')?.value ?? null),
         projectId: this.data.projectId,
-        assigneeId: Number(this.taskControl.get('assignee')?.value?.id),
+        assigneeId: Number(this.taskForm.get('assignee')?.value?.id),
       };
       this.isSendingRequest.set(true);
       this.taskService.createTask(request).subscribe({

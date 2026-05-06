@@ -1,25 +1,35 @@
 @if (isEditing()) {
-    <div mat-dialog-title>
-        <button matButton="outlined" (click)="onBack()">
+    <div class="title-container">
+        <button mat-icon-button (click)="onBack()">
             <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
         </button>
-        <h2>Edit {{ selectedLabel()?.name ?? '' }}</h2>
+        <h2 class="title">Edit {{ selectedLabel()?.name ?? '' }}</h2>
     </div>
 
     <div mat-dialog-content>
-        <form [formGroup]="labelForm">
-            <mat-form-field>
-                <input matInput placeholder="Label name" formControlName="name">
+        <form class="label-form" [formGroup]="labelForm">
+            <mat-form-field class="name-field">
+                <mat-label>Label name</mat-label>
+                <input matInput formControlName="name">
+                <mat-hint align="end">{{ labelForm.value.name?.length }} / 25</mat-hint>
+                @if (labelForm.hasError('required', 'name')) {
+                    <mat-error>This field is required.</mat-error>
+                }
+                @if (labelForm.hasError('maxlength', 'name')) {
+                    <mat-error>Label name cannot be longer than 25 characters.</mat-error>
+                }
             </mat-form-field>
 
-            <mat-label>Color</mat-label>
             <mat-chip-listbox formControlName="color">
-                @for (paletteItem of paletteItems; track paletteItem) {
+                @for (paletteItem of labelStoreClass.PALETTE_ITEMS; track paletteItem) {
                     <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
                         <span class="dot" aria-hidden="true"></span>
                     </mat-chip-option>
                 }
             </mat-chip-listbox>
+            @if (labelForm.controls.color.dirty && labelForm.hasError('required', 'color')) {
+                <mat-error>You need to choose the label color.</mat-error>
+            }
         </form>
     </div>
     <div mat-dialog-actions align="end">
@@ -27,11 +37,11 @@
     </div>
 }
 @else if (isDeleting()) {
-    <div>
-        <button matButton="outlined" (click)="onBack()">
+    <div class="title-container">
+        <button mat-icon-button (click)="onBack()">
             <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
         </button>
-        <h2 mat-dialog-title>Delete {{ selectedLabel()?.name ?? '' }}</h2>
+        <h2 class="title">Delete {{ selectedLabel()?.name ?? '' }}</h2>
     </div>
 
     <div mat-dialog-content>

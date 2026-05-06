@@ -1,19 +1,31 @@
 <h2 mat-dialog-title>New Label</h2>
 
 <div mat-dialog-content>
-    <form [formGroup]="labelForm">
-        <mat-form-field>
-            <input matInput placeholder="Label name" formControlName="name">
+    <form class="label-form" [formGroup]="labelForm">
+        <mat-form-field class="name-field">
+            <mat-label>Label name</mat-label>
+            <input matInput formControlName="name">
+            <mat-hint align="end">{{ labelForm.value.name?.length }} / 25</mat-hint>
+            @if (labelForm.hasError('required', 'name')) {
+                <mat-error>This field is required.</mat-error>
+            }
+            @if (labelForm.hasError('maxlength', 'name')) {
+                <mat-error>Label name cannot be longer than 25 characters.</mat-error>
+            }
         </mat-form-field>
 
-        <mat-label>Color</mat-label>
-        <mat-chip-listbox formControlName="color">
-            @for (paletteItem of paletteItems; track paletteItem) {
-                <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
-                    <span class="dot" aria-hidden="true"></span>
-                </mat-chip-option>
+        <div>
+            <mat-chip-listbox formControlName="color">
+                @for (paletteItem of labelStore.PALETTE_ITEMS; track paletteItem) {
+                    <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
+                        <span class="dot" aria-hidden="true"></span>
+                    </mat-chip-option>
+                }
+            </mat-chip-listbox>
+            @if (labelForm.controls.color.dirty && labelForm.hasError('required', 'color')) {
+                <mat-error>You need to choose the label color.</mat-error>
             }
-        </mat-chip-listbox>
+        </div>
 
         @if (isSendingRequest()) {
             <mat-spinner>Please wait...</mat-spinner>

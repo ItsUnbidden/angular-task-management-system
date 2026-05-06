@@ -132,7 +132,7 @@ export class Dashboard {
 
   onOpenNewProjectDialog() {
     const ref = this.dialog.open(NewProjectDialog, {
-      width: '420px',
+      width: '500px',
       disableClose: true
     });
 

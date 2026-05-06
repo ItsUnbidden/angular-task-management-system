@@ -62,6 +62,7 @@ export class Task {
 
   readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
   readonly selectedTaskCache = this.taskStore.selectedTaskCache.asReadonly();
+  readonly selectedTaskLabels = this.labelStore.selectedTaskLabels;
   readonly projectLabels = this.labelStore.cache.asReadonly();
   readonly currentUserCache = this.userStore.userCache.asReadonly();
   readonly isDropboxConnected = this.oauth2Service.isDropboxConnected.asReadonly();
@@ -393,10 +394,6 @@ export class Task {
 
   getChipTextLocal(value: string | null): string {
     return getChipText(value);
-  }
-
-  get getLabelsForTask() : LabelResponse[] {
-    return this.labelStore.getLabelsForTask(this.taskId());
   }
 
   private makeTaskUpdateRequest() : TaskUpdateRequest | undefined {

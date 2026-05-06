@@ -27,7 +27,7 @@ export class NewProjectDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  readonly projectControl = new FormGroup({
+  readonly projectForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -49,13 +49,13 @@ export class NewProjectDialog {
   }
 
   submit(): void {
-    if (this.projectControl.valid) {
+    if (this.projectForm.valid) {
       const request: ProjectCreateRequest = {
-        name: this.projectControl.get('name')?.value || '',
-        description: this.projectControl.get('description')?.value || undefined,
-        startDate: toLocalDateString(this.projectControl.get('startDate')?.value ?? null),
-        endDate: toLocalDateString(this.projectControl.get('endDate')?.value ?? null),
-        isPrivate: this.projectControl.get('isPrivate')?.value || false,
+        name: this.projectForm.get('name')?.value || '',
+        description: this.projectForm.get('description')?.value || undefined,
+        startDate: toLocalDateString(this.projectForm.get('startDate')?.value ?? null),
+        endDate: toLocalDateString(this.projectForm.get('endDate')?.value ?? null),
+        isPrivate: this.projectForm.get('isPrivate')?.value || false,
       };
       this.isSendingRequest.set(true);
       this.projectService.createProject(request)

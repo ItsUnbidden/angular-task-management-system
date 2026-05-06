@@ -166,7 +166,7 @@
                             <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.priority ?? null)">
                                 {{ getChipTextLocal(selectedTaskCache().item?.priority ?? null) }}
                             </mat-chip>
-                            @for (label of getLabelsForTask; track label.id) {
+                            @for (label of selectedTaskLabels(); track label.id) {
                                 <mat-chip class="label-chip" [attr.data-color]="label.color">
                                     {{ label.name }}
                                 </mat-chip>

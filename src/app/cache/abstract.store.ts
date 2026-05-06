@@ -15,15 +15,10 @@ export abstract class AbstractStore<T extends Entity, F> {
   };
 
   replace(newEntity: T) {
-    this.cache.update(c => {
-      const currentPage = c.page;
+    this.cache.update(cache => {
+      const currentPage = cache.page;
 
-      if (currentPage) {
-        const index = currentPage.content.findIndex(e => e.id === newEntity.id);
-
-        if (index !== -1) currentPage.content[index] = newEntity;
-      }
-      return { ...c, page: currentPage }
+      return currentPage ? { ...cache, page: { ...currentPage, content: currentPage.content.map(e => e.id === newEntity.id ? newEntity : e) } } : cache;
     });
   }
 

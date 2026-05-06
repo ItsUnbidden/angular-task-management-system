@@ -152,7 +152,7 @@ export class TaskGrid {
           })
         },
         disableClose: true,
-        width: '420px'
+        width: '500px'
       })
       .afterClosed().pipe(switchMap(confirmed => {
         if (confirmed) return this.cacheProjectTasks();

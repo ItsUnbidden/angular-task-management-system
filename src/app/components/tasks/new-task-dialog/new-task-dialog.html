@@ -1,29 +1,42 @@
-<main>
-    <h2 mat-dialog-title>New Task</h2>
+<h2 mat-dialog-title>New Task</h2>
 
-    <div mat-dialog-content>
-        <form [formGroup]="taskControl">
-            <mat-form-field>
-                <input matInput placeholder="Task name" formControlName="name">
-            </mat-form-field>
-            <mat-form-field>
-                <textarea matInput placeholder="Description" formControlName="description"></textarea>
-            </mat-form-field>
-            <mat-form-field>
+<div mat-dialog-content>
+    <form class="task-form" [formGroup]="taskForm">
+        <mat-form-field class="form-field">
+            <mat-label>Task name</mat-label>
+            <input matInput formControlName="name">
+            <mat-hint align="end">{{ taskForm.value.name?.length }} / 50</mat-hint>
+            @if (taskForm.hasError('required', 'name')) {
+                <mat-error>This field is required.</mat-error>
+            }
+            @if (taskForm.hasError('minlength', 'name')) {
+                <mat-error>Task name must be at least 3 characters long.</mat-error>
+            }
+            @if (taskForm.hasError('maxlength', 'name')) {
+                <mat-error>Task name cannot be longer than 50 characters.</mat-error>
+            }
+        </mat-form-field>
+        <mat-form-field class="form-field">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description"></textarea>
+            <mat-hint align="end">{{ taskForm.value.description?.length }} / 500</mat-hint>
+            @if (taskForm.hasError('maxlength', 'description')) {
+                <mat-error>Task description cannot be longer than 500 characters.</mat-error>
+            }
+        </mat-form-field>
+        <div class="priority-assignee-container">
+            <mat-form-field class="form-field">
                 <mat-label>Priority</mat-label>
                 <mat-select formControlName="priority" >
                     @for (option of priorityOptions; track option) {
                         <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
                     }
                 </mat-select>
+                @if (taskForm.hasError('required', 'priority')) {
+                    <mat-error>This field is required.</mat-error>
+                }
             </mat-form-field>
-            <mat-form-field>
-                <mat-label>Due date</mat-label>
-                <input matInput [matDatepicker]="picker" formControlName="dueDate">
-                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-                <mat-datepicker #picker></mat-datepicker>
-            </mat-form-field>
-            <mat-form-field>
+            <mat-form-field class="form-field">
                 <mat-label>Assigned user</mat-label>
                 <mat-select formControlName="assignee" >
                     @for (user of data.projectMembers; track user.id) {
@@ -31,17 +44,26 @@
                     }
                 </mat-select>
             </mat-form-field>
-            @if (isSendingRequest()) {
-                <mat-spinner>Please wait...</mat-spinner>
-            }
-            @else {
-                <mat-error>{{ error() }}</mat-error>
-            }
-        </form>
-    </div>
+        </div>
+        <mat-form-field class="form-field">
+            <mat-label>Due date</mat-label>
+            <input matInput [matDatepicker]="picker" formControlName="dueDate">
+            <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+            <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+        @if (error()) {
+            <mat-error>{{ error() }}</mat-error>
+        }
+        @if (isSendingRequest()) {
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Loading...</span>
+            </div>
+        }
+    </form>
+</div>
 
-    <div mat-dialog-actions align="end">
-        <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
-        <button mat-flat-button (click)="submit()" [disabled]="taskControl.invalid || isSendingRequest()">Create task</button>
-    </div>
-</main>
+<div mat-dialog-actions align="end">
+    <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
+    <button mat-flat-button (click)="submit()" [disabled]="taskForm.invalid || isSendingRequest()">Create task</button>
+</div>

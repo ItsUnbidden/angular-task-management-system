@@ -25,17 +25,16 @@ interface LabelManagementDialogData {
   selector: 'app-label-management-dialog',
   imports: [MatTableModule, MatChipsModule, MatButtonModule, MatFormFieldModule, MatDialogModule, MatProgressSpinnerModule, ReactiveFormsModule, MatInputModule, MatIcon],
   templateUrl: './label-management-dialog.html',
-  styleUrl: './label-management-dialog.css',
-  providers: [
-    LabelStore
-  ]
+  styleUrl: './label-management-dialog.css'
 })
 export class LabelManagementDialog {
   private readonly labelStore = inject(LabelStore);
 
+  protected labelStoreClass = LabelStore;
+
   readonly displayedColumns = ['chip', 'edit', 'delete'];
 
-  readonly labelCache = this.labelStore.cache;
+  readonly labelCache = this.labelStore.cache.asReadonly();
   readonly selectedLabel = signal<LabelResponse | null>(null);
 
   readonly isEditing = signal(false);
@@ -49,11 +48,10 @@ export class LabelManagementDialog {
     return (label) ? label.taskIds.filter(tId => tId !== this.data.taskId).length : 0;
   })
 
-  readonly paletteItems = ['blue', 'green', 'red', 'yellow'];
-
   readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
-      Validators.required
+      Validators.required,
+      Validators.maxLength(25)
     ]}),
     color: new FormControl('', { nonNullable: true, validators: [
       Validators.required
@@ -78,10 +76,6 @@ export class LabelManagementDialog {
         })
       }
     })
-  }
-
-  ngOnInit() {
-    this.labelStore.cacheLabelsForProject(this.data.projectId).subscribe();
   }
 
   onEditLabel(label: LabelResponse) {
@@ -110,7 +104,7 @@ export class LabelManagementDialog {
             this.onBack();
           }
         }),
-        switchMap(() => this.labelStore.cacheLabelsForProject(this.data.projectId))
+        switchMap(() => this.labelStore.cacheLabelsForProject(this.data.projectId, true))
       ).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as SimpleApiError;

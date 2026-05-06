@@ -2,16 +2,29 @@
 
 <div mat-dialog-content>
     <form [formGroup]="addUserForm">
-        <mat-form-field>
-            <input matInput placeholder="Username" formControlName="username">
+        <mat-form-field class="username-field">
+            <mat-label>Username</mat-label>
+            <input matInput formControlName="username">
+            <mat-hint align="end">{{ addUserForm.value.username?.length }} / 25</mat-hint>
+            @if (addUserForm.hasError('required', 'username')) {
+                <mat-error>This field is required.</mat-error>
+            }
+            @if (addUserForm.hasError('minlength', 'username')) {
+                <mat-error>Username must be at least 5 characters long.</mat-error>
+            }
+            @if (addUserForm.hasError('maxlength', 'username')) {
+                <mat-error>Username cannot be longer than 25 characters.</mat-error>
+            }
         </mat-form-field>
 
-        @if (selectedProjectCache().isLoading) {
-            <mat-spinner>Please wait...</mat-spinner>
+        @if (error()) {
+            <mat-error>{{ error() }}</mat-error>
         }
-        @if (selectedProjectCache().error) {}
-        @else {
-            <mat-error>{{ selectedProjectCache().error }}</mat-error>
+        @if (selectedProjectCache().isLoading) {
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Loading...</span>
+            </div>
         }
     </form>
 </div>

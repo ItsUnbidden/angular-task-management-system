@@ -11,6 +11,7 @@ import { MatChipsModule } from "@angular/material/chips";
 import { MatInputModule } from '@angular/material/input';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { finalize } from 'rxjs';
+import { LabelStore } from '../../../cache/label.store';
 
 interface NewLabelData {
   projectId: number,
@@ -24,14 +25,15 @@ interface NewLabelData {
   styleUrl: './new-label-dialog.css',
 })
 export class NewLabelDialog {
-  readonly error = signal('');
-  readonly isSendingRequest = signal(false);
+  protected readonly labelStore = LabelStore;
 
-  readonly paletteItems = ['blue', 'green', 'red', 'yellow'];
+  protected readonly error = signal('');
+  protected readonly isSendingRequest = signal(false);
 
   readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
-      Validators.required
+      Validators.required,
+      Validators.maxLength(25)
     ]}),
     color: new FormControl('', { nonNullable: true, validators: [
       Validators.required

@@ -14,10 +14,18 @@
         </p>
         <form class="user-credentials" [formGroup]="credentialsForm">
             <mat-form-field>
-                <input matInput placeholder="Username" formControlName="username">               
+                <mat-label>Username</mat-label>
+                <input matInput formControlName="username">    
+                @if (credentialsForm.hasError('required', 'username')) {
+                    <mat-error>This field is required.</mat-error>
+                }           
             </mat-form-field>
             <mat-form-field>
-                <input matInput type="password" placeholder="Password" formControlName="password">            
+                <mat-label>Password</mat-label>
+                <input matInput type="password" formControlName="password">  
+                @if (credentialsForm.hasError('required', 'password')) {
+                    <mat-error>This field is required.</mat-error>
+                }              
             </mat-form-field>
             @if (userCache().error) {
                 <mat-error>{{ userCache().error }}</mat-error>                  
