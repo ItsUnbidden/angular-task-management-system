@@ -114,10 +114,11 @@
             }
         }
         <mat-paginator [length]="tasks().page?.totalElements"
-                       [pageIndex]="tasks().pageIndex"
-                       [pageSize]="tasks().pageSize"
-                       [pageSizeOptions]="[6, 12, 24]"
-                       (page)="onTaskPage($event)">
+                        [pageIndex]="tasks().pageIndex"
+                        [pageSize]="tasks().pageSize"
+                        [pageSizeOptions]="[6, 12, 24]"
+                        showFirstLastButtons="true"
+                        (page)="onTaskPage($event)">
         </mat-paginator>
     </mat-card-content>
 </mat-card>

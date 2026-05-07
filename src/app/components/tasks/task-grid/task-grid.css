@@ -1,7 +1,16 @@
+:host {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .tasks-card {
-  width: 800px;
+  display: flex;
+  flex-direction: column;
   margin-top: 35px;
   margin-bottom: 50px;
+  width: 55%;
+  min-width: 800px;
 }
 
 .tasks-grid {
