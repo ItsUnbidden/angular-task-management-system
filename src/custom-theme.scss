@@ -34,6 +34,7 @@ body {
   margin: 0;
 }
 
+// Status chips
 .status-overdue {
   @include mat.chips-overrides((
     elevated-container-color: #ffebee,
@@ -62,6 +63,7 @@ body {
   ))
 }
 
+// Priority chips
 .priority-low {
   @include mat.chips-overrides((
     elevated-container-color: #e8f5e9,
@@ -83,32 +85,103 @@ body {
   ))
 }
 
+// Label chips
 .label-chip[data-color="blue"] {
   @include mat.chips-overrides((
     elevated-container-color: #1e88e5,
-    elevated-selected-container-color: #1e88e5,
-    
+    elevated-selected-container-color: #6fa9dd,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
   ))
 }
 
 .label-chip[data-color="green"] {
   @include mat.chips-overrides((
     elevated-container-color: #47ad17,
-    elevated-selected-container-color: #47ad17,
+    elevated-selected-container-color: #8dcf6f,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
   ))
 }
 
 .label-chip[data-color="red"] {
   @include mat.chips-overrides((
     elevated-container-color: #e51e1e,
-    elevated-selected-container-color: #e51e1e,
+    elevated-selected-container-color: #e67676,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
   ))
 }
 
 .label-chip[data-color="yellow"] {
   @include mat.chips-overrides((
     elevated-container-color: #e5c11e,
-    elevated-selected-container-color: #e5c11e,
+    elevated-selected-container-color: #d4c066,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="cyan"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #1ee592,
+    elevated-selected-container-color: #63dba3,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="deep-blue"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #211ee5,
+    elevated-selected-container-color: #b9b8ff,
+    label-text-color: #f0f0f0,
+    selected-label-text-color: #252525,
+  ))
+}
+
+.label-chip[data-color="magenta"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #e51eba,
+    elevated-selected-container-color: #e262c6,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="purple"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #851ee5,
+    elevated-selected-container-color: #a05ae0,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="orange"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #e56e1e,
+    elevated-selected-container-color: #e08e57,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="pink"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #fc9aff,
+    elevated-selected-container-color: #fdcaff,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
+  ))
+}
+
+.label-chip[data-color="yellow-green"] {
+  @include mat.chips-overrides((
+    elevated-container-color: #bae911,
+    elevated-selected-container-color: #c4e05d,
+    label-text-color: #2c2c2c,
+    selected-label-text-color: #2c2c2c,
   ))
 }
 
@@ -119,4 +192,8 @@ body {
   align-items: center;
   gap: 8px;
   margin-top: 10px;
+}
+
+.simple-error-message {
+  color: #c62828;
 }

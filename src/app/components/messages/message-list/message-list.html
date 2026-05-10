@@ -1,7 +1,7 @@
 <div class="main-container">
     <mat-card>
         <mat-card-header>
-            <mat-card-title class="card-title">{{ task()?.amountOfMessages }} Messages</mat-card-title>
+            <mat-card-title class="card-title">{{ taskCache().item?.amountOfMessages }} Messages</mat-card-title>
         </mat-card-header>
         <mat-divider></mat-divider>
         <mat-card-content>
@@ -12,19 +12,22 @@
             </form>
         </mat-card-content>
         <mat-card-actions class="new-comment-actions-container">
-            <button matButton="elevated" type="button" (click)="onNewCommentSubmit()" [disabled]="newCommentForm.invalid || isLoadingComments()">Comment</button>
+            <button matButton="elevated" type="button" (click)="onNewCommentSubmit()" [disabled]="newCommentForm.invalid || commentCache().isLoading">Comment</button>
         </mat-card-actions>
     </mat-card>
     
-    @if (isLoadingComments()) {
+    @if (commentCache().isLoading) {
         <div class="spinner-container">
             <mat-spinner diameter="30"></mat-spinner>
             <span>Loading comments...</span>
         </div>
     }
+    @else if (commentCache().error) {
+        <div class="simple-error-message">{{ commentCache().error }}</div>
+    }
     @else {
         <mat-list>
-            @for (comment of comments(); track comment.id) {
+            @for (comment of commentCache().page?.content; track comment.id) {
                 <mat-card>
                     <mat-card-header>
                         <mat-card-title class="card-title">{{ comment.username }}</mat-card-title>
@@ -51,7 +54,7 @@
                         </mat-card-content>
 
                         <mat-card-actions class="message-actions-container">
-                            @if (user()?.id === comment.userId || isManager()) {
+                            @if (userCache().item?.id === comment.userId || isManager()) {
                                 <button matButton="elevated" (click)="onEditMessage(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                     Edit
@@ -67,7 +70,7 @@
                                     Show replies ({{ comment.amountOfReplies }})
                                 </button>
                             } 
-                            @else if ((user()?.id !== comment.userId || isManager()) && !isReplying(comment.id)) {
+                            @else if ((userCache().item?.id !== comment.userId || isManager()) && !isReplying(comment.id)) {
                                 <button matButton="elevated" type="button" (click)="onReply(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
                                     Reply
@@ -96,13 +99,13 @@
                             }
                             @else {
                                 <div class="replies-container">                                      
-                                    @for (flattenedReply of getRepliesForComment(comment.id)?.replies; track flattenedReply.reply.id) {        
+                                    @for (flattenedReply of getRepliesForComment(comment.id); track flattenedReply.id) {        
                                         <div class="reply-row-container">
                                             <div class="reply-gutter" [style.--depth]="clampDepth(flattenedReply.depth)"></div>
                                             <div class="reply">
-                                                <div class="reply-header">{{ flattenedReply.reply.username }}</div>
-                                                @if (isEditing(flattenedReply.reply.id)) {
-                                                    <form [formGroup]="editMessageForm" (ngSubmit)="onEditMessageSubmit(flattenedReply.reply, comment)">
+                                                <div class="reply-header">{{ flattenedReply.username }}</div>
+                                                @if (isEditing(flattenedReply.id)) {
+                                                    <form [formGroup]="editMessageForm" (ngSubmit)="onEditMessageSubmit(flattenedReply, comment)">
                                                         <mat-form-field class="large-field">
                                                             <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
                                                         </mat-form-field>
@@ -113,9 +116,9 @@
                                                     </form>
                                                 }
                                                 @else {
-                                                    <div class="reply-body">{{ flattenedReply.reply.text }}</div>
+                                                    <div class="reply-body">{{ flattenedReply.text }}</div>
                                                 }
-                                                @if (isReplying(flattenedReply.reply.id)) {
+                                                @if (isReplying(flattenedReply.id)) {
                                                     <div class="new-reply">
                                                         <form [formGroup]="newReplyForm">
                                                             <mat-form-field class="large-field">
@@ -123,31 +126,31 @@
                                                             </mat-form-field>
                                                         </form>
                                                         <div class="message-actions-container">
-                                                            <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(flattenedReply.reply, comment)">Reply</button>
+                                                            <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(flattenedReply, comment)">Reply</button>
                                                             <button matButton="outlined" type="button" (click)="disableReplying()">Cancel</button>
                                                         </div>
                                                     </div>
                                                 }
                                                 <div class="message-actions-container">
-                                                    @if (!isEditing(flattenedReply.reply.id)) {
-                                                        @if (user()?.id === flattenedReply.reply.userId || isManager()) {
-                                                            <button matButton="elevated" (click)="onEditMessage(flattenedReply.reply)">
+                                                    @if (!isEditing(flattenedReply.id)) {
+                                                        @if (userCache().item?.id === flattenedReply.userId || isManager()) {
+                                                            <button matButton="elevated" (click)="onEditMessage(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
                                                                 Edit
                                                             </button>
-                                                            <button matButton="elevated" (click)="onDeleteMessage(flattenedReply.reply)">
+                                                            <button matButton="elevated" (click)="onDeleteMessage(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
                                                                 Delete
                                                             </button>
                                                             @if (isManager()) {
-                                                                <button matButton="elevated" (click)="onReply(flattenedReply.reply)">
+                                                                <button matButton="elevated" (click)="onReply(flattenedReply)">
                                                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
                                                                     Reply
                                                                 </button>       
                                                             }
                                                         }     
-                                                        @else if (!isReplying(flattenedReply.reply.id)) {                                                            
-                                                            <button matButton="elevated" (click)="onReply(flattenedReply.reply)">
+                                                        @else if (!isReplying(flattenedReply.id)) {                                                            
+                                                            <button matButton="elevated" (click)="onReply(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
                                                                 Reply
                                                             </button>                                                                                                                                                                                                           
@@ -181,7 +184,7 @@
     }
     <div class="message-actions-container">
         @if (isLastCommentsPage()) {
-            @if (currentCommentsPage !== 0) {
+            @if (commentCache().pageIndex !== 0) {
                 <button matButton="outlined" (click)="onHideComments()">
                     Hide comments
                     <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>

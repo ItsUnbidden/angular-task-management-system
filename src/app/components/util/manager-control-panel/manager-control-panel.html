@@ -4,7 +4,7 @@
             <mat-card-title>Users</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            <form [formGroup]="usersFilterForm">
+            <form [formGroup]="usersFilterForm"]>
                 <mat-form-field>
                     <mat-label>Filter users</mat-label>
                     <input matInput type="text" formControlName="filter">
@@ -14,19 +14,19 @@
                     <mat-radio-button value="username">Username</mat-radio-button>
                 </mat-radio-group>
             </form>
-            @if (isLoadingUsers()) {
+            @if (usersCache().isLoading) {
                 <div class="spinner-container">
                     <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                    <span>Loading projects...</span>
+                    <span>Loading users...</span>
                 </div>
             }
             @else {
-                <table mat-table [dataSource]="usersDS"
+                <table mat-table [dataSource]="usersCache().page?.content ?? []"
                     class="mat-elevation-z8"
                     matSort #usersSort="matSort"
                     (matSortChange)="onUsersSort($event)"
-                    [matSortActive]="usersTableState().sortActive"
-                    [matSortDirection]="usersTableState().sortDirection">
+                    [matSortActive]="usersCache().sort"
+                    [matSortDirection]="usersCache().direction">
                     <ng-container matColumnDef="id">
                         <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
                         <td mat-cell *matCellDef="let user">{{ user.id }}</td>
@@ -53,9 +53,9 @@
                 </table>
 
                 <mat-paginator #myProjectsPaginator
-                    [length]="usersTotalElements()"
-                    [pageIndex]="usersTableState().pageIndex"
-                    [pageSize]="usersTableState().pageSize"
+                    [length]="usersCache().page?.totalElements"
+                    [pageIndex]="usersCache().pageIndex"
+                    [pageSize]="usersCache().pageSize"
                     [pageSizeOptions]="[25, 50, 75]"
                     showFirstLastButtons="true"
                     (page)="onUsersPage($event)">

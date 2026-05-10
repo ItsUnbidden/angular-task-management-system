@@ -86,8 +86,8 @@
             <div class="mini-label">Don't have an account?</div>
             <button matButton class="toggle-registration-button" (click)="toggleRegistration()">Sign up</button>
         }
-        @if (errorMessage()) {
-            <mat-error>{{ errorMessage() }}</mat-error>
+        @if (error()) {
+            <mat-error>{{ error() }}</mat-error>
         }
         @if (isLoading()) {
             <div class="spinner-container">

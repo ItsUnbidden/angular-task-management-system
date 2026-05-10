@@ -1,6 +1,6 @@
 <h2 mat-dialog-title>Delete account</h2>
 
-@if (isLoading()) {
+@if (userCache().isLoading) {
     <div class="spinner-container">
         <mat-spinner diameter="30"></mat-spinner>
         <span>Loading user...</span>
@@ -14,19 +14,27 @@
         </p>
         <form class="user-credentials" [formGroup]="credentialsForm">
             <mat-form-field>
-                <input matInput placeholder="Username" formControlName="username">               
+                <mat-label>Username</mat-label>
+                <input matInput formControlName="username">    
+                @if (credentialsForm.hasError('required', 'username')) {
+                    <mat-error>This field is required.</mat-error>
+                }           
             </mat-form-field>
             <mat-form-field>
-                <input matInput type="password" placeholder="Password" formControlName="password">            
+                <mat-label>Password</mat-label>
+                <input matInput type="password" formControlName="password">  
+                @if (credentialsForm.hasError('required', 'password')) {
+                    <mat-error>This field is required.</mat-error>
+                }              
             </mat-form-field>
-            @if (error()) {
-                <mat-error>{{ error() }}</mat-error>                  
+            @if (userCache().error) {
+                <mat-error>{{ userCache().error }}</mat-error>                  
             }           
         </form>
     </div>
     
     <div mat-dialog-actions>
-        <button matButton="outlined" (click)="onClose()" [disabled]="isLoading()">Close</button>
-        <button matButton="filled" (click)="onSubmit()" [disabled]="isLoading() || credentialsForm.invalid">Confirm</button>
+        <button matButton="outlined" (click)="onClose()" [disabled]="userCache().isLoading">Close</button>
+        <button matButton="filled" (click)="onSubmit()" [disabled]="userCache().isLoading || credentialsForm.invalid">Confirm</button>
     </div>
 }

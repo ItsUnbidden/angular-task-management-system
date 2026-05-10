@@ -3,7 +3,7 @@
         <mat-card-title>Tasks</mat-card-title>
         @if (isAdmin() || isManager()) {
             <div>
-                <button mat-flat-button (click)="onCreateNewTask()" color="primary" [disabled]="isLoadingTasks()">Create task</button>
+                <button mat-flat-button (click)="onCreateNewTask()" color="primary" [disabled]="tasks().isLoading">Create task</button>
             </div>
         }
     </mat-card-header>
@@ -47,33 +47,33 @@
                         </mat-chip-listbox>
                     </div>
                     <mat-chip-listbox multiple formControlName="labelIds">
-                        @for (label of projectLabels(); track label.id) {
+                        @for (label of projectLabels().page?.content; track label.id) {
                             <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
                         }
                     </mat-chip-listbox>                    
                 </form>
             </mat-card-content>
             <mat-card-actions>
-                <button matButton="outlined" type="button" (click)="onClearFilters()" [disabled]="isLoadingTasks()">
+                <button matButton="outlined" type="button" (click)="onClearFilters()" [disabled]="tasks().isLoading">
                     <mat-icon fontSet="material-symbols-outlined">filter_alt_off</mat-icon>
                     Clear filters
                 </button>
             </mat-card-actions>
         </mat-card>
-        @if (isLoadingTasks()) {
+        @if (tasks().isLoading) {
             <div class="task-spinner-container">
                 <mat-spinner diameter="30"></mat-spinner>
                 <span>Loading tasks...</span>
             </div>
         }
         @else {
-            @if (tasksLoadingError()) {
+            @if (tasks().error) {
                 <mat-card-header>
                     <mat-card-title class="error-card-title">Error</mat-card-title>
                 </mat-card-header>
 
                 <mat-card-content>
-                    <p>{{ tasksLoadingError() }}</p>
+                    <p>{{ tasks().error }}</p>
                 </mat-card-content>
 
                 <mat-card-actions class="error-actions-container">
@@ -85,7 +85,7 @@
             }
             @else {
                 <div class="tasks-grid">
-                    @for (task of tasks(); track task.id) {
+                    @for (task of tasks().page?.content; track task.id) {
                         <mat-card class="task-tile" (click)="onOpenTask(task)">
                             <mat-card-header>
                                 <mat-card-title>{{ task.name }}</mat-card-title>
@@ -97,14 +97,14 @@
     
                                 <div class="task-card-priority">
                                     Priority:
-                                    <mat-chip [ngClass]="parseEnumColor(task.priority)">
-                                        {{ parseEnumText(task.priority) }}
+                                    <mat-chip [ngClass]="getChipColorLocal(task.priority)">
+                                        {{ getChipTextLocal(task.priority) }}
                                     </mat-chip>
                                 </div>
                                 <div class="task-card-date">
                                     {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
-                                    <mat-chip [ngClass]="parseEnumColor(task.status)">
-                                        {{ parseEnumText(task.status) }}
+                                    <mat-chip [ngClass]="getChipColorLocal(task.status)">
+                                        {{ getChipTextLocal(task.status) }}
                                     </mat-chip>
                                 </div>
                             </mat-card-content>               
@@ -113,6 +113,12 @@
                 </div>
             }
         }
-        <mat-paginator [length]="totalTasks()" [pageIndex]="taskPageIndex()" [pageSize]="taskPageSize()" [pageSizeOptions]="[6, 12, 24]" (page)="onTaskPage($event)"></mat-paginator>
+        <mat-paginator [length]="tasks().page?.totalElements"
+                        [pageIndex]="tasks().pageIndex"
+                        [pageSize]="tasks().pageSize"
+                        [pageSizeOptions]="[8, 12, 24]"
+                        showFirstLastButtons="true"
+                        (page)="onTaskPage($event)">
+        </mat-paginator>
     </mat-card-content>
 </mat-card>

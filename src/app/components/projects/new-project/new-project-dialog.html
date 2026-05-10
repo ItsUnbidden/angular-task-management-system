@@ -1,14 +1,30 @@
 <h2 mat-dialog-title>New Project</h2>
 
 <div mat-dialog-content>
-    <form [formGroup]="projectControl">
-        <mat-form-field>
-            <input matInput placeholder="Project name" formControlName="name">
+    <form class="project-form" [formGroup]="projectForm">
+        <mat-form-field class="form-field">
+            <mat-label>Project name</mat-label>
+            <input matInput formControlName="name">
+            <mat-hint align="end">{{ projectForm.value.name?.length }} / 50</mat-hint>
+            @if (projectForm.hasError('required', 'name')) {
+                <mat-error>This field is required.</mat-error>
+            }
+            @if (projectForm.hasError('minlength', 'name')) {
+                <mat-error>Project name must be at least 3 characters long.</mat-error>
+            }
+            @if (projectForm.hasError('maxlength', 'name')) {
+                <mat-error>Project name cannot be longer than 50 characters.</mat-error>
+            }
         </mat-form-field>
-        <mat-form-field>
-            <textarea matInput placeholder="Description" formControlName="description"></textarea>
+        <mat-form-field class="form-field">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description"></textarea>
+            <mat-hint align="end">{{ projectForm.value.description?.length }} / 500</mat-hint>
+            @if (projectForm.hasError('maxlength', 'description')) {
+                <mat-error>Project description cannot be longer than 50 characters.</mat-error>
+            }
         </mat-form-field>
-        <mat-form-field>
+        <mat-form-field class="form-field">
             <mat-label>Project dates</mat-label>
             <mat-date-range-input [rangePicker]="picker">
                 <input matStartDate mat-input formControlName="startDate">
@@ -31,5 +47,5 @@
 
 <div mat-dialog-actions align="end">
     <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
-    <button mat-flat-button (click)="submit()" [disabled]="projectControl.invalid || isSendingRequest()">Create project</button>
+    <button mat-flat-button (click)="submit()" [disabled]="projectForm.invalid || isSendingRequest()">Create project</button>
 </div>

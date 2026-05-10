@@ -1,8 +1,8 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { Observable, tap } from 'rxjs';
-import { GeneralApiError, OAuth2StatusResponse, ThirdPartyTestResponse } from '../models';
+import { EMPTY, Observable, switchMap, tap } from 'rxjs';
+import { OAuth2StatusResponse, ThirdPartyTestResponse } from '../models';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +13,7 @@ export class OAuth2Service {
   readonly isCheckingDropbox = signal(false);
   readonly isCheckingCalendar = signal(false);
 
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   logoutFromDropbox() : Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/api/dropbox/logout`).pipe(tap({
@@ -23,7 +23,7 @@ export class OAuth2Service {
     }));
   }
 
-  logoutFromCalendar() {
+  logoutFromCalendar() : Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/api/google/logout`).pipe(tap({
       next: () => {
         this.isCalendarConnected.set(false);
@@ -31,67 +31,63 @@ export class OAuth2Service {
     }));
   }
 
-  checkDropboxStatus() : Observable<OAuth2StatusResponse> {
+  checkDropboxStatus() : Observable<ThirdPartyTestResponse> {
     this.isCheckingDropbox.set(true);
-    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/dropbox/status`).pipe(tap({
-      next: s => {
-        switch (s.status) {
+    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/dropbox/status`).pipe(
+      switchMap(response => {
+        switch (response.status) {
           case 'OK':
             this.isDropboxConnected.set(true);
             this.isCheckingDropbox.set(false);
-            break;
+            return EMPTY;
           case 'EXPIRED':
-            this.checkDropboxHealth().subscribe({
-              next: result => {
-                console.log('Health check for Dropbox has been successfully conducted.');
-                this.isDropboxConnected.set(true);
-                this.isCheckingDropbox.set(false);
-              },
-              error: (err: HttpErrorResponse) => {
-                const error = err.error as GeneralApiError;
-
-                console.error('Health check for Dropbox has failed.', error.errors[0]);
-                this.isDropboxConnected.set(false);
-                this.isCheckingDropbox.set(false);
-              }
-            });
-            break;
+            return this.checkDropboxHealth().pipe(
+              tap({
+                next: () => {
+                  this.isDropboxConnected.set(true);
+                },
+                error: () => {
+                  this.isDropboxConnected.set(false);
+                },
+                finalize: () => {
+                  this.isCheckingDropbox.set(false);
+                }
+              })
+            );
           default: 
             this.isDropboxConnected.set(false);
             this.isCheckingDropbox.set(false);
+            return EMPTY;
         }
       }
-    }));
+    ));
   }
 
   checkCalendarStatus() {
-    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/google/status`).pipe(tap({
-      next: s => {
-        switch (s.status) {
-          case 'OK':
-            this.isCalendarConnected.set(true);
-            this.isCheckingCalendar.set(false);
-            break;
-          case 'EXPIRED':
-            this.checkGoogleHealth().subscribe({
-              next: result => {
-                console.log('Health check for Google Calendar has been successfully conducted.');
+    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/google/status`).pipe(switchMap(response => {
+      switch (response.status) {
+        case 'OK':
+          this.isCalendarConnected.set(true);
+          this.isCheckingCalendar.set(false);
+          return EMPTY;
+        case 'EXPIRED':
+          return this.checkGoogleHealth().pipe(
+            tap({
+              next: () => {
                 this.isCalendarConnected.set(true);
-                this.isCheckingCalendar.set(false);
               },
-              error: (err: HttpErrorResponse) => {
-                const error = err.error as GeneralApiError;
-
-                console.error('Health check for Google Calendar has failed.', error.errors[0]);
+              error: () => {
                 this.isCalendarConnected.set(false);
+              },
+              finalize: () => {
                 this.isCheckingCalendar.set(false);
               }
-            });
-            break;
-          default: 
-            this.isCalendarConnected.set(false);
-            this.isCheckingCalendar.set(false);
-        }
+            })
+          );
+        default: 
+          this.isCalendarConnected.set(false);
+          this.isCheckingCalendar.set(false);
+          return EMPTY;
       }
     }));
   }

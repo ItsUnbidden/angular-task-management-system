@@ -1,0 +1,26 @@
+.form-field {
+    width: 100%;
+}
+
+.form-field textarea[matInput] {
+    height: 140px;
+    resize: none;
+    overflow: auto;
+}
+
+.row-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.task-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row-container button {
+    min-width: 180px;
+}

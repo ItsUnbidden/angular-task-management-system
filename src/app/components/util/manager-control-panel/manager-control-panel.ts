@@ -1,12 +1,10 @@
-import { Component, effect, signal } from '@angular/core';
-import { MatTableDataSource, MatTableModule } from '@angular/material/table';
-import { GeneralApiError, UserResponse } from '../../../models';
+import { Component, effect, inject } from '@angular/core';
+import { MatTableModule } from '@angular/material/table';
+import { UserResponse } from '../../../models';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
-import { UserService } from '../../../service/user.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
+import { debounceTime, distinctUntilChanged, EMPTY, switchMap } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -14,6 +12,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatDialog } from '@angular/material/dialog';
 import { UserActionsDialog } from './user-actions-dialog/user-actions-dialog';
 import { getUserRole } from '../../../utils';
+import { UserStore } from '../../../cache/user.store';
 
 interface TableState {
   pageIndex: number;
@@ -29,76 +28,79 @@ interface TableState {
   styleUrl: './manager-control-panel.css',
 })
 export class ManagerControlPanel {
-  readonly isLoadingUsers = signal(false);
-  readonly usersLoadingError = signal<string | null>(null);
-  readonly usersTableState = signal<TableState>({ pageIndex: 0, pageSize: 25, sortActive: 'username', sortDirection: 'asc' });
-  readonly usersTotalElements = signal(0);
+  private readonly userStore = inject(UserStore);
 
-  userColumns = ['id', 'username', 'email', 'isLocked', 'role'];
-  usersDS = new MatTableDataSource<UserResponse>([]);
+  readonly usersCache = this.userStore.cache;
 
-  usersFilterForm = new FormGroup({
+  readonly userColumns = ['id', 'username', 'email', 'isLocked', 'role'];
+
+  readonly usersFilterForm = new FormGroup({
     filter: new FormControl<string>('', { nonNullable: true }),
     type: new FormControl<'email' | 'username'>('username', { nonNullable: true })
   });
 
-  constructor(private userService: UserService, private dialog: MatDialog) {
-    effect(() => {
-      this.usersTableState();
-      this.loadUsers();
-    });
+  constructor(private readonly dialog: MatDialog) {
     this.usersFilterForm.valueChanges.pipe(
       debounceTime(400),
-      distinctUntilChanged()
-    ).subscribe(() => {
-      const state = this.usersTableState();
+      distinctUntilChanged(),
+      switchMap(() => {
+        const cache = this.usersCache();
 
-      if (state.pageIndex === 0) {
-        this.loadUsers();
-      } else {
-        this.usersTableState.update(state => {
-          return { ...state, pageIndex: 0 };
+        return this.userStore.cacheUsers(
+          this.usersFilterForm.value.filter ?? '',
+          this.usersFilterForm.value.type ?? 'username', {
+          pageIndex: cache.pageIndex,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
         });
+      })
+    ).subscribe();
+
+    effect(() => {
+      const currentCache = this.usersCache();
+
+      if (currentCache.isLoading) {
+        this.usersFilterForm.disable({ emitEvent: false });
+      } else {
+        this.usersFilterForm.enable({ emitEvent: false });
       }
-    });
+    })
   }
 
   ngAfterViewInit() {
-    this.loadUsers();
-  }
-
-  loadUsers() {
-    const filter = this.usersFilterForm.value.filter ?? '';
-    const type = this.usersFilterForm.value.type ?? 'username';
-
-    const state = this.usersTableState();
-      this.isLoadingUsers.set(true);
-      this.usersLoadingError.set(null);
-      this.userService.searchUsers(filter, type, state.pageIndex, state.pageSize,
-          state.sortActive, state.sortDirection).subscribe({
-        next: page => {
-          this.usersDS.data = page.content;
-          this.isLoadingUsers.set(false);
-          this.usersTotalElements.set(page.totalElements);
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.usersLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading users.');
-        }
-      });
+    this.userStore.cacheUsers(this.usersFilterForm.value.filter ?? '', this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: 0,
+      pageSize: 25,
+      sortActive: 'username',
+      sortDirection: 'asc'
+    }).subscribe();
   }
 
   onUsersPage(event: PageEvent) {
-    this.usersTableState.update(state => {
-      return { ...state, pageIndex: event.pageIndex, pageSize: event.pageSize };
-    });
+    const cache = this.usersCache();
+
+    this.userStore.cacheUsers(
+      this.usersFilterForm.value.filter ?? '',
+      this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: event.pageIndex,
+      pageSize: event.pageSize,
+      sortActive: cache.sort,
+      sortDirection: cache.direction
+    }).subscribe();
   }
 
   onUsersSort(event: Sort) {
-    this.usersTableState.update(state => {
-      return { ...state, sortActive: event.direction !== '' ? event.active : 'username', sortDirection: event.direction !== '' ? event.direction : 'asc' };
-    })
+    const cache = this.usersCache();
+
+    this.userStore.cacheUsers(
+      this.usersFilterForm.value.filter ?? '',
+      this.usersFilterForm.value.type ?? 'username', {
+      pageIndex: 0,
+      pageSize: cache.pageSize,
+      sortActive: event.active,
+      sortDirection: event.direction
+    }).subscribe();
   }
 
   onSelectUser(user: UserResponse) {
@@ -107,13 +109,22 @@ export class ManagerControlPanel {
       disableClose: true,
       width: '480px'
     })
-    .afterClosed()
-    .subscribe(hasChanged => {
+    .afterClosed().pipe(switchMap(hasChanged => {
       if (hasChanged) {
-        this.loadUsers();
+        const cache = this.usersCache();
+
+        return this.userStore.cacheUsers(
+          this.usersFilterForm.value.filter ?? '',
+          this.usersFilterForm.value.type ?? 'username', {
+          pageIndex: cache.pageIndex,
+          pageSize: cache.pageSize,
+          sortActive: cache.sort,
+          sortDirection: cache.direction
+        });
       }
-    })
-    ;
+      return EMPTY;
+    }))
+    .subscribe();
   }
 
   getUserRoleLocal(user: UserResponse) : string {

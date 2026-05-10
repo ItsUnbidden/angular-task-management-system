@@ -16,7 +16,8 @@ export type ConfirmDialogData = {
   styleUrl: './confirm-dialog.css',
 })
 export class ConfirmDialog {
-  constructor(private dialogRef: MatDialogRef<ConfirmDialog, boolean>, @Inject(MAT_DIALOG_DATA) public data: ConfirmDialogData) {}
+  constructor(private readonly dialogRef: MatDialogRef<ConfirmDialog, boolean>,
+              @Inject(MAT_DIALOG_DATA) public readonly data: ConfirmDialogData) {}
 
   close(result: boolean) {
     this.dialogRef.close(result);

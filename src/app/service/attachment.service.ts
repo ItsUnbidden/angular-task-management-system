@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { AttachmentResponse, Page } from '../models';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpEvent } from '@angular/common/http';
@@ -8,20 +8,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root',
 })
 export class AttachmentService {
-  readonly attachments = signal<AttachmentResponse[]>([]);
-  readonly isLoading = signal(false);
-
-  constructor(private http: HttpClient) {}
-
-  cacheAttachmentsForTask(taskId: number) {
-    this.isLoading.set(true);
-    this.getAttachmentsForTask(taskId).subscribe({
-      next: page => {
-        this.attachments.set(page.content);
-        this.isLoading.set(false);
-      }
-    });
-  }
+  constructor(private readonly http: HttpClient) {}
 
   getAttachmentsForTask(taskId: number): Observable<Page<AttachmentResponse>> {
     return this.http.get<Page<AttachmentResponse>>(`${environment.apiUrl}/api/attachments/tasks/${taskId}`);
@@ -32,7 +19,6 @@ export class AttachmentService {
 
     formData.append('file', file);
     return this.http.post(`${environment.apiUrl}/api/attachments/tasks/${taskId}`, formData, {
-      reportProgress: true,
       observe: 'events'
     });
   }

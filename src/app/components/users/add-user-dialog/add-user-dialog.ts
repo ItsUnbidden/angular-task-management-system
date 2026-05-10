@@ -1,12 +1,14 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { ProjectService } from '../../../service/project.service';
-import { GeneralApiError } from '../../../models';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { ProjectStore } from '../../../cache/project.store';
+import { HttpErrorResponse } from '@angular/common/http';
+import { SimpleApiError } from '../../../models';
+import { getDefaultErrorMessageForType } from '../../../utils';
 
 @Component({
   selector: 'app-add-user-dialog',
@@ -16,10 +18,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './add-user-dialog.css',
 })
 export class AddUserDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  private readonly projectStore = inject(ProjectStore);
 
-  addUserForm = new FormGroup({
+  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
+
+  readonly error = signal<string | null>(null);
+
+  readonly addUserForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -30,28 +35,22 @@ export class AddUserDialog {
     })
   })
 
-  constructor(private dialogRef: MatDialogRef<AddUserDialog, boolean>, private projectService: ProjectService, @Inject(MAT_DIALOG_DATA) private data: number) {}
+  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>) {}
 
   submit() {
     if (this.addUserForm.valid) {
       const username = this.addUserForm.value.username;
 
       if (username) {
-        this.isSendingRequest.set(true);
-        this.projectService.addUserToProject(this.data, username).subscribe({
-          next: p => {
+        this.error.set(null);
+        this.projectStore.addUserToProject(username).subscribe({
+          next: () => {
             this.dialogRef.close(true);
-            this.isSendingRequest.set(false);
           },
-          error: (err) => {
-            const error = err.error as GeneralApiError;
-            if (error) {
-              this.error.set(error.errors[0]);
-            }
-            else {
-              this.error.set('Unknown error')
-            }
-            this.isSendingRequest.set(false);
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as SimpleApiError;
+
+            this.error.set(getDefaultErrorMessageForType(error));
           }
         });
       }

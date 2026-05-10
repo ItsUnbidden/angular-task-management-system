@@ -9,10 +9,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatInputModule } from '@angular/material/input';
+import { getDefaultErrorMessageForType } from '../../../utils';
+import { finalize } from 'rxjs';
+import { LabelStore } from '../../../cache/label.store';
 
 interface NewLabelData {
   projectId: number,
-  taskId: number
+  taskId?: number
 }
 
 @Component({
@@ -22,21 +25,24 @@ interface NewLabelData {
   styleUrl: './new-label-dialog.css',
 })
 export class NewLabelDialog {
-  error = signal('');
-  isSendingRequest = signal(false);
+  protected readonly labelStore = LabelStore;
 
-  paletteItems = ['blue', 'green', 'red', 'yellow'];
+  protected readonly error = signal('');
+  protected readonly isSendingRequest = signal(false);
 
-  labelForm = new FormGroup({
+  readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
-      Validators.required
+      Validators.required,
+      Validators.maxLength(25)
     ]}),
     color: new FormControl('', { nonNullable: true, validators: [
       Validators.required
     ]})
   })
 
-  constructor(private dialogRef: MatDialogRef<NewLabelDialog, boolean>, private labelService: LabelService, @Inject(MAT_DIALOG_DATA) private data: NewLabelData) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewLabelDialog, boolean>,
+    private readonly labelService: LabelService,
+    @Inject(MAT_DIALOG_DATA) private readonly data: NewLabelData) {}
   
   close(): void {
       this.dialogRef.close();
@@ -48,24 +54,19 @@ export class NewLabelDialog {
         name: this.labelForm.value.name ?? '',
         color: this.labelForm.value.color ?? '',
         projectId: this.data.projectId,
-        taskIds: [ this.data.taskId ]
+        taskIds: this.data.taskId ? [ this.data.taskId ] : []
       };
       this.isSendingRequest.set(true);
-      this.labelService.createLabel(request).subscribe({
+      this.labelService.createLabel(request).pipe(
+        finalize(() => this.isSendingRequest.set(false)))
+      .subscribe({
         next: () => {
-          this.isSendingRequest.set(false);
           this.dialogRef.close(true);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
           
-          if (error) {
-            this.error.set(error.errors[0]);
-          }
-          else {
-            this.error.set('Unknown error')
-          }
-          this.isSendingRequest.set(false);
+          this.error.set(getDefaultErrorMessageForType(error));
         }
       });
     }

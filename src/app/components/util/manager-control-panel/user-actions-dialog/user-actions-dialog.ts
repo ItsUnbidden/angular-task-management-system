@@ -1,12 +1,13 @@
 import { Component, inject, Inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { UserService } from '../../../../service/user.service';
 import { GeneralApiError, UserResponse } from '../../../../models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { getUserRole } from '../../../../utils';
+import { getDefaultErrorMessageForType, getUserRole } from '../../../../utils';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { UserStore } from '../../../../cache/user.store';
+import { UserService } from '../../../../service/user.service';
 
 @Component({
   selector: 'app-user-actions-dialog',
@@ -15,15 +16,18 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
   styleUrl: './user-actions-dialog.css',
 })
 export class UserActionsDialog {
-  private userService = inject(UserService);
+  private readonly userStore = inject(UserStore);
 
-  readonly isOwner = this.userService.isOwner;
+  readonly isOwner = this.userStore.isOwner;
   readonly loadedUser = signal<UserResponse | null>(null);
   readonly isLoading = signal(false);
 
   private hasChanged = false;
 
-  constructor(private dialogRef: MatDialogRef<UserActionsDialog, boolean>, private snackBar: MatSnackBar, @Inject(MAT_DIALOG_DATA) data: UserResponse) {
+  constructor(private readonly userService: UserService,
+              private readonly dialogRef: MatDialogRef<UserActionsDialog, boolean>,
+              private readonly snackBar: MatSnackBar,
+              @Inject(MAT_DIALOG_DATA) readonly data: UserResponse) {
     this.loadedUser.set(data);
   }
 
@@ -41,7 +45,7 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while updating user role.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);
@@ -64,7 +68,7 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(error ? error.errors[0] : 'Unknown error occured while locking the user.', 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
           this.isLoading.set(false);

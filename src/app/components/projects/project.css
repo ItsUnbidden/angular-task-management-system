@@ -10,7 +10,8 @@
 .overview-card {
     display: flex;
     flex-direction: column;
-    width: 800px;
+    width: 55%;
+    min-width: 800px;
 }
 
 .row {
@@ -81,4 +82,8 @@ mat-accordion .mat-expansion-panel-header-description {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.inline-form-field {
+    width: 500px;
 }

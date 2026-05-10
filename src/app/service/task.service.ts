@@ -1,89 +1,17 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { GeneralApiError, Page, TaskCreateRequest, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
-import { Observable, of, tap } from 'rxjs';
+import { Page, TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class TaskService {
-  readonly tasks = signal<TaskResponse[]>([]);
-  readonly selectedTask = signal<TaskResponse | null>(null);
-  readonly isLoadingTasks = signal(false);
-  readonly isLoadingSelectedTask = signal(false);
-  readonly tasksLoadingError = signal<string | null>(null);
-  readonly selectedTaskLoadingError = signal<string | null>(null);
-  readonly totalTasks = signal(0);
+  constructor(private readonly http: HttpClient) { }
 
-  constructor(private http: HttpClient) { }
-
-  cacheSelectedTask(taskId: number) : Observable<TaskResponse> {
-    const tasks = this.tasks();
-    const existing = tasks.find(t => t.id === taskId);
-    
-    if (existing) {
-      this.selectedTask.set(existing);
-      return of(existing);
-    } else {
-      this.isLoadingSelectedTask.set(true);
-      this.selectedTaskLoadingError.set(null);
-      return this.http.get<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}`).pipe(tap({
-        next: t => {
-          this.selectedTask.set(t);
-          this.isLoadingSelectedTask.set(false);
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          this.selectedTaskLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading the selected task.');
-        }
-      }));
-    }
-  }
-
-  updateCachedTask(request: TaskUpdateRequest | TaskUpdateStatusRequest) : Observable<TaskResponse> | null {
-    const selectedTask = this.selectedTask();
-
-    if (selectedTask) {
-      const next = (t: TaskResponse) => {
-        this.selectedTask.set(t);
-        this.isLoadingSelectedTask.set(false);
-      };
-      const error = (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.selectedTaskLoadingError.set(error ? error.errors[0] : 'Unknown error occured while updating the selected task.');
-        this.isLoadingSelectedTask.set(false);
-      }
-
-      this.isLoadingSelectedTask.set(true);
-      this.selectedTaskLoadingError.set(null);
-      if (this.isStatusUpdateRequest(request)) {
-        return this.updateTaskStatus(selectedTask.id, request).pipe(tap({ next, error }));
-      }
-      return this.updateTask(selectedTask.id, request).pipe(tap({ next, error }));
-    }
-    return null;
-  }
-
-  cacheProjectTasksPage(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {
-    this.isLoadingTasks.set(true);
-    this.tasksLoadingError.set(null);
-    return this.getFilteredTasksInProject(projectId, filter, page, size).pipe(tap({
-      next: res => {
-        this.tasks.set(res.content);
-        this.totalTasks.set(res.totalElements);
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as GeneralApiError;
-
-        this.tasksLoadingError.set(error ? error.errors[0] : 'Unknown error occured while loading the task page.')
-      },
-      finalize: () => {
-        this.isLoadingTasks.set(false);
-      }
-    }));
+  getTaskById(taskId: number) : Observable<TaskResponse> {
+    return this.http.get<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}`);
   }
 
   getTasksForProject(projectId: number, page: number, size: number) : Observable<Page<TaskResponse>> {
@@ -136,7 +64,7 @@ export class TaskService {
     return this.http.patch<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}/status`, request);
   }
 
-  private isStatusUpdateRequest(request: TaskUpdateRequest | TaskUpdateStatusRequest) : request is TaskUpdateStatusRequest {
-    return 'newStatus' in request;
+  deleteTask(taskId: number) : Observable<TaskDeleteResponse> {
+    return this.http.delete<TaskDeleteResponse>(`${environment.apiUrl}/api/tasks/${taskId}`);
   }
 }

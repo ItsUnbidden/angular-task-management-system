@@ -1,6 +1,6 @@
-import { Component, Inject, signal } from '@angular/core';
+import { Component, inject, Inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { EssentialUserResponse, GeneralApiError, TaskCreateRequest, TaskPriority, UserResponse } from '../../../models';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,6 +11,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from "@angular/material/select";
 import { TaskService } from '../../../service/task.service';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { getDefaultErrorMessageForType } from '../../../utils';
+import { MatChipsModule } from '@angular/material/chips';
+import { LabelStore } from '../../../cache/label.store';
+import { EMPTY, switchMap } from 'rxjs';
+import { ProjectStore } from '../../../cache/project.store';
+import { NewLabelDialog } from '../../label/new-label-dialog/new-label-dialog';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -24,15 +30,21 @@ export interface NewTaskDialogData {
 
 @Component({
   selector: 'app-new-task-dialog',
-  imports: [MatDialogModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule, MatButtonModule, MatIconModule, MatSelectModule, MatProgressSpinnerModule],
+  imports: [MatDialogModule, MatFormFieldModule, MatInputModule,
+            ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule,
+            MatButtonModule, MatIconModule, MatSelectModule,
+            MatProgressSpinnerModule, MatChipsModule],
   templateUrl: './new-task-dialog.html',
   styleUrl: './new-task-dialog.css',
 })
 export class NewTaskDialog {
-  readonly error = signal('');
-  readonly isSendingRequest = signal(false);
+  private readonly projectStore = inject(ProjectStore);
+  protected readonly labelStore = inject(LabelStore);
 
-  taskControl = new FormGroup({
+  protected readonly error = signal('');
+  protected readonly isSendingRequest = signal(false);
+
+  protected readonly taskForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -41,37 +53,43 @@ export class NewTaskDialog {
     description: new FormControl('', [
       Validators.maxLength(500)
     ]),
-    priority: new FormControl('', [
+    priority: new FormControl('MEDIUM', [
       Validators.required
     ]),
     dueDate: new FormControl<Date | null>(null),
-    assignee: new FormControl<UserResponse | null>(null)
+    assignee: new FormControl<UserResponse | null>(null),
+    labels: new FormControl<number[]>([], { nonNullable: true })
   });
 
-  priorityOptions: TaskPriorityOption[] = [
+  protected readonly priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low' },
     { priority: 'MEDIUM', priorityView: 'Medium' },
     { priority: 'HIGH', priorityView: 'High' },
-  ]
+  ];
 
-  constructor(private dialogRef: MatDialogRef<NewTaskDialog, boolean>, private taskService: TaskService, @Inject(MAT_DIALOG_DATA) public data: NewTaskDialogData) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewTaskDialog, boolean>,
+              private readonly dialog: MatDialog,
+              private readonly taskService: TaskService,
+              @Inject(MAT_DIALOG_DATA) public readonly data: NewTaskDialogData) {}
 
-  close(): void {
+  protected close(): void {
     this.dialogRef.close();
   }
 
-  submit(): void {
-    if (this.taskControl.valid) {
+  protected submit(): void {
+    if (this.taskForm.valid) {
       const request: TaskCreateRequest = {
-        name: this.taskControl.get('name')?.value || '',
-        description: this.taskControl.get('description')?.value || undefined,
-        priority: this.taskControl.get('priority')?.value as TaskPriority,
-        dueDate: this.toLocalDateString(this.taskControl.get('dueDate')?.value ?? null),
+        name: this.taskForm.get('name')?.value || '',
+        description: this.taskForm.get('description')?.value || undefined,
+        priority: this.taskForm.value.priority as TaskPriority || 'MEDIUM',
+        dueDate: this.toLocalDateString(this.taskForm.value.dueDate || null),
         projectId: this.data.projectId,
-        assigneeId: Number(this.taskControl.get('assignee')?.value?.id),
+        assigneeId: Number(this.taskForm.value.assignee?.id),
+        labelIds: this.taskForm.value.labels || []
       };
       this.isSendingRequest.set(true);
-      this.taskService.createTask(request).subscribe({
+      this.taskService.createTask(request).pipe(
+        switchMap(() => this.labelStore.cacheLabelsForProject(this.data.projectId, true))).subscribe({
         next: () => {
           this.isSendingRequest.set(false);
           this.dialogRef.close(true);
@@ -79,15 +97,32 @@ export class NewTaskDialog {
         error: (err) => {
           const error = err.error as GeneralApiError;
                     
-          if (error) {
-            this.error.set(error.errors[0]);
-          }
-          else {
-            this.error.set('Unknown error')
-          }
+          this.error.set(getDefaultErrorMessageForType(error));
+
           this.isSendingRequest.set(false);
         }
       })
+    }
+  }
+
+  protected onAddNewLabel() {
+    const project = this.projectStore.selectedProjectCache()?.item;
+
+    if (project) {
+      this.dialog.open(NewLabelDialog, {
+        data: {
+          projectId: project.id
+        },
+        disableClose: true,
+        width: '420px'
+      })
+      .afterClosed().pipe(switchMap(confirmed => {
+        if (confirmed) {
+          return this.labelStore.cacheLabelsForProject(project.id, true);
+        }        
+        return EMPTY;
+      }))
+      .subscribe();
     }
   }
 

@@ -11,7 +11,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { toLocalDateString } from '../../../utils';
+import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
+import { finalize } from 'rxjs';
 
 @Component({
   selector: 'app-new-project-dialog',
@@ -26,7 +27,7 @@ export class NewProjectDialog {
   readonly error = signal('');
   readonly isSendingRequest = signal(false);
 
-  projectControl = new FormGroup({
+  readonly projectForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
       Validators.minLength(3),
@@ -40,39 +41,35 @@ export class NewProjectDialog {
     isPrivate: new FormControl(false)
   });
 
-  constructor(private dialogRef: MatDialogRef<NewProjectDialog, boolean>, private projectService: ProjectService) {}
+  constructor(private readonly dialogRef: MatDialogRef<NewProjectDialog, boolean>,
+              private readonly projectService: ProjectService) {}
 
   close(): void {
     this.dialogRef.close();
   }
 
   submit(): void {
-    if (this.projectControl.valid) {
+    if (this.projectForm.valid) {
       const request: ProjectCreateRequest = {
-        name: this.projectControl.get('name')?.value || '',
-        description: this.projectControl.get('description')?.value || undefined,
-        startDate: toLocalDateString(this.projectControl.get('startDate')?.value ?? null),
-        endDate: toLocalDateString(this.projectControl.get('endDate')?.value ?? null),
-        isPrivate: this.projectControl.get('isPrivate')?.value || false,
+        name: this.projectForm.get('name')?.value || '',
+        description: this.projectForm.get('description')?.value || undefined,
+        startDate: toLocalDateString(this.projectForm.get('startDate')?.value ?? null),
+        endDate: toLocalDateString(this.projectForm.get('endDate')?.value ?? null),
+        isPrivate: this.projectForm.get('isPrivate')?.value || false,
       };
       this.isSendingRequest.set(true);
-      this.projectService.createProject(request).subscribe({
-        next: () => {
-          this.isSendingRequest.set(false);
-          this.dialogRef.close(true);
-        },
-        error: (err) => {
-          const error = err.error as GeneralApiError;
-          
-          if (error) {
-            this.error.set(error.errors[0]);
+      this.projectService.createProject(request)
+        .pipe(finalize(() => this.isSendingRequest.set(false)))
+        .subscribe({
+          next: () => {
+            this.dialogRef.close(true);
+          },
+          error: (err) => {
+            const error = err.error as GeneralApiError;
+            
+            this.error.set(getDefaultErrorMessageForType(error));
           }
-          else {
-            this.error.set('Unknown error')
-          }
-          this.isSendingRequest.set(false);
-        }
-      });
+        });
     }
   }
 }
