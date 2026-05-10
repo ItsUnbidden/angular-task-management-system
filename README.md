@@ -167,3 +167,7 @@ Some external service operations take too long. For example, connecting a projec
 
 ### Theming
 Angular Material allows for advanced theming to make things look pretty good. This is not really a priority for me right now, but I might take this on later.
+
+
+## License
+This project is licensed under the [MIT License](/LICENSE).
