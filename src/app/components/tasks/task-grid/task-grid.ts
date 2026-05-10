@@ -16,7 +16,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from "@angular/material/icon";
 import { getChipColor, getChipText, toLocalDateString } from '../../../utils';
-import { EMPTY, forkJoin, map, Observable, switchMap, tap } from 'rxjs';
+import { EMPTY, map, Observable, switchMap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
@@ -45,7 +45,7 @@ interface TaskPriorityOption {
   styleUrl: './task-grid.css',
 })
 export class TaskGrid {
-  private static readonly DEFAULT_GRID_SIZE = 6;
+  private static readonly DEFAULT_GRID_SIZE = 8;
 
   private readonly userStore = inject(UserStore);
   private readonly projectStore = inject(ProjectStore);
@@ -101,7 +101,7 @@ export class TaskGrid {
 
       if (projectId) {
         untracked(() => {
-          this.taskStore.cacheProjectTasks(projectId, this.taskStore.currentProjectId === projectId ? this.tasks().pageIndex : 0, 6).subscribe();
+          this.taskStore.cacheProjectTasks(projectId, this.taskStore.currentProjectId === projectId ? this.tasks().pageIndex : 0, TaskGrid.DEFAULT_GRID_SIZE).subscribe();
           this.labelStore.cacheLabelsForProject(projectId).subscribe();
         });
       }

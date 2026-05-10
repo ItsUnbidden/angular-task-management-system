@@ -96,7 +96,11 @@ export class MessageList {
     const taskCache = this.taskCache();
 
     if (message && taskCache.item) {
-      this.messageService.leaveComment(taskCache.item.id, { text: message }).subscribe({
+      this.messageService.leaveComment(taskCache.item.id, { text: message }).pipe(
+        switchMap(() => {
+          this.messageStore.clearComments();
+          return this.messageStore.cacheMoreComments(this.taskId(), 0);
+        })).subscribe({
         next: () => {
           this.taskCache.update(cache => {
             return { ...cache, item: cache.item ? { ...cache.item, amountOfMessages: ++cache.item.amountOfMessages } : undefined };

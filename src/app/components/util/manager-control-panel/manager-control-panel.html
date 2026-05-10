@@ -4,7 +4,7 @@
             <mat-card-title>Users</mat-card-title>
         </mat-card-header>
         <mat-card-content>
-            <form [formGroup]="usersFilterForm">
+            <form [formGroup]="usersFilterForm"]>
                 <mat-form-field>
                     <mat-label>Filter users</mat-label>
                     <input matInput type="text" formControlName="filter">
@@ -17,7 +17,7 @@
             @if (usersCache().isLoading) {
                 <div class="spinner-container">
                     <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                    <span>Loading projects...</span>
+                    <span>Loading users...</span>
                 </div>
             }
             @else {

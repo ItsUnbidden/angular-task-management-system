@@ -22,6 +22,9 @@
                                 <span>Loading projects...</span>
                             </div>
                         }
+                        @else if (projectsCache().error) {
+                            <div class="simple-error-message">{{ projectsCache().error }}</div>
+                        }
                         @else {
                             <table mat-table [dataSource]="projectsCache().page?.content ?? []"
                                 class="mat-elevation-z8"
@@ -87,6 +90,9 @@
                                 <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
                                 <span>Loading tasks...</span>
                             </div>
+                        }
+                        @else if (myTasksCache().error) {
+                            <div class="simple-error-message">{{ myTasksCache().error }}</div>
                         }
                         @else {
                             <table mat-table [dataSource]="myTasksCache().page?.content ?? []"
@@ -162,6 +168,9 @@
                                 <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
                                 <span>Loading projects...</span>
                             </div>
+                        }
+                        @else if (projectsCache().error) {
+                            <div class="simple-error-message">{{ projectsCache().error }}</div>
                         }
                         @else {
                             <table mat-table [dataSource]="projectsCache().page?.content ?? []"

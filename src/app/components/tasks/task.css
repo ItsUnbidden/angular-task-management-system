@@ -27,7 +27,7 @@
 .header-container form {
     display: flex;
     align-items: baseline;
-    margin-bottom: -15px;
+    margin-bottom: -5px;
 }
 
 .row {
@@ -83,4 +83,8 @@
 
 .error-card-title {
     margin-bottom: 10px;
+}
+
+.inline-form-field {
+    width: 500px;
 }

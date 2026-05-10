@@ -83,3 +83,7 @@ mat-accordion .mat-expansion-panel-header-description {
     justify-content: center;
     align-items: center;
 }
+
+.inline-form-field {
+    width: 500px;
+}

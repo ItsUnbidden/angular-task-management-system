@@ -38,11 +38,21 @@
                 <mat-card-content>
                     @if (isEditingName()) {
                         <form class="edit-input-form" [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
-                            <mat-form-field>
+                            <mat-form-field class="inline-form-field">
                                 <mat-label>New project name</mat-label>
                                 <input matInput type="text" formControlName="projectName">
+                                <mat-hint align="end">{{ nameEditForm.value.projectName?.length }} / 50</mat-hint>
+                                @if (nameEditForm.hasError('required', 'projectName')) {
+                                    <mat-error>This field is required.</mat-error>
+                                }
+                                @if (nameEditForm.hasError('minlength', 'projectName')) {
+                                    <mat-error>Project name must be at least 3 characters long.</mat-error>
+                                }
+                                @if (nameEditForm.hasError('maxlength', 'projectName')) {
+                                    <mat-error>Project name cannot be longer than 50 characters.</mat-error>
+                                }
                             </mat-form-field>
-                            <button mat-icon-button type="submit">
+                            <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid || projectCache().isLoading">
                                 <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
                             </button>
                             <button mat-icon-button type="button" (click)="onCloseEditing()">

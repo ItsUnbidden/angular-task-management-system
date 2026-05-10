@@ -20,7 +20,7 @@
         @if (attachmentsCache().error) {
             <div class="simple-error-message">{{ attachmentsCache().error }}</div>
         } 
-        @else if (attachmentsCache().page?.content?.length ?? 0 < 1) {
+        @else if ((attachmentsCache().page?.content?.length ?? 0) < 1) {
             <div>There are currently no attachments.</div>
         }
         @else {

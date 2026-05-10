@@ -1,4 +1,4 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,9 +20,6 @@ import { TaskStore } from '../../../cache/task.store';
   imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule],
   templateUrl: './attachment-list.html',
   styleUrl: './attachment-list.css',
-  providers: [
-    AttachmentStore
-  ]
 })
 export class AttachmentList {
   private static readonly MAX_FILE_SIZE = 157_286_400;
@@ -36,13 +33,7 @@ export class AttachmentList {
   constructor(private readonly attachmentService: AttachmentService, 
               private readonly taskStore: TaskStore,
               private readonly snackBar: MatSnackBar,
-              private readonly dialog: MatDialog) {
-    effect(() => {
-      const task = taskStore.selectedTaskCache()?.item;
-
-      if (task) this.attachmentStore.cacheAttachmentsForTask(task.id).subscribe();
-    });
-  }
+              private readonly dialog: MatDialog) {}
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;

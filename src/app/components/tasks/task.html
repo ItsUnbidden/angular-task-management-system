@@ -30,9 +30,19 @@
                     </button>
                     @if (isEditingName()) {
                         <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitTaskName()">
-                            <mat-form-field>
+                            <mat-form-field class="inline-form-field">
                                 <mat-label>New task name</mat-label>
                                 <input matInput type="text" formControlName="taskName">
+                                <mat-hint align="end">{{ nameEditForm.value.taskName?.length }} / 50</mat-hint>
+                                @if (nameEditForm.hasError('required', 'taskName')) {
+                                    <mat-error>This field is required.</mat-error>
+                                }
+                                @if (nameEditForm.hasError('minlength', 'taskName')) {
+                                    <mat-error>Task name must be at least 3 characters long.</mat-error>
+                                }
+                                @if (nameEditForm.hasError('maxlength', 'taskName')) {
+                                    <mat-error>Task name cannot be longer than 50 characters.</mat-error>
+                                }
                             </mat-form-field>
                             <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid">
                                 <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
