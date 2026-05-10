@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { UserResponse } from '../../../models';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
@@ -56,6 +56,16 @@ export class ManagerControlPanel {
         });
       })
     ).subscribe();
+
+    effect(() => {
+      const currentCache = this.usersCache();
+
+      if (currentCache.isLoading) {
+        this.usersFilterForm.disable({ emitEvent: false });
+      } else {
+        this.usersFilterForm.enable({ emitEvent: false });
+      }
+    })
   }
 
   ngAfterViewInit() {
@@ -64,7 +74,7 @@ export class ManagerControlPanel {
       pageSize: 25,
       sortActive: 'username',
       sortDirection: 'asc'
-    });
+    }).subscribe();
   }
 
   onUsersPage(event: PageEvent) {
