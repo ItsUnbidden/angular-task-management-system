@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
+import { Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectUpdateStatusRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
 import { environment } from '../../environments/environment';
 
 @Injectable({
@@ -52,6 +52,10 @@ export class ProjectService {
 
   changeMemberRole(projectId: number, userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectResponse> {
     return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/users/${userId}/roles`, request);
+  }
+
+  changeStatus(projectId: number, request: ProjectUpdateStatusRequest) : Observable<ProjectResponse> {
+    return this.http.patch<ProjectResponse>(`${environment.apiUrl}/api/projects/${projectId}/status`, request);
   }
 
   deleteProject(projectId: number) : Observable<ProjectDeleteResponse> {

@@ -47,6 +47,10 @@ export interface ProjectDeleteResponse {
   hasDeletedCalendar: boolean;
 }
 
+export interface ProjectUpdateStatusRequest {
+  newStatus: 'IN_PROGRESS' | 'COMPLETED';
+}
+
 export interface TaskResponse extends Entity {
   name: string;
   description?: string;

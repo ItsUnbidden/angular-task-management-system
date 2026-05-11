@@ -220,7 +220,13 @@
                         }
                         @if (!isCreator() && isContributor()) {
                             <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
-                        }            
+                        }     
+                        @if (projectCache().item?.status === 'COMPLETED') {
+                            <button matButton="elevated" (click)="onChangeStatus('IN_PROGRESS')">Mark as in progress</button>
+                        }
+                        @if (projectCache().item?.status !== 'COMPLETED') {
+                            <button matButton="elevated" (click)="onChangeStatus('COMPLETED')">Mark as completed</button>
+                        }
                         @if (isUserConnectedToDropbox()) {
                             @if (isCreator()) {
                                 @if (projectCache().item?.isDropboxConnected) {

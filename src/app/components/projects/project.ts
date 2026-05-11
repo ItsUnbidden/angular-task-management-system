@@ -669,6 +669,18 @@ export class Project {
     }
   }
 
+  onChangeStatus(status: 'IN_PROGRESS' | 'COMPLETED') {
+    this.projectStore.changeStatus(status).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+          duration: 5000
+        });
+      }
+    });
+  }
+
   onReload() {
     this.projectStore.cacheSelectedProject(this.projectId(), true).subscribe();
   }
