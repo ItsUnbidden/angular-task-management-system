@@ -65,6 +65,15 @@ export class TaskGrid {
   readonly tasks = this.taskStore.cache.asReadonly();
   readonly projectLabels = this.labelStore.cache.asReadonly();
 
+  private readonly currentFilter = computed(() => {
+    const filter = this.tasks().filter;
+
+    if (filter && typeof filter !== 'string') {
+      return filter;
+    }
+    return undefined;
+  });
+
   readonly isAdmin = this.projectStore.isAdmin;
   readonly isManager = this.userStore.isManager;
 
@@ -86,12 +95,12 @@ export class TaskGrid {
   ]
 
   readonly filterForm = new FormGroup({
-    assigneeId: new FormControl<number | null>(null),
-    status: new FormControl<TaskStatus | null>(null),
-    priority: new FormControl<TaskPriority | null>(null),
-    dueDateFrom: new FormControl<Date | null>(null),
-    dueDateTo: new FormControl<Date | null>(null),
-    labelIds: new FormControl<number[]>([])
+    assigneeId: new FormControl<number | null>(this.currentFilter()?.assigneeId ?? null),
+    status: new FormControl<TaskStatus | null>(this.currentFilter()?.status ?? null),
+    priority: new FormControl<TaskPriority | null>(this.currentFilter()?.priority ?? null),
+    dueDateFrom: new FormControl<Date | null>(this.getDate(this.currentFilter()?.dueDateFrom)),
+    dueDateTo: new FormControl<Date | null>(this.getDate(this.currentFilter()?.dueDateTo)),
+    labelIds: new FormControl<number[]>(this.currentFilter()?.labelIds ?? [])
   });
 
   constructor(private readonly dialog: MatDialog,
@@ -198,5 +207,9 @@ export class TaskGrid {
 
   getChipTextLocal(status: string | null): string {
     return getChipText(status);
+  }
+
+  private getDate(value?: string) : Date | null {
+    return value ? new Date(value) : null;
   }
 }
