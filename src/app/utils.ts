@@ -1,5 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
-import { ErrorType, EssentialUserResponse, GeneralApiError, ProjectResponse, UserResponse } from "./models";
+import { ErrorType, EssentialUserResponse, ExternalServiceApiError, GeneralApiError, ProjectResponse, SimpleApiError, ThirdPartyOperationStatus, ThirdPartyOperationTag, UserResponse } from "./models";
 import { error } from "console";
 import { environment } from "../environments/environment";
 
@@ -86,9 +86,6 @@ export function getProjectCreator(project: ProjectResponse) : EssentialUserRespo
 }
 
 export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
-    if (!error) {
-        return 'An unkown error has occured.';
-    }
     if (environment.logErrors) {
         console.error('An error has occured.', error);
     }
@@ -117,4 +114,19 @@ export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
         case ErrorType.INTERNAL: return 'An unknown internal error has occured. The issue is being investigated. Please try again later.';
         default: return 'An unknown error has occured.';
     }
+}
+
+export function getDefaultErrorMessageForExternalResult(error: ExternalServiceApiError) {
+    if (environment.logErrors) {
+        console.error('An error has occured.', error);
+    }
+    switch (error.externalResult.tag) {
+        case ThirdPartyOperationTag.NO_TASK_FOLDER_ID: return 'This task does not have a folder on Dropbox. You will have to recreate the task.';
+        case ThirdPartyOperationTag.IOEXCEPTION: return 'An internal server error has occured. Please try again later.';
+        default: return 'An unknown external service issue has occured. Please try again later.'
+    }
+}
+
+export function isExternalError(error: SimpleApiError) : error is ExternalServiceApiError {
+    return 'externalResult' in error;
 }

@@ -3,8 +3,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
-import { AttachmentResponse } from '../../../models';
-import { HttpEventType } from '@angular/common/http';
+import { AttachmentResponse, ExternalServiceApiError, SimpleApiError } from '../../../models';
+import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider'
@@ -14,6 +14,7 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, switchMap } from 'rxjs';
 import { AttachmentStore } from '../../../cache/attachment.store';
 import { TaskStore } from '../../../cache/task.store';
+import { getDefaultErrorMessageForExternalResult, getDefaultErrorMessageForType, isExternalError } from '../../../utils';
 
 @Component({
   selector: 'app-attachment-list',
@@ -58,7 +59,18 @@ export class AttachmentList {
         }
         return EMPTY;
       }))
-      .subscribe();
+      .subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as SimpleApiError;
+          const message = isExternalError(error) ? getDefaultErrorMessageForExternalResult(error) : getDefaultErrorMessageForType(error);
+
+          this.isProgressBarActive.set(false);
+
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 5000
+          });
+        }
+      });
     }
   }
 
@@ -86,12 +98,16 @@ export class AttachmentList {
     })
     .afterClosed().pipe(
       switchMap(confirmed => {
-        if (confirmed) return this.attachmentService.deleteAttachment(attachment.id);
+        if (confirmed) {
+          this.isProgressBarActive.set(true);
+          return this.attachmentService.deleteAttachment(attachment.id)
+        };
         return EMPTY;
       }),
       switchMap(() => {
         const task = this.taskStore.selectedTaskCache()?.item;
 
+        this.isProgressBarActive.set(false);
         if (task) return this.attachmentStore.cacheAttachmentsForTask(task.id);
         return EMPTY;
       })
