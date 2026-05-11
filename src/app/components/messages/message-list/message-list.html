@@ -183,7 +183,7 @@
         </mat-list>
     }
     <div class="message-actions-container">
-        @if (isLastCommentsPage()) {
+        @if (commentCache().page?.last) {
             @if (commentCache().pageIndex !== 0) {
                 <button matButton="outlined" (click)="onHideComments()">
                     Hide comments

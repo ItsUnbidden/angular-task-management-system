@@ -39,7 +39,6 @@ export class MessageList {
 
   readonly commentCache = this.messageStore.commentsCache.asReadonly();
   readonly userCache = this.userStore.userCache.asReadonly();
-  readonly isLastCommentsPage = this.messageStore.isLastCommentsPage;
 
   readonly isManager = this.userStore.isManager;
 
@@ -294,7 +293,7 @@ export class MessageList {
   isLastRepliesPage(commentId: number) : boolean {
     const store = this.messageStore.replyStores().get(commentId);
 
-    return store ? store.isLastRepliesPage() : false;
+    return store?.cache().page?.last ?? false;
   }
 
   setExpandComment(commentId: number, isExpanded: boolean) {

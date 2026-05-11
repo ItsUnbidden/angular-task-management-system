@@ -200,6 +200,8 @@ export interface Page<T extends Entity> {
   totalElements: number;
   number: number;
   size: number;
+  first: boolean;
+  last: boolean;
 }
 
 export interface Cache {

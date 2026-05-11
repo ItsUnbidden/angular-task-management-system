@@ -1,5 +1,5 @@
-import { inject, Injectable, InjectionToken, signal } from '@angular/core';
-import { CommentResponse, Page, ReplyResponse } from '../models';
+import { inject, Injectable, signal } from '@angular/core';
+import { CommentResponse, Page } from '../models';
 import { MessageService } from '../service/message.service';
 import { Observable, tap } from 'rxjs';
 import { FlattenedReply, ReplyStore } from './reply.store';
@@ -24,7 +24,6 @@ export class MessageStore {
   readonly messageStates = signal(new Map<number, MessageState>);
 
   readonly commentsCache = this.commentStore.cache;
-  readonly isLastCommentsPage = this.commentStore.isLastCommentsPage;
 
   constructor(private readonly messageService: MessageService) {}
 
