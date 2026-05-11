@@ -485,6 +485,11 @@ export class Project {
         if (confirmed) return this.projectStore.connectProjectToDropbox();
         return EMPTY;
       })).subscribe({
+        next: () => {
+          this.snackBar.open('Dropbox has been successfully connected to this project.', 'Dismiss', {
+            duration: 3000
+          });
+        },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
@@ -512,6 +517,11 @@ export class Project {
         if (confirmed) return this.projectStore.connectProjectToCalendar();
         return EMPTY;
       })).subscribe({
+        next: () => {
+          this.snackBar.open('Calendar has been successfully connected to this project.', 'Dismiss', {
+            duration: 3000
+          });
+        },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
