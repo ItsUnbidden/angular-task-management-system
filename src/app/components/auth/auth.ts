@@ -12,6 +12,7 @@ import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../uti
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SimpleApiError } from '../../models';
+import { ValidationBoundaries } from '../validation-boundaries';
 
 @Component({
     selector: 'app-auth',
@@ -20,6 +21,11 @@ import { SimpleApiError } from '../../models';
     styleUrl: './auth.css'
 })
 export class Auth {
+  protected readonly USERNAME_MAX_LENGTH = ValidationBoundaries.USER_USERNAME_MAX_LENGTH;
+  protected readonly USERNAME_MIN_LENGTH = ValidationBoundaries.USER_USERNAME_MIN_LENGTH;
+  protected readonly PASSWORD_MAX_LENGTH = ValidationBoundaries.USER_PASSWORD_MAX_LENGTH;
+  protected readonly PASSWORD_MIN_LENGTH = ValidationBoundaries.USER_PASSWORD_MIN_LENGTH;
+
   private readonly authService = inject(AuthService);
 
   readonly isLoading = signal<boolean>(false);
@@ -47,13 +53,13 @@ export class Auth {
   readonly registrationForm = new FormGroup({
     username: new FormControl('', [
       Validators.required,
-      Validators.minLength(5),
-      Validators.maxLength(25)
+      Validators.minLength(ValidationBoundaries.USER_USERNAME_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.USER_USERNAME_MAX_LENGTH)
     ]),
     password: new FormControl('', [
       Validators.required,
-      Validators.minLength(8),
-      Validators.maxLength(100)
+      Validators.minLength(ValidationBoundaries.USER_PASSWORD_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.USER_USERNAME_MAX_LENGTH)
     ]),
     repeatPassword: new FormControl('', [
       Validators.required

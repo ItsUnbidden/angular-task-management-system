@@ -12,12 +12,12 @@
             <mat-form-field>
                 <mat-label>Username</mat-label>
                 <input matInput formControlName="username">
-                <mat-hint align="end">{{ userDetailsForm.value.username?.length }} / 25</mat-hint>
+                <mat-hint align="end">{{ userDetailsForm.value.username?.length }} / {{ USERNAME_MAX_LENGTH }}</mat-hint>
                 @if (userDetailsForm.hasError('minlength', 'username')) {
-                    <mat-error>A username must be at least 5 characters long.</mat-error>
+                    <mat-error>A username must be at least {{ USERNAME_MIN_LENGTH }} characters long.</mat-error>
                 }
                 @if (userDetailsForm.hasError('maxlength', 'username')) {
-                    <mat-error>A username cannot be longer than 25 characters.</mat-error>
+                    <mat-error>A username cannot be longer than {{ USERNAME_MAX_LENGTH }} characters.</mat-error>
                 }
             </mat-form-field>
             <mat-form-field>
@@ -30,18 +30,18 @@
             <mat-form-field>
                 <mat-label>Password</mat-label>
                 <input matInput type="password" formControlName="password">
-                <mat-hint align="end">{{ userDetailsForm.value.password?.length }} / 100</mat-hint>
+                <mat-hint align="end">{{ userDetailsForm.value.password?.length }} / {{ PASSWORD_MAX_LENGTH }}</mat-hint>
                 @if (userDetailsForm.hasError('minlength', 'password')) {
-                    <mat-error>A password must be at least 8 characters long.</mat-error>
+                    <mat-error>A password must be at least {{ PASSWORD_MIN_LENGTH }} characters long.</mat-error>
                 }
                 @else if (userDetailsForm.hasError('maxlength', 'password')) {
-                    <mat-error>A password cannot be longer than 100 characters.</mat-error>
+                    <mat-error>A password cannot be longer than {{ PASSWORD_MAX_LENGTH }} characters.</mat-error>
                 }
             </mat-form-field>
             <mat-form-field>
                 <mat-label>Repeat password</mat-label>
                 <input matInput type="password" formControlName="repeatPassword">
-                <mat-hint align="end">{{ userDetailsForm.value.repeatPassword?.length }} / 100</mat-hint>     
+                <mat-hint align="end">{{ userDetailsForm.value.repeatPassword?.length }} / {{ PASSWORD_MAX_LENGTH }}</mat-hint>     
                 @if (userDetailsForm.hasError('passwordMismatch', 'repeatPassword')) {
                     <mat-error>Passwords must match.</mat-error>                  
                 }         

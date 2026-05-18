@@ -1,6 +1,5 @@
 import { AbstractControl, ValidationErrors, ValidatorFn } from "@angular/forms";
 import { ErrorType, EssentialUserResponse, ExternalServiceApiError, GeneralApiError, ProjectResponse, SimpleApiError, ThirdPartyOperationStatus, ThirdPartyOperationTag, UserResponse } from "./models";
-import { error } from "console";
 import { environment } from "../environments/environment";
 
 export function toLocalDateString(date: Date | null): string | undefined {

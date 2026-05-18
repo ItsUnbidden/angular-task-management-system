@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, switchMap, tap} from 'rxjs';
 import { LoginRequest, RegistrationRequest, UserResponse } from '../models';
-import { environment } from '../../environments/environment';
 import { UserStore } from '../cache/user.store';
 
 @Injectable({
@@ -12,11 +11,11 @@ export class AuthService {
   constructor(private readonly http: HttpClient, private readonly userStore: UserStore) {}
 
   register(body: RegistrationRequest): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/api/auth/register`, body);
+    return this.http.post<void>(`/api/auth/register`, body);
   }
 
   login(body: LoginRequest) : Observable<UserResponse | null> {
-    return this.http.post<void>(`${environment.apiUrl}/api/auth/login`, body).pipe(
+    return this.http.post<void>(`/api/auth/login`, body).pipe(
       switchMap(() => this.userStore.ensureUserLoaded()),
       tap({
         next: user => {
@@ -27,20 +26,20 @@ export class AuthService {
   }
 
   logout() : Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/api/auth/logout`).pipe(tap({
+    return this.http.delete<void>(`/api/auth/logout`).pipe(tap({
       next: () => this.userStore.clearUser()
     }));
   }
 
   refreshToken(): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/api/auth/refresh`, {});
+    return this.http.post<void>(`/api/auth/refresh`, {});
   }
 
   forceCsrfTokenResolve() : Observable<void> {
-    return this.http.get<void>(`${environment.apiUrl}/api/auth/csrf`);
+    return this.http.get<void>(`/api/auth/csrf`);
   }
 
   refreshCsrfToken() : Observable<void> {
-    return this.http.get<void>(`${environment.apiUrl}/api/auth/csrf/refresh`);
+    return this.http.get<void>(`/api/auth/csrf/refresh`);
   }
 }

@@ -17,6 +17,7 @@ import { LabelStore } from '../../../cache/label.store';
 import { EMPTY, switchMap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { NewLabelDialog } from '../../label/new-label-dialog/new-label-dialog';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -38,6 +39,10 @@ export interface NewTaskDialogData {
   styleUrl: './new-task-dialog.css',
 })
 export class NewTaskDialog {
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.TASK_NAME_MAX_LENGTH;
+  protected readonly NAME_MIN_LENGTH = ValidationBoundaries.TASK_NAME_MIN_LENGTH;
+  protected readonly DESCRIPTION_MAX_LENGTH = ValidationBoundaries.TASK_DESCRIPTION_MAX_LENGTH;
+
   private readonly projectStore = inject(ProjectStore);
   protected readonly labelStore = inject(LabelStore);
 
@@ -47,11 +52,11 @@ export class NewTaskDialog {
   protected readonly taskForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
-      Validators.minLength(3),
-      Validators.maxLength(50)
+      Validators.minLength(ValidationBoundaries.TASK_NAME_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.TASK_NAME_MAX_LENGTH)
     ]),
     description: new FormControl('', [
-      Validators.maxLength(500)
+      Validators.maxLength(ValidationBoundaries.TASK_DESCRIPTION_MAX_LENGTH)
     ]),
     priority: new FormControl('MEDIUM', [
       Validators.required

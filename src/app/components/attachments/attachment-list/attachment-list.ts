@@ -3,7 +3,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
-import { AttachmentResponse, ExternalServiceApiError, SimpleApiError } from '../../../models';
+import { AttachmentResponse, SimpleApiError } from '../../../models';
 import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -27,16 +27,16 @@ export class AttachmentList {
 
   private readonly attachmentStore = inject(AttachmentStore);
 
-  readonly attachmentsCache = this.attachmentStore.cache.asReadonly();
+  protected readonly attachmentsCache = this.attachmentStore.cache.asReadonly();
 
-  readonly isProgressBarActive = signal(false);
+  protected readonly isProgressBarActive = signal(false);
   
   constructor(private readonly attachmentService: AttachmentService, 
               private readonly taskStore: TaskStore,
               private readonly snackBar: MatSnackBar,
               private readonly dialog: MatDialog) {}
 
-  onFileSelected(event: Event) {
+  protected onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const task = this.taskStore.selectedTaskCache()?.item;
@@ -74,7 +74,7 @@ export class AttachmentList {
     }
   }
 
-  onDownloadFile(attachment: AttachmentResponse) {
+  protected onDownloadFile(attachment: AttachmentResponse) {
     this.attachmentService.downloadFile(attachment.id).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
@@ -87,7 +87,7 @@ export class AttachmentList {
     });
   }
 
-  onDeleteAttachment(attachment: AttachmentResponse) {
+  protected onDeleteAttachment(attachment: AttachmentResponse) {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Delete attachment',

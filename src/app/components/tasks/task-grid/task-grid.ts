@@ -54,16 +54,16 @@ export class TaskGrid {
 
   private readonly route = inject(ActivatedRoute);
   
-  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
-  readonly projectUsers = computed(() => {
+  protected readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
+  protected readonly projectUsers = computed(() => {
     const project = this.selectedProjectCache().item;
     
     return (project) ? project.projectRoles.map<EssentialUserResponse>(pr => {
       return { id: pr.userId, username: pr.username };
     }) : null;
   });
-  readonly tasks = this.taskStore.cache.asReadonly();
-  readonly projectLabels = this.labelStore.cache.asReadonly();
+  protected readonly tasks = this.taskStore.cache.asReadonly();
+  protected readonly projectLabels = this.labelStore.cache.asReadonly();
 
   private readonly currentFilter = computed(() => {
     const filter = this.tasks().filter;
@@ -74,27 +74,27 @@ export class TaskGrid {
     return undefined;
   });
 
-  readonly isAdmin = this.projectStore.isAdmin;
-  readonly isManager = this.userStore.isManager;
+  protected readonly isAdmin = this.projectStore.isAdmin;
+  protected readonly isManager = this.userStore.isManager;
 
-  readonly projectId = toSignal(
+  private readonly projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
   );
 
-  readonly statusOptions: TaskStatusOption[] = [
+  protected readonly statusOptions: TaskStatusOption[] = [
     { status: 'NOT_STARTED', statusView: 'Not started', class: 'status-initiated' },
     { status: 'IN_PROGRESS', statusView: 'In progress', class: 'status-in-progress' },
     { status: 'COMPLETED', statusView: 'Completed', class: 'status-completed' },
     { status: 'OVERDUE', statusView: 'Overdue', class: 'status-overdue' }
   ]
 
-  readonly priorityOptions: TaskPriorityOption[] = [
+  protected readonly priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low', class: 'priority-low' },
     { priority: 'MEDIUM', priorityView: 'Medium', class: 'priority-medium' },
     { priority: 'HIGH', priorityView: 'High', class: 'priority-high' }
   ]
 
-  readonly filterForm = new FormGroup({
+  protected readonly filterForm = new FormGroup({
     assigneeId: new FormControl<number | null>(this.currentFilter()?.assigneeId ?? null),
     status: new FormControl<TaskStatus | null>(this.currentFilter()?.status ?? null),
     priority: new FormControl<TaskPriority | null>(this.currentFilter()?.priority ?? null),
@@ -143,13 +143,13 @@ export class TaskGrid {
     }
   }
 
-  onTaskPage(event: PageEvent) {
+  protected onTaskPage(event: PageEvent) {
     const project = this.selectedProjectCache()?.item;
 
     if (project) this.taskStore.cacheProjectTasks(project.id, event.pageIndex, event.pageSize).subscribe();
   }
 
-  onCreateNewTask() {
+  protected onCreateNewTask() {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
@@ -170,11 +170,11 @@ export class TaskGrid {
     }
   }
 
-  onOpenTask(task: TaskResponse) {
+  protected onOpenTask(task: TaskResponse) {
     this.router.navigateByUrl(`/projects/${task.projectId}/tasks/${task.id}`);
   }
   
-  onClearFilters() {
+  protected onClearFilters() {
     this.filterForm.patchValue({
       assigneeId: null,
       status: null,
@@ -188,24 +188,24 @@ export class TaskGrid {
     if (project) this.taskStore.cacheProjectTasks(project.id, this.tasks().pageIndex, this.tasks().pageSize, {}).subscribe();
   }
 
-  onTryAgain() {
+  protected onTryAgain() {
     const project = this.selectedProjectCache()?.item;
 
     if (project) this.taskStore.cacheProjectTasks(project.id, 0, TaskGrid.DEFAULT_GRID_SIZE, {}).subscribe();
   }
 
-  cacheProjectTasks() : Observable<Page<TaskResponse>> {
+  protected cacheProjectTasks() : Observable<Page<TaskResponse>> {
     const project = this.selectedProjectCache().item;
 
     if (project) return this.taskStore.cacheProjectTasks(project.id);
     return EMPTY;
   }
 
-  getChipColorLocal(status: string | null): string {
+  protected getChipColorLocal(status: string | null): string {
     return getChipColor(status);
   }
 
-  getChipTextLocal(status: string | null): string {
+  protected getChipTextLocal(status: string | null): string {
     return getChipText(status);
   }
 

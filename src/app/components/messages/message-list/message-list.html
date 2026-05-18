@@ -8,6 +8,10 @@
             <form [formGroup]="newCommentForm">
                 <mat-form-field class="large-field">
                     <textarea matInput type="text" formControlName="comment" placeholder="Here goes your comment..."></textarea>
+                    <mat-hint align="end">{{ newCommentForm.value.comment?.length }} / {{ MAX_LENGTH }}</mat-hint>
+                    @if (newCommentForm.hasError('maxlength', 'comment')) {
+                        <mat-error>A comment cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                    }
                 </mat-form-field>
             </form>
         </mat-card-content>
@@ -39,6 +43,10 @@
                             <form [formGroup]="editMessageForm">
                                 <mat-form-field class="large-field">
                                     <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                    <mat-hint align="end">{{ editMessageForm.value.message?.length }} / {{ MAX_LENGTH }}</mat-hint>
+                                    @if (newCommentForm.hasError('maxlength', 'message')) {
+                                        <mat-error>A message cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                    }
                                 </mat-form-field>
                             </form>
                         </mat-card-content>
@@ -83,6 +91,10 @@
                                 <form [formGroup]="newReplyForm">
                                     <mat-form-field class="large-field">
                                         <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                        <mat-hint align="end">{{ newReplyForm.value.reply?.length }} / {{ MAX_LENGTH }}</mat-hint>
+                                        @if (newCommentForm.hasError('maxlength', 'reply')) {
+                                            <mat-error>A reply cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                        }
                                     </mat-form-field>
                                 </form>
                                 <div class="message-actions-container">
@@ -108,6 +120,10 @@
                                                     <form [formGroup]="editMessageForm" (ngSubmit)="onEditMessageSubmit(flattenedReply, comment)">
                                                         <mat-form-field class="large-field">
                                                             <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                                            <mat-hint align="end">{{ editMessageForm.value.message?.length }} / {{ MAX_LENGTH }}</mat-hint>
+                                                            @if (newCommentForm.hasError('maxlength', 'message')) {
+                                                                <mat-error>A message cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                                            }
                                                         </mat-form-field>
                                                         <div class="message-actions-container">
                                                             <button matButton="elevated" type="submit" [disabled]="editMessageForm.invalid">Edit</button>
@@ -123,6 +139,10 @@
                                                         <form [formGroup]="newReplyForm">
                                                             <mat-form-field class="large-field">
                                                                 <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                                                <mat-hint align="end">{{ newReplyForm.value.reply?.length }} / {{ MAX_LENGTH }}</mat-hint>
+                                                                @if (newCommentForm.hasError('maxlength', 'reply')) {
+                                                                    <mat-error>A reply cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                                                }
                                                             </mat-form-field>
                                                         </form>
                                                         <div class="message-actions-container">

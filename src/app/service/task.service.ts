@@ -1,6 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
-import { environment } from '../../environments/environment';
+import { Injectable } from '@angular/core';
 import { Page, TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
 import { Observable } from 'rxjs';
 
@@ -11,11 +10,11 @@ export class TaskService {
   constructor(private readonly http: HttpClient) { }
 
   getTaskById(taskId: number) : Observable<TaskResponse> {
-    return this.http.get<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}`);
+    return this.http.get<TaskResponse>(`/api/tasks/${taskId}`);
   }
 
   getTasksForProject(projectId: number, page: number, size: number) : Observable<Page<TaskResponse>> {
-    return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/projects/${projectId}?page=${page}&size=${size}`);
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}?page=${page}&size=${size}`);
   }
 
   getMyTasks(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<TaskResponse>> {
@@ -23,11 +22,11 @@ export class TaskService {
     
     if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
 
-    return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/me`, { params });
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/me`, { params });
   }
 
   getTasksByLabel(labelId: number) : Observable<TaskResponse[]> {
-    return this.http.get<TaskResponse[]>(`${environment.apiUrl}/api/tasks/labels/${labelId}`);
+    return this.http.get<TaskResponse[]>(`/api/tasks/labels/${labelId}`);
   }
   
   getFilteredTasksInProject(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {
@@ -49,22 +48,22 @@ export class TaskService {
     params = params
       .set('size', size)
       .set('page', page);
-    return this.http.get<Page<TaskResponse>>(`${environment.apiUrl}/api/tasks/projects/${projectId}/filter`, { params });
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}/filter`, { params });
   }
 
   createTask(request: TaskCreateRequest) : Observable<TaskResponse> {
-    return this.http.post<TaskResponse>(`${environment.apiUrl}/api/tasks`, request);
+    return this.http.post<TaskResponse>(`/api/tasks`, request);
   }
 
   updateTask(taskId: number, request: TaskUpdateRequest) : Observable<TaskResponse> {
-    return this.http.put<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}`, request);
+    return this.http.put<TaskResponse>(`/api/tasks/${taskId}`, request);
   }
 
   updateTaskStatus(taskId: number, request: TaskUpdateStatusRequest) : Observable<TaskResponse> {
-    return this.http.patch<TaskResponse>(`${environment.apiUrl}/api/tasks/${taskId}/status`, request);
+    return this.http.patch<TaskResponse>(`/api/tasks/${taskId}/status`, request);
   }
 
   deleteTask(taskId: number) : Observable<TaskDeleteResponse> {
-    return this.http.delete<TaskDeleteResponse>(`${environment.apiUrl}/api/tasks/${taskId}`);
+    return this.http.delete<TaskDeleteResponse>(`/api/tasks/${taskId}`);
   }
 }

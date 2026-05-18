@@ -33,15 +33,15 @@
                             <mat-form-field class="inline-form-field">
                                 <mat-label>New task name</mat-label>
                                 <input matInput type="text" formControlName="taskName">
-                                <mat-hint align="end">{{ nameEditForm.value.taskName?.length }} / 50</mat-hint>
+                                <mat-hint align="end">{{ nameEditForm.value.taskName?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                                 @if (nameEditForm.hasError('required', 'taskName')) {
                                     <mat-error>This field is required.</mat-error>
                                 }
                                 @if (nameEditForm.hasError('minlength', 'taskName')) {
-                                    <mat-error>Task name must be at least 3 characters long.</mat-error>
+                                    <mat-error>Task name must be at least {{ NAME_MIN_LENGTH }} characters long.</mat-error>
                                 }
                                 @if (nameEditForm.hasError('maxlength', 'taskName')) {
-                                    <mat-error>Task name cannot be longer than 50 characters.</mat-error>
+                                    <mat-error>Task name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
                                 }
                             </mat-form-field>
                             <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid">
@@ -71,6 +71,10 @@
                         <mat-form-field class="description-input" appearance="outline">
                             <mat-label>New task description</mat-label>
                             <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
+                            <mat-hint align="end">{{ descriptionEditForm.value.taskDescription?.length }} / {{ DESCRIPTION_MAX_LENGTH }}</mat-hint>
+                            @if (descriptionEditForm.hasError('maxlength', 'description')) {
+                                <mat-error>Task description cannot be longer than {{ DESCRIPTION_MAX_LENGTH }} characters.</mat-error>
+                            }
                         </mat-form-field>
                         <div class="actions">
                             <button mat-icon-button type="submit" [disabled]="descriptionEditForm.invalid">

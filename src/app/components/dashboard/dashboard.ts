@@ -33,26 +33,26 @@ export class Dashboard {
   private readonly userStore = inject(UserStore);
   private readonly dashboardStore = inject(DashboardStore);
 
-  readonly projectsCache = this.dashboardStore.projectsCache.asReadonly();
-  readonly myTasksCache = this.dashboardStore.myTasksCache.asReadonly();
+  protected readonly projectsCache = this.dashboardStore.projectsCache.asReadonly();
+  protected readonly myTasksCache = this.dashboardStore.myTasksCache.asReadonly();
 
-  readonly currentTab = signal<number>(0);
+  protected readonly currentTab = signal<number>(0);
 
-  readonly isManager = this.userStore.isManager;
+  protected readonly isManager = this.userStore.isManager;
 
-  readonly projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
-  readonly publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
-  readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
+  protected readonly projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
+  protected readonly publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
+  protected readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
 
-  readonly myProjectsFilterForm = new FormGroup({
+  protected readonly myProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
 
-  readonly myTasksFilterForm = new FormGroup({
+  protected readonly myTasksFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
 
-  readonly publicProjectsFilterForm = new FormGroup({
+  protected readonly publicProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
   });
   
@@ -121,7 +121,7 @@ export class Dashboard {
     ).subscribe();
   }
 
-  ngAfterViewInit() {
+  protected ngAfterViewInit() {
     this.dashboardStore.cacheMyTasks(this.myTasksFilterForm.value.filter ?? '', {
       pageIndex: 0,
       pageSize: 10,
@@ -130,7 +130,7 @@ export class Dashboard {
     }).subscribe();
   }
 
-  onOpenNewProjectDialog() {
+  protected onOpenNewProjectDialog() {
     const ref = this.dialog.open(NewProjectDialog, {
       width: '500px',
       disableClose: true
@@ -154,15 +154,15 @@ export class Dashboard {
     })).subscribe();
   }
 
-  onSelectProject(p: ProjectResponse) {
+  protected onSelectProject(p: ProjectResponse) {
     this.router.navigateByUrl(`/projects/${p.id}`);
   }
 
-  onSelectTask(t: TaskResponse) {
+  protected onSelectTask(t: TaskResponse) {
     this.router.navigateByUrl(`/projects/${t.projectId}/tasks/${t.id}`);
   }
 
-  onMyProjectsPage(event: PageEvent) {
+  protected onMyProjectsPage(event: PageEvent) {
     const cache = this.projectsCache();
     const state = {
       pageIndex: event.pageIndex,
@@ -174,7 +174,7 @@ export class Dashboard {
     this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onMyTasksPage(event: PageEvent) {
+  protected onMyTasksPage(event: PageEvent) {
     const cache = this.myTasksCache();
     const state = {
       pageIndex: event.pageIndex,
@@ -186,7 +186,7 @@ export class Dashboard {
     this.dashboardStore.cacheMyTasks(this.myTasksFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onPublicProjectsPage(event: PageEvent) {
+  protected onPublicProjectsPage(event: PageEvent) {
     const cache = this.projectsCache();
     const state = {
       pageIndex: event.pageIndex,
@@ -198,7 +198,7 @@ export class Dashboard {
     this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onMyProjectsSort(event: Sort) {
+  protected onMyProjectsSort(event: Sort) {
     const cache = this.projectsCache();
     const state = {
       pageIndex: 0,
@@ -210,7 +210,7 @@ export class Dashboard {
     this.dashboardStore.cacheMyProjects(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onMyTasksSort(event: Sort) {
+  protected onMyTasksSort(event: Sort) {
     const cache = this.myTasksCache();
     const state = {
       pageIndex: 0,
@@ -222,7 +222,7 @@ export class Dashboard {
     this.dashboardStore.cacheMyTasks(this.myProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onPublicProjectsSort(event: Sort) {
+  protected onPublicProjectsSort(event: Sort) {
     const cache = this.projectsCache();
     const state = {
       pageIndex: 0,
@@ -234,19 +234,19 @@ export class Dashboard {
     this.dashboardStore.cachePublicProjects(this.publicProjectsFilterForm.value.filter ?? '', state).subscribe();
   }
 
-  onTabChange(event: MatTabChangeEvent) {
+  protected onTabChange(event: MatTabChangeEvent) {
     this.currentTab.set(event.index);
   }
 
-  getChipColorLocal(value: string | null): string {
+  protected getChipColorLocal(value: string | null): string {
     return getChipColor(value);
   }
 
-  getChipTextLocal(value: string | null): string {
+  protected getChipTextLocal(value: string | null): string {
     return getChipText(value);
   }
 
-  getProjectCreatorLocal(project: ProjectResponse) : EssentialUserResponse {
+  protected getProjectCreatorLocal(project: ProjectResponse) : EssentialUserResponse {
     return getProjectCreator(project);
   }
 

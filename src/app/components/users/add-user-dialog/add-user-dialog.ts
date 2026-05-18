@@ -9,6 +9,7 @@ import { ProjectStore } from '../../../cache/project.store';
 import { HttpErrorResponse } from '@angular/common/http';
 import { SimpleApiError } from '../../../models';
 import { getDefaultErrorMessageForType } from '../../../utils';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 @Component({
   selector: 'app-add-user-dialog',
@@ -18,26 +19,29 @@ import { getDefaultErrorMessageForType } from '../../../utils';
   styleUrl: './add-user-dialog.css',
 })
 export class AddUserDialog {
+  protected readonly USERNAME_MAX_LENGTH = ValidationBoundaries.USER_USERNAME_MAX_LENGTH;
+  protected readonly USERNAME_MIN_LENGTH = ValidationBoundaries.USER_USERNAME_MIN_LENGTH;
+
   private readonly projectStore = inject(ProjectStore);
 
-  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
+  protected readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
 
-  readonly error = signal<string | null>(null);
+  protected readonly error = signal<string | null>(null);
 
-  readonly addUserForm = new FormGroup({
+  protected readonly addUserForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(5),
-        Validators.maxLength(25)
+        Validators.minLength(ValidationBoundaries.USER_USERNAME_MIN_LENGTH),
+        Validators.maxLength(ValidationBoundaries.USER_USERNAME_MAX_LENGTH)
       ]
     })
   })
 
   constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>) {}
 
-  submit() {
+  protected submit() {
     if (this.addUserForm.valid) {
       const username = this.addUserForm.value.username;
 
@@ -57,7 +61,7 @@ export class AddUserDialog {
     }
   }
 
-  close() {
+  protected close() {
     this.dialogRef.close();
   }
 }

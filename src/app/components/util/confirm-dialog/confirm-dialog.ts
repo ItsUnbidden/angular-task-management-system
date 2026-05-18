@@ -19,7 +19,7 @@ export class ConfirmDialog {
   constructor(private readonly dialogRef: MatDialogRef<ConfirmDialog, boolean>,
               @Inject(MAT_DIALOG_DATA) public readonly data: ConfirmDialogData) {}
 
-  close(result: boolean) {
+  protected close(result: boolean) {
     this.dialogRef.close(result);
   }
 }

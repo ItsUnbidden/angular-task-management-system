@@ -21,6 +21,7 @@ import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 @Component({
   selector: 'app-message-list',
@@ -29,51 +30,53 @@ import { ActivatedRoute } from '@angular/router';
   styleUrl: './message-list.css',
 })
 export class MessageList {
+  protected readonly MAX_LENGTH = ValidationBoundaries.MESSAGE_MAX_LENGTH;
+
   private readonly taskStore = inject(TaskStore);
   private readonly messageStore = inject(MessageStore)
   private readonly userStore = inject(UserStore);
 
   private readonly route = inject(ActivatedRoute);
 
-  readonly taskCache = this.taskStore.selectedTaskCache;
+  protected readonly taskCache = this.taskStore.selectedTaskCache;
 
-  readonly commentCache = this.messageStore.commentsCache.asReadonly();
-  readonly userCache = this.userStore.userCache.asReadonly();
+  protected readonly commentCache = this.messageStore.commentsCache.asReadonly();
+  protected readonly userCache = this.userStore.userCache.asReadonly();
 
-  readonly isManager = this.userStore.isManager;
+  protected readonly isManager = this.userStore.isManager;
 
-  readonly maxReplyDepth = 6;
+  protected readonly maxReplyDepth = 6;
 
-  readonly taskId = toSignal(
+  private readonly taskId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 }
   );
 
-  readonly newCommentForm = new FormGroup({
+  protected readonly newCommentForm = new FormGroup({
     comment: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.maxLength(255)
+        Validators.maxLength(ValidationBoundaries.MESSAGE_MAX_LENGTH)
       ]
     })
   });
 
-  readonly editMessageForm = new FormGroup({
+  protected readonly editMessageForm = new FormGroup({
     message: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.maxLength(255)
+        Validators.maxLength(ValidationBoundaries.MESSAGE_MAX_LENGTH)
       ]
     })
   });
 
-  readonly newReplyForm = new FormGroup({
+  protected readonly newReplyForm = new FormGroup({
     reply: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.maxLength(255)
+        Validators.maxLength(ValidationBoundaries.MESSAGE_MAX_LENGTH)
       ]
     })
   });
@@ -90,7 +93,7 @@ export class MessageList {
     });
   }
 
-  onNewCommentSubmit() {
+  protected onNewCommentSubmit() {
     const message = this.newCommentForm.value.comment;
     const taskCache = this.taskCache();
 
@@ -121,7 +124,7 @@ export class MessageList {
     }
   }
 
-  onEditMessage(message: MessageResponse) {
+  protected onEditMessage(message: MessageResponse) {
     this.enableEditing(message.id);
     this.editMessageForm.patchValue({
       message: message.text
@@ -130,7 +133,7 @@ export class MessageList {
     })
   }
 
-  onEditMessageSubmit(message: MessageResponse, parent: CommentResponse | null) {
+  protected onEditMessageSubmit(message: MessageResponse, parent: CommentResponse | null) {
     const task = this.taskCache()?.item;
     const messageText = this.editMessageForm.value.message;
 
@@ -158,11 +161,11 @@ export class MessageList {
     this.disableEditing();
   }
 
-  onEditMessageCancel() {
+  protected onEditMessageCancel() {
     this.disableEditing();
   }
 
-  onDeleteMessage(message: MessageResponse) {
+  protected onDeleteMessage(message: MessageResponse) {
     const task = this.taskCache()?.item;
 
     if (task) {
@@ -199,23 +202,23 @@ export class MessageList {
     }
   }
 
-  onMoreComments() {
+  protected onMoreComments() {
     const task = this.taskCache().item;
 
     if (task) this.messageStore.cacheMoreComments(task.id, ++this.commentCache().pageIndex).subscribe();
   }
 
-  onMoreReplies(commentId: number) {
+  protected onMoreReplies(commentId: number) {
     this.messageStore.cacheMoreReplies(commentId).subscribe();
   }
 
-  onOpenCommentReplies(comment: CommentResponse) {
+  protected onOpenCommentReplies(comment: CommentResponse) {
     this.setExpandComment(comment.id, true);
     if (this.userCache().item?.id !== comment.userId) this.enableReplying(comment.id);
     this.messageStore.cacheMoreReplies(comment.id).subscribe();
   }
 
-  onNewReplySubmit(message: MessageResponse, superParent: CommentResponse | null) {
+  protected onNewReplySubmit(message: MessageResponse, superParent: CommentResponse | null) {
     if (this.isComment(message)) {
       this.setExpandComment(message.id, true);
     }
@@ -244,28 +247,28 @@ export class MessageList {
     });
   }
 
-  onReply(message: MessageResponse) {
+  protected onReply(message: MessageResponse) {
     this.enableReplying(message.id);
   }
 
-  onHideComments() {
+  protected onHideComments() {
     this.messageStore.clearComments();
     const task = this.taskCache().item;
 
     if (task) this.messageStore.cacheMoreComments(task.id, 0).subscribe();
   }
 
-  onHideReplies(commentId: number) {
+  protected onHideReplies(commentId: number) {
     this.messageStore.clearRepliesForComment(commentId);
     this.setExpandComment(commentId, false);
     this.disableReplying();
   }
 
-  clampDepth(depth: number) : number {
+  protected clampDepth(depth: number) : number {
     return Math.min(depth, this.maxReplyDepth);
   }
 
-  getRepliesForComment(commentId: number) : FlattenedReply[] {
+  protected getRepliesForComment(commentId: number) : FlattenedReply[] {
     const store = this.messageStore.replyStores().get(commentId);
 
     if (store) {
@@ -274,45 +277,45 @@ export class MessageList {
     return [];
   }
 
-  isCommentExpanded(commentId: number) : boolean {
+  protected isCommentExpanded(commentId: number) : boolean {
     return this.messageStore.isCommentExpanded(commentId);
   }
 
-  isLoadingRepliesForComment(commentId: number) : boolean {
+  protected isLoadingRepliesForComment(commentId: number) : boolean {
     return this.messageStore.isLoadingRepliesForComment(commentId);
   }
 
-  isReplying(messageId: number) : boolean {
+  protected isReplying(messageId: number) : boolean {
     return this.messageStore.isReplying(messageId);
   }
 
-  isEditing(messageId: number) : boolean {
+  protected isEditing(messageId: number) : boolean {
     return this.messageStore.isEditing(messageId);
   }
 
-  isLastRepliesPage(commentId: number) : boolean {
+  protected isLastRepliesPage(commentId: number) : boolean {
     const store = this.messageStore.replyStores().get(commentId);
 
     return store?.cache().page?.last ?? false;
   }
 
-  setExpandComment(commentId: number, isExpanded: boolean) {
+  protected setExpandComment(commentId: number, isExpanded: boolean) {
     this.messageStore.setExpandComment(commentId, isExpanded);
   }
 
-  enableReplying(messageId: number) {
+  protected enableReplying(messageId: number) {
     this.messageStore.enableReplying(messageId);
   }
 
-  disableReplying() {
+  protected disableReplying() {
     this.messageStore.disableReplying();
   }
 
-  enableEditing(messageId: number) {
+  protected enableEditing(messageId: number) {
     this.messageStore.enableEditing(messageId);
   }
 
-  disableEditing() {
+  protected disableEditing() {
     this.messageStore.disableEditing();
   }
 

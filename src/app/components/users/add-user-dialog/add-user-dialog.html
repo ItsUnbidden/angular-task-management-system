@@ -5,15 +5,15 @@
         <mat-form-field class="username-field">
             <mat-label>Username</mat-label>
             <input matInput formControlName="username">
-            <mat-hint align="end">{{ addUserForm.value.username?.length }} / 25</mat-hint>
+            <mat-hint align="end">{{ addUserForm.value.username?.length }} / {{ USERNAME_MAX_LENGTH }}</mat-hint>
             @if (addUserForm.hasError('required', 'username')) {
                 <mat-error>This field is required.</mat-error>
             }
             @if (addUserForm.hasError('minlength', 'username')) {
-                <mat-error>Username must be at least 5 characters long.</mat-error>
+                <mat-error>Username must be at least {{ USERNAME_MIN_LENGTH }} characters long.</mat-error>
             }
             @if (addUserForm.hasError('maxlength', 'username')) {
-                <mat-error>Username cannot be longer than 25 characters.</mat-error>
+                <mat-error>Username cannot be longer than {{ USERNAME_MAX_LENGTH }} characters.</mat-error>
             }
         </mat-form-field>
 

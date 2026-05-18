@@ -13,6 +13,7 @@ import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
 import { finalize } from 'rxjs';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 @Component({
   selector: 'app-new-project-dialog',
@@ -24,17 +25,21 @@ import { finalize } from 'rxjs';
   styleUrl: './new-project-dialog.css',
 })
 export class NewProjectDialog {
-  readonly error = signal('');
-  readonly isSendingRequest = signal(false);
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.PROJECT_NAME_MAX_LENGTH;
+  protected readonly NAME_MIN_LENGTH = ValidationBoundaries.PROJECT_NAME_MIN_LENGTH;
+  protected readonly DESCRIPTION_MAX_LENGTH = ValidationBoundaries.PROJECT_DESCRIPTION_MAX_LENGTH;
 
-  readonly projectForm = new FormGroup({
+  protected readonly error = signal('');
+  protected readonly isSendingRequest = signal(false);
+
+  protected readonly projectForm = new FormGroup({
     name: new FormControl('', [
       Validators.required,
-      Validators.minLength(3),
-      Validators.maxLength(50)
+      Validators.minLength(ValidationBoundaries.PROJECT_NAME_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.PROJECT_NAME_MAX_LENGTH)
     ]),
     description: new FormControl('', [
-      Validators.maxLength(500)
+      Validators.maxLength(ValidationBoundaries.PROJECT_DESCRIPTION_MAX_LENGTH)
     ]),
     startDate: new FormControl<Date | null>(null),
     endDate: new FormControl<Date | null>(null),
@@ -44,11 +49,11 @@ export class NewProjectDialog {
   constructor(private readonly dialogRef: MatDialogRef<NewProjectDialog, boolean>,
               private readonly projectService: ProjectService) {}
 
-  close(): void {
+  protected close(): void {
     this.dialogRef.close();
   }
 
-  submit(): void {
+  protected submit(): void {
     if (this.projectForm.valid) {
       const request: ProjectCreateRequest = {
         name: this.projectForm.get('name')?.value || '',

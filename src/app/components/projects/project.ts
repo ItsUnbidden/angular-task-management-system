@@ -27,6 +27,7 @@ import { OAuth2Service } from '../../service/oauth2.service';
 import { getChipColor, getChipText, getDefaultErrorMessageForType, toLocalDateString } from '../../utils';
 import { ProjectStore } from '../../cache/project.store';
 import { UserStore } from '../../cache/user.store';
+import { ValidationBoundaries } from '../validation-boundaries';
 
 @Component({
   selector: 'app-overview',
@@ -42,56 +43,60 @@ import { UserStore } from '../../cache/user.store';
   styleUrl: './project.css',
 })
 export class Project {
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.PROJECT_NAME_MAX_LENGTH;
+  protected readonly NAME_MIN_LENGTH = ValidationBoundaries.PROJECT_NAME_MIN_LENGTH;
+  protected readonly DESCRIPTION_MAX_LENGTH = ValidationBoundaries.PROJECT_DESCRIPTION_MAX_LENGTH;
+
   private readonly route = inject(ActivatedRoute);
   private readonly projectStore = inject(ProjectStore);
   private readonly userStore = inject(UserStore);
   private readonly oauth2Service = inject(OAuth2Service);
 
-  readonly projectCache = this.projectStore.selectedProjectCache;
-  readonly currentUser = this.userStore.userCache;
+  protected readonly projectCache = this.projectStore.selectedProjectCache;
+  protected readonly currentUser = this.userStore.userCache;
  
-  readonly isEditingName = signal(false);
-  readonly isEditingDescription = signal(false);
-  readonly isEditingDates = signal(false);
-  readonly isSavingPrivacy = signal(true);
+  protected readonly isEditingName = signal(false);
+  protected readonly isEditingDescription = signal(false);
+  protected readonly isEditingDates = signal(false);
+  protected readonly isSavingPrivacy = signal(true);
   
-  readonly isUserConnectedToDropbox = this.oauth2Service.isDropboxConnected;
-  readonly isUserConnectedToCalendar = this.oauth2Service.isCalendarConnected;
+  protected readonly isUserConnectedToDropbox = this.oauth2Service.isDropboxConnected;
+  protected readonly isUserConnectedToCalendar = this.oauth2Service.isCalendarConnected;
 
-  readonly isCreator = this.projectStore.isCreator;
-  readonly isAdmin = this.projectStore.isAdmin;
-  readonly isContributor = this.projectStore.isContributor;
+  protected readonly isCreator = this.projectStore.isCreator;
+  protected readonly isAdmin = this.projectStore.isAdmin;
+  protected readonly isContributor = this.projectStore.isContributor;
 
-  readonly isManager = this.userStore.isManager;
+  protected readonly isManager = this.userStore.isManager;
 
-  readonly creator = computed(() => this.projectCache().item?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
-  readonly admins = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
-  readonly contributors = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
+  protected readonly creator = computed(() => this.projectCache().item?.projectRoles.find(pr => pr.roleType === 'CREATOR') ?? null);
+  protected readonly admins = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'ADMIN') ?? []);
+  protected readonly contributors = computed(() => this.projectCache().item?.projectRoles.filter(pr => pr.roleType === 'CONTRIBUTOR') ?? []);
 
-  readonly projectId = toSignal(
+  private readonly projectId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
   );
 
-  readonly nameEditForm = new FormGroup({
+  protected readonly nameEditForm = new FormGroup({
     projectName: new FormControl('', { nonNullable: true, validators: [
       Validators.required,
-      Validators.minLength(3),
-      Validators.maxLength(50)
+      Validators.minLength(ValidationBoundaries.PROJECT_NAME_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.PROJECT_NAME_MAX_LENGTH)
     ] })
   });
 
-  readonly descriptionEditForm = new FormGroup({
+  protected readonly descriptionEditForm = new FormGroup({
     projectDescription: new FormControl('', { validators: [
-      Validators.maxLength(500)
+      Validators.maxLength(ValidationBoundaries.PROJECT_DESCRIPTION_MAX_LENGTH)
     ] })
   });
 
-  readonly datesEditForm = new FormGroup({
+  protected readonly datesEditForm = new FormGroup({
     startDate: new FormControl<Date | null>(null),
     endDate: new FormControl<Date | null>(null)
   })
 
-  readonly isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
+  protected readonly isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
   constructor(private readonly dialog: MatDialog,
               private readonly snackBar: MatSnackBar,
@@ -153,14 +158,14 @@ export class Project {
     });
   } 
 
-  onProjectNameEdit() {
+  protected onProjectNameEdit() {
     this.isEditingName.set(true);
 
     this.isEditingDescription.set(false);
     this.isEditingDates.set(false);
   }
 
-  onSubmitProjectName() {
+  protected onSubmitProjectName() {
     const project = this.projectCache()?.item;
 
     if (project && this.nameEditForm.value.projectName && this.nameEditForm.value.projectName !== project.name) {
@@ -174,20 +179,20 @@ export class Project {
     this.isEditingName.set(false);
   }
 
-  onCloseEditing() {
+  protected onCloseEditing() {
     this.isEditingDescription.set(false);
     this.isEditingName.set(false);
     this.isEditingDates.set(false);
   }
 
-  onProjectDescriptionEdit() {
+  protected onProjectDescriptionEdit() {
     this.isEditingDescription.set(true);
 
     this.isEditingName.set(false);
     this.isEditingDates.set(false);
   }
 
-  onSubmitProjectDescription() {
+  protected onSubmitProjectDescription() {
     const project = this.projectCache()?.item;
 
     if (project && this.descriptionEditForm.value.projectDescription !== project.description) {
@@ -201,7 +206,7 @@ export class Project {
     this.isEditingDescription.set(false);
   }
 
-  onIsPrivateToggleChange(isOn: boolean) {
+  protected onIsPrivateToggleChange(isOn: boolean) {
     this.isSavingPrivacy.set(true);
     this.isPrivateCtrl.setValue(!isOn, { emitEvent: false });
     this.dialog.open(ConfirmDialog, {
@@ -228,14 +233,14 @@ export class Project {
     })).subscribe();
   }
 
-  onProjectDatesEdit() {
+  protected onProjectDatesEdit() {
     this.isEditingDates.set(true);
 
     this.isEditingDescription.set(false);
     this.isEditingName.set(false);
   }
 
-  onSubmitProjectDates() {
+  protected onSubmitProjectDates() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -252,7 +257,7 @@ export class Project {
     this.isEditingDates.set(false);
   }
 
-  onAddUser() {
+  protected onAddUser() {
     this.dialog.open(AddUserDialog, {
       disableClose: true,
       width: '420px'
@@ -265,7 +270,7 @@ export class Project {
     });
   }
 
-  onRemoveUser(projectRole: ProjectRoleResponse) {
+  protected onRemoveUser(projectRole: ProjectRoleResponse) {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -307,7 +312,7 @@ export class Project {
     }
   }
 
-  onQuitProject() {
+  protected onQuitProject() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -340,7 +345,7 @@ export class Project {
     }
   }
 
-  onMakeAdmin(projectRole: ProjectRoleResponse) {
+  protected onMakeAdmin(projectRole: ProjectRoleResponse) {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -372,7 +377,7 @@ export class Project {
     }
   }
 
-  onRemoveAdmin(projectRole: ProjectRoleResponse) {
+  protected onRemoveAdmin(projectRole: ProjectRoleResponse) {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -404,7 +409,7 @@ export class Project {
     }
   }
 
-  onTransferOwnership(projectRole: ProjectRoleResponse) {
+  protected onTransferOwnership(projectRole: ProjectRoleResponse) {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -436,7 +441,7 @@ export class Project {
     }
   }
 
-  onDeleteProject() {
+  protected onDeleteProject() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -469,7 +474,7 @@ export class Project {
     }
   }
 
-  onConnectDropbox() {
+  protected onConnectDropbox() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -501,7 +506,7 @@ export class Project {
     }
   }
 
-  onConnectCalendar() {
+  protected onConnectCalendar() {
     const project = this.projectCache()?.item;
 
     if (project) {      
@@ -533,7 +538,7 @@ export class Project {
     }
   }
 
-  onJoinDropbox() {
+  protected onJoinDropbox() {
     const project = this.projectCache()?.item;
 
     if (project) {         
@@ -563,7 +568,7 @@ export class Project {
     }
   }
 
-  onJoinCalendar() {
+  protected onJoinCalendar() {
     const project = this.projectCache()?.item;
 
     if (project) {         
@@ -593,7 +598,7 @@ export class Project {
     }
   }
 
-  onDisconnectDropbox() {
+  protected onDisconnectDropbox() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -631,7 +636,7 @@ export class Project {
     }
   }
 
-  onDisconnectCalendar() {
+  protected onDisconnectCalendar() {
     const project = this.projectCache()?.item;
 
     if (project) {
@@ -669,7 +674,7 @@ export class Project {
     }
   }
 
-  onChangeStatus(status: 'IN_PROGRESS' | 'COMPLETED') {
+  protected onChangeStatus(status: 'IN_PROGRESS' | 'COMPLETED') {
     this.projectStore.changeStatus(status).subscribe({
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
@@ -681,15 +686,15 @@ export class Project {
     });
   }
 
-  onReload() {
+  protected onReload() {
     this.projectStore.cacheSelectedProject(this.projectId(), true).subscribe();
   }
 
-  getChipColorLocal(value: string | null): string {
+  protected getChipColorLocal(value: string | null): string {
     return getChipColor(value);
   }
 
-  getChipTextLocal(value: string | null): string {
+  protected getChipTextLocal(value: string | null): string {
     return getChipText(value);
   }
 
