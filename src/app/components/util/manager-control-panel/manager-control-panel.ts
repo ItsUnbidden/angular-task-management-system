@@ -14,13 +14,6 @@ import { UserActionsDialog } from './user-actions-dialog/user-actions-dialog';
 import { getUserRole } from '../../../utils';
 import { UserStore } from '../../../cache/user.store';
 
-interface TableState {
-  pageIndex: number;
-  pageSize: number;
-  sortActive: string;
-  sortDirection: 'asc' | 'desc' | '';
-}
-
 @Component({
   selector: 'app-manager-control-panel',
   imports: [MatCardModule, MatTableModule, MatPaginatorModule, MatSortModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule, MatRadioModule],
@@ -30,11 +23,11 @@ interface TableState {
 export class ManagerControlPanel {
   private readonly userStore = inject(UserStore);
 
-  readonly usersCache = this.userStore.cache;
+  protected readonly usersCache = this.userStore.cache;
 
-  readonly userColumns = ['id', 'username', 'email', 'isLocked', 'role'];
+  protected readonly userColumns = ['id', 'username', 'email', 'isLocked', 'role'];
 
-  readonly usersFilterForm = new FormGroup({
+  protected readonly usersFilterForm = new FormGroup({
     filter: new FormControl<string>('', { nonNullable: true }),
     type: new FormControl<'email' | 'username'>('username', { nonNullable: true })
   });
@@ -68,7 +61,7 @@ export class ManagerControlPanel {
     })
   }
 
-  ngAfterViewInit() {
+  protected ngAfterViewInit() {
     this.userStore.cacheUsers(this.usersFilterForm.value.filter ?? '', this.usersFilterForm.value.type ?? 'username', {
       pageIndex: 0,
       pageSize: 25,
@@ -77,7 +70,7 @@ export class ManagerControlPanel {
     }).subscribe();
   }
 
-  onUsersPage(event: PageEvent) {
+  protected onUsersPage(event: PageEvent) {
     const cache = this.usersCache();
 
     this.userStore.cacheUsers(
@@ -90,7 +83,7 @@ export class ManagerControlPanel {
     }).subscribe();
   }
 
-  onUsersSort(event: Sort) {
+  protected onUsersSort(event: Sort) {
     const cache = this.usersCache();
 
     this.userStore.cacheUsers(
@@ -103,7 +96,7 @@ export class ManagerControlPanel {
     }).subscribe();
   }
 
-  onSelectUser(user: UserResponse) {
+  protected onSelectUser(user: UserResponse) {
     this.dialog.open(UserActionsDialog, {
       data: user,
       disableClose: true,
@@ -127,7 +120,7 @@ export class ManagerControlPanel {
     .subscribe();
   }
 
-  getUserRoleLocal(user: UserResponse) : string {
+  protected getUserRoleLocal(user: UserResponse) : string {
     return getUserRole(user);
   }
 }

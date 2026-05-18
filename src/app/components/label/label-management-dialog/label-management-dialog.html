@@ -11,12 +11,12 @@
             <mat-form-field class="name-field">
                 <mat-label>Label name</mat-label>
                 <input matInput formControlName="name">
-                <mat-hint align="end">{{ labelForm.value.name?.length }} / 25</mat-hint>
+                <mat-hint align="end">{{ labelForm.value.name?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                 @if (labelForm.hasError('required', 'name')) {
                     <mat-error>This field is required.</mat-error>
                 }
                 @if (labelForm.hasError('maxlength', 'name')) {
-                    <mat-error>Label name cannot be longer than 25 characters.</mat-error>
+                    <mat-error>Label name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
                 }
             </mat-form-field>
 

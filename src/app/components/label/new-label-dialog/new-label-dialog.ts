@@ -12,6 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { finalize } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 interface NewLabelData {
   projectId: number,
@@ -25,15 +26,16 @@ interface NewLabelData {
   styleUrl: './new-label-dialog.css',
 })
 export class NewLabelDialog {
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.LABEL_NAME_MAX_LENGTH;
   protected readonly labelStore = LabelStore;
 
   protected readonly error = signal('');
   protected readonly isSendingRequest = signal(false);
 
-  readonly labelForm = new FormGroup({
+  protected readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
       Validators.required,
-      Validators.maxLength(25)
+      Validators.maxLength(ValidationBoundaries.LABEL_NAME_MAX_LENGTH)
     ]}),
     color: new FormControl('', { nonNullable: true, validators: [
       Validators.required
@@ -44,11 +46,11 @@ export class NewLabelDialog {
     private readonly labelService: LabelService,
     @Inject(MAT_DIALOG_DATA) private readonly data: NewLabelData) {}
   
-  close(): void {
+  protected close(): void {
       this.dialogRef.close();
     }
   
-  submit(): void {
+  protected submit(): void {
     if (this.labelForm.valid) {
       const request: LabelCreateRequest = {
         name: this.labelForm.value.name ?? '',

@@ -19,9 +19,9 @@ import { UserStore } from '../../../cache/user.store';
 export class DeleteAccountDialog {
   private readonly userStore = inject(UserStore);
 
-  readonly userCache = this.userStore.userCache;
+  protected readonly userCache = this.userStore.userCache;
 
-  readonly credentialsForm = new FormGroup({
+  protected readonly credentialsForm = new FormGroup({
     username: new FormControl('', {
       validators: [
         Validators.required
@@ -37,7 +37,7 @@ export class DeleteAccountDialog {
   constructor(private readonly dialogRef: MatDialogRef<DeleteAccountDialog, UserDeleteResponse>,
               private readonly dialog: MatDialog) {}
 
-  onSubmit() {
+  protected onSubmit() {
     const username = this.credentialsForm.value.username;
     const password = this.credentialsForm.value.password;
 
@@ -62,7 +62,7 @@ export class DeleteAccountDialog {
     }
   }
 
-  onClose() {
+  protected onClose() {
     this.dialogRef.close();
   }
 }

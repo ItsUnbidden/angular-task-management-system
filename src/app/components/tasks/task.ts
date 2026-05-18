@@ -31,6 +31,7 @@ import { ProjectStore } from '../../cache/project.store';
 import { TaskStore } from '../../cache/task.store';
 import { UserStore } from '../../cache/user.store';
 import { LabelStore } from '../../cache/label.store';
+import { ValidationBoundaries } from '../validation-boundaries';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -48,59 +49,63 @@ interface TaskPriorityOption {
   styleUrl: './task.css',
 })
 export class Task {
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.TASK_NAME_MAX_LENGTH;
+  protected readonly NAME_MIN_LENGTH = ValidationBoundaries.TASK_NAME_MIN_LENGTH;
+  protected readonly DESCRIPTION_MAX_LENGTH = ValidationBoundaries.TASK_DESCRIPTION_MAX_LENGTH;
+
   private readonly projectStore = inject(ProjectStore);
   private readonly taskStore = inject(TaskStore);
   private readonly userStore = inject(UserStore);
   private readonly labelStore = inject(LabelStore);
   private readonly oauth2Service = inject(OAuth2Service);
 
-  readonly route = inject(ActivatedRoute);
+  protected readonly route = inject(ActivatedRoute);
 
-  readonly taskId = toSignal(
+  private readonly taskId = toSignal(
     this.route.paramMap.pipe(map(p => Number(p.get('taskId')))), { initialValue: 0 }
   );
 
-  readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
-  readonly selectedTaskCache = this.taskStore.selectedTaskCache.asReadonly();
-  readonly selectedTaskLabels = this.labelStore.selectedTaskLabels;
-  readonly projectLabels = this.labelStore.cache.asReadonly();
-  readonly currentUserCache = this.userStore.userCache.asReadonly();
-  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected.asReadonly();
-  readonly currentProjectRole = this.projectStore.currentProjectRole;
+  protected readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
+  protected readonly selectedTaskCache = this.taskStore.selectedTaskCache.asReadonly();
+  protected readonly selectedTaskLabels = this.labelStore.selectedTaskLabels;
+  protected readonly projectLabels = this.labelStore.cache.asReadonly();
+  protected readonly currentUserCache = this.userStore.userCache.asReadonly();
+  protected readonly isDropboxConnected = this.oauth2Service.isDropboxConnected.asReadonly();
+  protected readonly currentProjectRole = this.projectStore.currentProjectRole;
 
-  readonly isEditingName = signal(false);
-  readonly isEditingDescription = signal(false);
-  readonly isEditingDate = signal(false);
-  readonly isEditingChips = signal(false);
+  protected readonly isEditingName = signal(false);
+  protected readonly isEditingDescription = signal(false);
+  protected readonly isEditingDate = signal(false);
+  protected readonly isEditingChips = signal(false);
 
-  readonly isCreator = this.projectStore.isCreator;
-  readonly isAdmin = this.projectStore.isAdmin;
-  readonly isContributor = this.projectStore.isContributor;
+  protected readonly isCreator = this.projectStore.isCreator;
+  protected readonly isAdmin = this.projectStore.isAdmin;
+  protected readonly isContributor = this.projectStore.isContributor;
 
-  readonly isManager = this.userStore.isManager;
+  protected readonly isManager = this.userStore.isManager;
 
-  readonly nameEditForm = new FormGroup({
+  protected readonly nameEditForm = new FormGroup({
     taskName: new FormControl('', { nonNullable: true,
       validators: [
         Validators.required,
-        Validators.minLength(3),
-        Validators.maxLength(50)
+        Validators.minLength(ValidationBoundaries.TASK_NAME_MIN_LENGTH),
+        Validators.maxLength(ValidationBoundaries.TASK_NAME_MAX_LENGTH)
       ]
     })
   });
 
-  readonly descriptionEditForm = new FormGroup({
+  protected readonly descriptionEditForm = new FormGroup({
     taskDescription: new FormControl('', {
       validators: [
-        Validators.maxLength(500)
+        Validators.maxLength(ValidationBoundaries.TASK_DESCRIPTION_MAX_LENGTH)
       ]})
   });
 
-  readonly dateEditForm = new FormGroup({
+  protected readonly dateEditForm = new FormGroup({
     taskDueDate: new FormControl<Date | null>(null)
   });
 
-  readonly chipsEditForm = new FormGroup({
+  protected readonly chipsEditForm = new FormGroup({
     taskPriority: new FormControl('', {
       nonNullable: true,
       validators: [
@@ -110,7 +115,7 @@ export class Task {
     labels: new FormControl<number[]>([], { nonNullable: true })
   });
 
-  readonly priorityOptions: TaskPriorityOption[] = [
+  protected readonly priorityOptions: TaskPriorityOption[] = [
     { priority: 'LOW', priorityView: 'Low' },
     { priority: 'MEDIUM', priorityView: 'Medium' },
     { priority: 'HIGH', priorityView: 'High' }
@@ -162,7 +167,7 @@ export class Task {
     });
   };
 
-  onSubmitTaskName() {
+  protected onSubmitTaskName() {
     const task = this.selectedTaskCache()?.item;
     const newName = this.nameEditForm.value.taskName;
 
@@ -177,14 +182,14 @@ export class Task {
     this.isEditingName.set(false);
   }
 
-  onTaskNameEdit() {
+  protected onTaskNameEdit() {
     this.isEditingName.set(true);
 
     this.isEditingDescription.set(false);
     this.isEditingDate.set(false);
   }
 
-  onSubmitTaskDescription() {
+  protected onSubmitTaskDescription() {
     const task = this.selectedTaskCache()?.item;
     const newDescription = this.descriptionEditForm.value.taskDescription;
 
@@ -199,14 +204,14 @@ export class Task {
     this.isEditingDescription.set(false);
   }
 
-  onTaskDescriptionEdit() {
+  protected onTaskDescriptionEdit() {
     this.isEditingDescription.set(true);
 
     this.isEditingName.set(false);
     this.isEditingDate.set(false);
   }
 
-  onSubmitTaskDueDate() {
+  protected onSubmitTaskDueDate() {
     const task = this.selectedTaskCache()?.item;
     const newDueDate = toLocalDateString(this.dateEditForm.value.taskDueDate ?? null);
 
@@ -221,14 +226,14 @@ export class Task {
     this.isEditingDate.set(false);
   }
 
-  onTaskDueDateEdit() {
+  protected onTaskDueDateEdit() {
     this.isEditingDate.set(true);
 
     this.isEditingName.set(false);
     this.isEditingDescription.set(false);
   }
 
-  onSubmitTaskChips() {
+  protected onSubmitTaskChips() {
     const newPriority = this.chipsEditForm.value.taskPriority;
 
     if (newPriority) {
@@ -245,7 +250,7 @@ export class Task {
     this.isEditingChips.set(false);
   }
 
-  onTaskChipsEdit() {
+  protected onTaskChipsEdit() {
     this.isEditingChips.set(true);
 
     this.isEditingName.set(false);
@@ -253,7 +258,7 @@ export class Task {
     this.isEditingDate.set(false);
   }
 
-  onStatusChange(newStatus: TaskStatus) {
+  protected onStatusChange(newStatus: TaskStatus) {
     const task = this.selectedTaskCache()?.item;
 
     if (task) {
@@ -263,7 +268,7 @@ export class Task {
     }
   }
 
-  onAddNewLabel() {
+  protected onAddNewLabel() {
     const project = this.selectedProjectCache()?.item;
     const task = this.selectedTaskCache()?.item;
 
@@ -286,7 +291,7 @@ export class Task {
     }
   }
 
-  onOpenLabelManagement() {
+  protected onOpenLabelManagement() {
     const project = this.selectedProjectCache()?.item;
     const task = this.selectedTaskCache()?.item;
 
@@ -307,7 +312,7 @@ export class Task {
     }
   }
 
-  onJoinDropbox() {
+  protected onJoinDropbox() {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {         
@@ -338,7 +343,7 @@ export class Task {
     }
   }
 
-  onTaskDelete() {
+  protected onTaskDelete() {
     const task = this.selectedTaskCache()?.item;
 
     if (task) {
@@ -372,24 +377,24 @@ export class Task {
     }
   }
 
-  onCloseEditing() {
+  protected onCloseEditing() {
     this.isEditingDate.set(false);
     this.isEditingName.set(false);
     this.isEditingDescription.set(false);
     this.isEditingChips.set(false);
   }
 
-  onTryAgain() {
+  protected onTryAgain() {
     const taskId = this.taskId();
 
     if (taskId) this.taskStore.cacheSelectedTask(taskId, true).subscribe();
   }
 
-  getChipColorLocal(value: string | null): string {
+  protected getChipColorLocal(value: string | null): string {
     return getChipColor(value);
   }
 
-  getChipTextLocal(value: string | null): string {
+  protected getChipTextLocal(value: string | null): string {
     return getChipText(value);
   }
 

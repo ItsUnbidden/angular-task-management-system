@@ -11,13 +11,6 @@ export interface FlattenedReply extends ReplyResponse {
 export class ReplyStore extends AbstractStore<ReplyResponse, never> {
   static readonly ITEMS_PER_PAGE = 10;
 
-  readonly isLastRepliesPage = computed(() => {
-    const currentCache = this.cache();
-
-    return currentCache && currentCache.page
-        ? ReplyStore.ITEMS_PER_PAGE * (currentCache.pageIndex + 1) >= currentCache.page?.totalElements
-        : false;
-  });
   readonly flattenedCache = computed(() => {
     const repliesCache = this.cache();
 

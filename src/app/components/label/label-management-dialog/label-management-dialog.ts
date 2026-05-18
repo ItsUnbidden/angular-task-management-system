@@ -15,6 +15,7 @@ import { MatIcon } from "@angular/material/icon";
 import { switchMap, tap } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 interface LabelManagementDialogData {
   projectId: number;
@@ -28,30 +29,32 @@ interface LabelManagementDialogData {
   styleUrl: './label-management-dialog.css'
 })
 export class LabelManagementDialog {
+  protected readonly NAME_MAX_LENGTH = ValidationBoundaries.LABEL_NAME_MAX_LENGTH;
+
   private readonly labelStore = inject(LabelStore);
 
   protected labelStoreClass = LabelStore;
 
-  readonly displayedColumns = ['chip', 'edit', 'delete'];
+  protected readonly displayedColumns = ['chip', 'edit', 'delete'];
 
-  readonly labelCache = this.labelStore.cache.asReadonly();
-  readonly selectedLabel = signal<LabelResponse | null>(null);
+  protected readonly labelCache = this.labelStore.cache.asReadonly();
+  protected readonly selectedLabel = signal<LabelResponse | null>(null);
 
-  readonly isEditing = signal(false);
-  readonly isDeleting = signal(false);
-  readonly isEditRequestRunning = signal<boolean>(false);
-  readonly editError = signal<string | null>(null);
+  protected readonly isEditing = signal(false);
+  protected readonly isDeleting = signal(false);
+  protected readonly isEditRequestRunning = signal<boolean>(false);
+  protected readonly editError = signal<string | null>(null);
 
-  readonly numberOfAffectedTasks = computed(() => { 
+  protected readonly numberOfAffectedTasks = computed(() => { 
     const label = this.selectedLabel();
 
     return (label) ? label.taskIds.filter(tId => tId !== this.data.taskId).length : 0;
   })
 
-  readonly labelForm = new FormGroup({
+  protected readonly labelForm = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [
       Validators.required,
-      Validators.maxLength(25)
+      Validators.maxLength(ValidationBoundaries.LABEL_NAME_MAX_LENGTH)
     ]}),
     color: new FormControl('', { nonNullable: true, validators: [
       Validators.required
@@ -78,17 +81,17 @@ export class LabelManagementDialog {
     })
   }
 
-  onEditLabel(label: LabelResponse) {
+  protected onEditLabel(label: LabelResponse) {
     this.selectedLabel.set(label);
     this.isEditing.set(true);
   }
 
-  onRemoveLabel(label: LabelResponse) {
+  protected onRemoveLabel(label: LabelResponse) {
     this.selectedLabel.set(label);
     this.isDeleting.set(true);
   }
 
-  onExecuteDeleteLabel() {
+  protected onExecuteDeleteLabel() {
     const label = this.selectedLabel();
 
     if (label) {
@@ -116,7 +119,7 @@ export class LabelManagementDialog {
     }
   }
   
-  onExecuteEditLabel() {
+  protected onExecuteEditLabel() {
     const label = this.selectedLabel();
 
     if (label) {
@@ -145,12 +148,12 @@ export class LabelManagementDialog {
     }
   }
 
-  onBack() {
+  protected onBack() {
     this.isDeleting.set(false);
     this.isEditing.set(false);
   }
 
-  onClose() {
+  protected onClose() {
     this.dialogRef.close(this.hasChangedLabels);
   }
 }

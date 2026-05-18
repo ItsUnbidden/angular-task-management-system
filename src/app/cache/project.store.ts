@@ -181,6 +181,21 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
     }
     return EMPTY;
   }
+
+  changeStatus(status: 'IN_PROGRESS' | 'COMPLETED') {
+    const project = this.selectedProjectCache().item;
+
+    if (project) {
+      this.setSelectedProjectIsLoading(true);
+      return this.projectService.changeStatus(project.id, { newStatus: status }).pipe(tap({
+        next: project => {
+          this.selectedProjectCache.set({ item: project, isLoading: false, error: null });
+        },
+        finalize: () => this.setSelectedProjectIsLoading(false)
+      }))
+    }
+    return EMPTY;
+  }
   
   deleteProject() : Observable<ProjectDeleteResponse> {
     const project = this.selectedProjectCache()?.item;

@@ -41,15 +41,15 @@
                             <mat-form-field class="inline-form-field">
                                 <mat-label>New project name</mat-label>
                                 <input matInput type="text" formControlName="projectName">
-                                <mat-hint align="end">{{ nameEditForm.value.projectName?.length }} / 50</mat-hint>
+                                <mat-hint align="end">{{ nameEditForm.value.projectName?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                                 @if (nameEditForm.hasError('required', 'projectName')) {
                                     <mat-error>This field is required.</mat-error>
                                 }
                                 @if (nameEditForm.hasError('minlength', 'projectName')) {
-                                    <mat-error>Project name must be at least 3 characters long.</mat-error>
+                                    <mat-error>Project name must be at least {{ NAME_MIN_LENGTH }} characters long.</mat-error>
                                 }
                                 @if (nameEditForm.hasError('maxlength', 'projectName')) {
-                                    <mat-error>Project name cannot be longer than 50 characters.</mat-error>
+                                    <mat-error>Project name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
                                 }
                             </mat-form-field>
                             <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid || projectCache().isLoading">
@@ -78,6 +78,10 @@
                             <mat-form-field class="description-input" appearance="outline">
                                 <mat-label>New project description</mat-label>
                                 <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>
+                                <mat-hint align="end">{{ descriptionEditForm.value.projectDescription?.length }} / {{ DESCRIPTION_MAX_LENGTH }}</mat-hint>
+                                @if (descriptionEditForm.hasError('maxlength', 'description')) {
+                                    <mat-error>Project description cannot be longer than {{ DESCRIPTION_MAX_LENGTH }} characters.</mat-error>
+                                }
                             </mat-form-field>
                             <div class="actions">
                                 <button mat-icon-button type="submit">
@@ -220,7 +224,13 @@
                         }
                         @if (!isCreator() && isContributor()) {
                             <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
-                        }            
+                        }     
+                        @if (projectCache().item?.status === 'COMPLETED') {
+                            <button matButton="elevated" (click)="onChangeStatus('IN_PROGRESS')">Mark as in progress</button>
+                        }
+                        @if (projectCache().item?.status !== 'COMPLETED') {
+                            <button matButton="elevated" (click)="onChangeStatus('COMPLETED')">Mark as completed</button>
+                        }
                         @if (isUserConnectedToDropbox()) {
                             @if (isCreator()) {
                                 @if (projectCache().item?.isDropboxConnected) {

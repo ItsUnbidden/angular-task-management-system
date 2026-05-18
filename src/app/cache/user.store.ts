@@ -56,7 +56,7 @@ export class UserStore extends AbstractStore<UserResponse, string> {
       tap({
         next: (user) => this.userCache.set({ item: user, isLoading: false, error: null }),
       }),
-      catchError((err: HttpErrorResponse) => {
+      catchError((err) => {
         const error = err.error as SimpleApiError;
 
         this.userCache.set({ isLoading: false, error: getDefaultErrorMessageForType(error) });

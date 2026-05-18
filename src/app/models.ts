@@ -47,6 +47,10 @@ export interface ProjectDeleteResponse {
   hasDeletedCalendar: boolean;
 }
 
+export interface ProjectUpdateStatusRequest {
+  newStatus: 'IN_PROGRESS' | 'COMPLETED';
+}
+
 export interface TaskResponse extends Entity {
   name: string;
   description?: string;
@@ -200,6 +204,8 @@ export interface Page<T extends Entity> {
   totalElements: number;
   number: number;
   size: number;
+  first: boolean;
+  last: boolean;
 }
 
 export interface Cache {
@@ -236,8 +242,17 @@ export interface SimpleApiError extends GeneralApiError {
   message: string;
 }
 
+export interface ExternalServiceApiError extends SimpleApiError {
+  externalResult: ThirdPartyOperationResult;
+}
+
 export interface ValidationApiError extends GeneralApiError {
   fieldErrors: FieldError[];
+}
+
+export interface ThirdPartyOperationResult {
+  status: ThirdPartyOperationStatus;
+  tag?: ThirdPartyOperationTag; 
 }
 
 export interface FieldError {
@@ -300,7 +315,23 @@ export enum ErrorType {
   INTERNAL = 'INTERNAL'
 }
 
-export type ThirdPartyOperationStatus = 'SUCCESS' | 'SKIPPED' | 'NOT_APPLICABLE' | 'FAILED';
+export enum ThirdPartyOperationStatus {
+  SUCCESS = 'SUCCESS',
+  PARTIAL_SUCCESS = 'PARTIAL_SUCCESS',
+  SKIPPED = 'SKIPPED',
+  TOKEN_REJECTED = 'TOKEN_REJECTED',
+  RAN_OUT_OF_RETRIES = 'RAN_OUT_OF_RETRIES',
+  RETRY_TOO_LONG = 'RETRY_TOO_LONG',
+  NOT_APPLICABLE = 'NOT_APPLICABLE',
+  FAILED = 'FAILED'
+}
+
+export enum ThirdPartyOperationTag {
+  UNKNOWN = 'UNKNOWN',
+
+  NO_TASK_FOLDER_ID = 'NO_TASK_FOLDER_ID',
+  IOEXCEPTION = 'IOEXCEPTION',
+}
 
 export type ProjectStatus = 'INITIATED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
 

@@ -10,6 +10,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { UserStore } from '../../../cache/user.store';
+import { ValidationBoundaries } from '../../validation-boundaries';
 
 @Component({
   selector: 'app-update-user-details-dialog',
@@ -18,32 +19,37 @@ import { UserStore } from '../../../cache/user.store';
   styleUrl: './update-user-details-dialog.css',
 })
 export class UpdateUserDetailsDialog {
+  protected readonly USERNAME_MAX_LENGTH = ValidationBoundaries.USER_USERNAME_MAX_LENGTH;
+  protected readonly USERNAME_MIN_LENGTH = ValidationBoundaries.USER_USERNAME_MIN_LENGTH;
+  protected readonly PASSWORD_MAX_LENGTH = ValidationBoundaries.USER_PASSWORD_MAX_LENGTH;
+  protected readonly PASSWORD_MIN_LENGTH = ValidationBoundaries.USER_PASSWORD_MIN_LENGTH;
+
   private readonly userStore = inject(UserStore);
 
-  readonly userCache = this.userStore.userCache;
+  protected readonly userCache = this.userStore.userCache;
 
-  readonly userDetailsForm = new FormGroup({
+  protected readonly userDetailsForm = new FormGroup({
     username: new FormControl('', [
-      Validators.minLength(5),
-      Validators.maxLength(25)
+      Validators.minLength(ValidationBoundaries.USER_USERNAME_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.USER_USERNAME_MAX_LENGTH)
     ]),
     password: new FormControl('', [
-      Validators.minLength(8),
-      Validators.maxLength(100)
+      Validators.minLength(ValidationBoundaries.USER_PASSWORD_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.USER_PASSWORD_MAX_LENGTH)
     ]),
     repeatPassword: new FormControl('', [
-      Validators.minLength(8),
-      Validators.maxLength(100)
+      Validators.minLength(ValidationBoundaries.USER_PASSWORD_MIN_LENGTH),
+      Validators.maxLength(ValidationBoundaries.USER_PASSWORD_MAX_LENGTH)
     ]),
     email: new FormControl('', [
       Validators.email
     ])
-  }, { validators: [ passwordMatchValidator(), emptyFormValidator() ] });
+  }, { validators: [ passwordMatchValidator(), this.emptyFormValidator() ] });
 
   constructor(private readonly dialogRef: MatDialogRef<UpdateUserDetailsDialog, boolean>,
               private readonly snackBar: MatSnackBar) {}
 
-  onSubmit() {
+  protected onSubmit() {
     const user = this.userCache().item;
     const username = this.userDetailsForm.value.username?.trim();
     const email = this.userDetailsForm.value.email?.trim();
@@ -77,21 +83,21 @@ export class UpdateUserDetailsDialog {
     }
   }
 
-  onClose() {
+  protected onClose() {
     this.dialogRef.close();
   }
-}
 
-export function emptyFormValidator() : ValidatorFn {
-  return (control: AbstractControl) => {
-    const controls = (control as FormGroup).controls;
+  private emptyFormValidator() : ValidatorFn {
+    return (control: AbstractControl) => {
+      const controls = (control as FormGroup).controls;
 
-    const hasValue = Object.values(controls).some(element => {
-      const value = element.value?.trim();
+      const hasValue = Object.values(controls).some(element => {
+        const value = element.value?.trim();
 
-      return value && value !== '';
-    });
+        return value && value !== '';
+      });
 
-    return hasValue ? null : { atLeastOneRequired: true };
+      return hasValue ? null : { atLeastOneRequired: true };
+    }
   }
 }

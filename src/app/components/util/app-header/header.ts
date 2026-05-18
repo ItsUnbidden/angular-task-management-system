@@ -2,7 +2,6 @@ import { Component, computed, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
 import { EventType, Router } from '@angular/router';
-import { environment } from '../../../../environments/environment';
 import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { GeneralApiError, UserDeleteResponse } from '../../../models';
@@ -30,49 +29,49 @@ export class Header {
   private readonly oauth2Service = inject(OAuth2Service);
   private readonly userStore = inject(UserStore);
 
-  readonly userCache = this.userStore.userCache;
-  readonly isLoggedIn = computed(() => {
+  protected readonly userCache = this.userStore.userCache;
+  protected readonly isLoggedIn = computed(() => {
     const user = this.userCache().item;
 
     return user ? true : false;
   });
-  readonly isOnDashboard = toSignal(this.router.events.pipe(map(event => {
+  protected readonly isOnDashboard = toSignal(this.router.events.pipe(map(event => {
     if (event.type === EventType.NavigationEnd) {
       return this.router.url.includes('/dashboard');
     }
     return false;
   })), { initialValue: false });
-  readonly isOnControlPanel = toSignal(this.router.events.pipe(map(event => {
+  protected readonly isOnControlPanel = toSignal(this.router.events.pipe(map(event => {
     if (event.type === EventType.NavigationEnd) {
       return this.router.url.includes('/manager-controls');
     }
     return false;
   })), { initialValue: false });
 
-  readonly isManager = this.userStore.isManager;
-  readonly isOwner = this.userStore.isOwner;
+  protected readonly isManager = this.userStore.isManager;
+  protected readonly isOwner = this.userStore.isOwner;
 
-  readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
-  readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
+  protected readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
+  protected readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
 
-  readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
-  readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
+  protected readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
+  protected readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
 
   constructor(private readonly authService: AuthService,
               private readonly snackBar: MatSnackBar,
               private readonly dialog: MatDialog) {}
 
-  onConnectDropbox() {
+  protected onConnectDropbox() {
     const returnUrl = this.router.url;
-    window.location.href = `${environment.apiUrl}/api/oauth2/connect/dropbox?returnUrl=${encodeURIComponent(returnUrl)}`;
+    window.location.href = `/api/oauth2/connect/dropbox?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
-  onConnectCalendar() {
+  protected onConnectCalendar() {
     const returnUrl = this.router.url;
-    window.location.href = `${environment.apiUrl}/api/oauth2/connect/google?returnUrl=${encodeURIComponent(returnUrl)}`;
+    window.location.href = `/api/oauth2/connect/google?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
   
-  onLogoutDropbox() {
+  protected onLogoutDropbox() {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Disconnect Dropbox',
@@ -101,7 +100,7 @@ export class Header {
     });
   }
 
-  onLogoutCalendar() {
+  protected onLogoutCalendar() {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Disconnect Google Calendar',
@@ -130,7 +129,7 @@ export class Header {
     });
   }
 
-  onLogout() {
+  protected onLogout() {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Logout',
@@ -163,22 +162,22 @@ export class Header {
     });
   }
 
-  onToDashboard() {
+  protected onToDashboard() {
     this.router.navigateByUrl('/dashboard');
   }
 
-  onManagerActions() {
+  protected onManagerActions() {
     this.router.navigateByUrl('/manager-controls');
   }
 
-  onChangeUserDetails() {
+  protected onChangeUserDetails() {
     this.dialog.open(UpdateUserDetailsDialog, {
       disableClose: true,
       width: "420px"
     });
   }
 
-  onDeleteAccount() {
+  protected onDeleteAccount() {
     this.dialog.open(DeleteAccountDialog, {
       disableClose: true,
       width: "420px"

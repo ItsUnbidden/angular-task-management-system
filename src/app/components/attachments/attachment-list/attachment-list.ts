@@ -3,8 +3,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
-import { AttachmentResponse } from '../../../models';
-import { HttpEventType } from '@angular/common/http';
+import { AttachmentResponse, SimpleApiError } from '../../../models';
+import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider'
@@ -14,6 +14,7 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, switchMap } from 'rxjs';
 import { AttachmentStore } from '../../../cache/attachment.store';
 import { TaskStore } from '../../../cache/task.store';
+import { getDefaultErrorMessageForExternalResult, getDefaultErrorMessageForType, isExternalError } from '../../../utils';
 
 @Component({
   selector: 'app-attachment-list',
@@ -26,16 +27,16 @@ export class AttachmentList {
 
   private readonly attachmentStore = inject(AttachmentStore);
 
-  readonly attachmentsCache = this.attachmentStore.cache.asReadonly();
+  protected readonly attachmentsCache = this.attachmentStore.cache.asReadonly();
 
-  readonly isProgressBarActive = signal(false);
+  protected readonly isProgressBarActive = signal(false);
   
   constructor(private readonly attachmentService: AttachmentService, 
               private readonly taskStore: TaskStore,
               private readonly snackBar: MatSnackBar,
               private readonly dialog: MatDialog) {}
 
-  onFileSelected(event: Event) {
+  protected onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     const task = this.taskStore.selectedTaskCache()?.item;
@@ -58,11 +59,22 @@ export class AttachmentList {
         }
         return EMPTY;
       }))
-      .subscribe();
+      .subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as SimpleApiError;
+          const message = isExternalError(error) ? getDefaultErrorMessageForExternalResult(error) : getDefaultErrorMessageForType(error);
+
+          this.isProgressBarActive.set(false);
+
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 5000
+          });
+        }
+      });
     }
   }
 
-  onDownloadFile(attachment: AttachmentResponse) {
+  protected onDownloadFile(attachment: AttachmentResponse) {
     this.attachmentService.downloadFile(attachment.id).subscribe({
       next: blob => {
         const url = URL.createObjectURL(blob);
@@ -75,7 +87,7 @@ export class AttachmentList {
     });
   }
 
-  onDeleteAttachment(attachment: AttachmentResponse) {
+  protected onDeleteAttachment(attachment: AttachmentResponse) {
     this.dialog.open(ConfirmDialog, {
       data: {
         title: 'Delete attachment',
@@ -86,12 +98,16 @@ export class AttachmentList {
     })
     .afterClosed().pipe(
       switchMap(confirmed => {
-        if (confirmed) return this.attachmentService.deleteAttachment(attachment.id);
+        if (confirmed) {
+          this.isProgressBarActive.set(true);
+          return this.attachmentService.deleteAttachment(attachment.id)
+        };
         return EMPTY;
       }),
       switchMap(() => {
         const task = this.taskStore.selectedTaskCache()?.item;
 
+        this.isProgressBarActive.set(false);
         if (task) return this.attachmentStore.cacheAttachmentsForTask(task.id);
         return EMPTY;
       })

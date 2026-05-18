@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
-import { environment } from '../../environments/environment';
 import { EMPTY, Observable, switchMap, tap } from 'rxjs';
 import { OAuth2StatusResponse, ThirdPartyTestResponse } from '../models';
 
@@ -16,7 +15,7 @@ export class OAuth2Service {
   constructor(private readonly http: HttpClient) {}
 
   logoutFromDropbox() : Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/api/dropbox/logout`).pipe(tap({
+    return this.http.delete<void>(`/api/dropbox/logout`).pipe(tap({
       next: () => {
         this.isDropboxConnected.set(false);
       }
@@ -24,7 +23,7 @@ export class OAuth2Service {
   }
 
   logoutFromCalendar() : Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/api/google/logout`).pipe(tap({
+    return this.http.delete<void>(`/api/google/logout`).pipe(tap({
       next: () => {
         this.isCalendarConnected.set(false);
       }
@@ -33,7 +32,7 @@ export class OAuth2Service {
 
   checkDropboxStatus() : Observable<ThirdPartyTestResponse> {
     this.isCheckingDropbox.set(true);
-    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/dropbox/status`).pipe(
+    return this.http.get<OAuth2StatusResponse>(`/api/dropbox/status`).pipe(
       switchMap(response => {
         switch (response.status) {
           case 'OK':
@@ -64,7 +63,7 @@ export class OAuth2Service {
   }
 
   checkCalendarStatus() {
-    return this.http.get<OAuth2StatusResponse>(`${environment.apiUrl}/api/google/status`).pipe(switchMap(response => {
+    return this.http.get<OAuth2StatusResponse>(`/api/google/status`).pipe(switchMap(response => {
       switch (response.status) {
         case 'OK':
           this.isCalendarConnected.set(true);
@@ -93,10 +92,10 @@ export class OAuth2Service {
   }
 
   checkDropboxHealth() : Observable<ThirdPartyTestResponse> {
-    return this.http.get<ThirdPartyTestResponse>(`${environment.apiUrl}/api/dropbox/test`);
+    return this.http.get<ThirdPartyTestResponse>(`/api/dropbox/test`);
   }
 
   checkGoogleHealth() : Observable<ThirdPartyTestResponse> {
-    return this.http.get<ThirdPartyTestResponse>(`${environment.apiUrl}/api/google/test`);
+    return this.http.get<ThirdPartyTestResponse>(`/api/google/test`);
   }
 }
