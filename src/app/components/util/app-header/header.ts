@@ -18,6 +18,7 @@ import { UserStore } from '../../../cache/user.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { GeneralApiError } from '../../../models/error.model';
 import { UserDeleteResponse } from '../../../models/user.model';
+import { ThirdPartyOperationStatus } from '../../../models/external.model';
 
 @Component({
   selector: 'app-header',
@@ -199,7 +200,36 @@ export class Header {
     let message = `You account has been successfully deleted. 
         Deleted ${response.deletedProjects.length} projects and 
         quitted ${response.quittedProjects.length} projects. `;
-    // TODO: Make a nice message for when not everything is disconnected properly.
+
+    let numberOfDropboxConnectedProjects = 0;
+    let numberOfFailedDeletions = 0;
+    response.deletedProjects.forEach(pd => {
+      if (pd.dropboxResult.status !== ThirdPartyOperationStatus.NOT_APPLICABLE) {
+        ++numberOfDropboxConnectedProjects;
+        if (pd.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+          ++numberOfFailedDeletions;
+        }
+      }
+    });
+    if (numberOfFailedDeletions > 0) {
+      message += `The shared folders of ${numberOfFailedDeletions} out of ${numberOfDropboxConnectedProjects} 
+          projects that were connected to Dropbox were not deleted. You might need to remove them manually. `;
+    }
+
+    let numberOfOtherDropboxConnectedProjects = 0;
+    let numberOfFailedQuits = 0;
+    response.quittedProjects.forEach(pd => {
+      if (pd.dropboxResult.status !== ThirdPartyOperationStatus.NOT_APPLICABLE) {
+        ++numberOfOtherDropboxConnectedProjects;
+        if (pd.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+          ++numberOfFailedQuits;
+        }
+      }
+    });
+    if (numberOfFailedQuits > 0) {
+      message += `The shared folders of ${numberOfFailedQuits} out of ${numberOfOtherDropboxConnectedProjects} 
+          projects that you were a member of were not properly disconnected. You might need to remove them manually.`;
+    }
     return message;
   }
 }
