@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { EMPTY, Observable, switchMap, tap } from 'rxjs';
-import { OAuth2StatusResponse, ThirdPartyTestResponse } from '../models';
+import { DropboxOperationResult, OAuth2StatusResponse, ThirdPartyOperationResult } from '../models/external.model';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +30,7 @@ export class OAuth2Service {
     }));
   }
 
-  checkDropboxStatus() : Observable<ThirdPartyTestResponse> {
+  checkDropboxStatus() : Observable<DropboxOperationResult> {
     this.isCheckingDropbox.set(true);
     return this.http.get<OAuth2StatusResponse>(`/api/dropbox/status`).pipe(
       switchMap(response => {
@@ -91,11 +91,11 @@ export class OAuth2Service {
     }));
   }
 
-  checkDropboxHealth() : Observable<ThirdPartyTestResponse> {
-    return this.http.get<ThirdPartyTestResponse>(`/api/dropbox/test`);
+  checkDropboxHealth() : Observable<DropboxOperationResult> {
+    return this.http.get<DropboxOperationResult>(`/api/dropbox/test`);
   }
 
-  checkGoogleHealth() : Observable<ThirdPartyTestResponse> {
-    return this.http.get<ThirdPartyTestResponse>(`/api/google/test`);
+  checkGoogleHealth() : Observable<ThirdPartyOperationResult> {
+    return this.http.get<ThirdPartyOperationResult>(`/api/google/test`);
   }
 }

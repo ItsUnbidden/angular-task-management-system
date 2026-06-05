@@ -8,7 +8,6 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { GeneralApiError, TaskDeleteResponse, TaskPriority, TaskStatus, TaskUpdateRequest } from '../../models';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { EMPTY, map, switchMap } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -16,7 +15,6 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
-import { ProjectService } from '../../service/project.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
@@ -25,13 +23,17 @@ import { LabelManagementDialog } from '../label/label-management-dialog/label-ma
 import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, getDefaultErrorMessageForType, toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
 import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 import { ProjectStore } from '../../cache/project.store';
 import { TaskStore } from '../../cache/task.store';
 import { UserStore } from '../../cache/user.store';
 import { LabelStore } from '../../cache/label.store';
 import { ValidationBoundaries } from '../validation-boundaries';
+import { TaskStatus, TaskUpdateRequest, TaskPriority } from '../../models/task.model';
+import { GeneralApiError } from '../../models/error.model';
+import { Project } from '../projects/project';
+import { ThirdPartyOperationStatus } from '../../models/external.model';
 
 interface TaskPriorityOption {
   priority: TaskPriority;
@@ -106,7 +108,7 @@ export class Task {
   });
 
   protected readonly chipsEditForm = new FormGroup({
-    taskPriority: new FormControl('', {
+    taskPriority: new FormControl<TaskPriority>('MEDIUM', {
       nonNullable: true,
       validators: [
         Validators.required
@@ -121,7 +123,7 @@ export class Task {
     { priority: 'HIGH', priorityView: 'High' }
   ];
 
-  constructor(private readonly projectService: ProjectService,
+  constructor(private readonly project: Project,
               private readonly snackBar: MatSnackBar,
               private readonly dialog: MatDialog,
               private readonly router: Router) {
@@ -176,7 +178,15 @@ export class Task {
 
       if (request) {
         request.name = newName;
-        this.taskStore.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingName.set(false);
@@ -198,7 +208,15 @@ export class Task {
 
       if (request) {
         request.description = newDescription ?? undefined;
-        this.taskStore.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingDescription.set(false);
@@ -220,7 +238,15 @@ export class Task {
 
       if (request) {
         request.dueDate = newDueDate;
-        this.taskStore.updateCachedTask(request).subscribe();
+        this.taskStore.updateCachedTask(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingDate.set(false);
@@ -240,11 +266,19 @@ export class Task {
       const request = this.makeTaskUpdateRequest();
 
       if (request) {
-        request.priority = newPriority as TaskPriority;
+        request.priority = newPriority;
         request.labelIds = this.chipsEditForm.value.labels ?? [];
         this.taskStore.updateCachedTask(request).pipe(switchMap((task) => {
           return this.labelStore.cacheLabelsForProject(task.projectId, true);
-        })).subscribe();
+        })).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingChips.set(false);
@@ -264,7 +298,15 @@ export class Task {
     if (task) {
       const request = { newStatus: newStatus };
       
-      this.taskStore.updateCachedTask(request).subscribe();
+      this.taskStore.updateCachedTask(request).subscribe({
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+            duration: 10000
+          });
+        }
+      });
     }
   }
 
@@ -308,39 +350,20 @@ export class Task {
         if (hasChangedLabels) return this.labelStore.cacheLabelsForProject(project.id, true);
         return EMPTY;
       }))
-      .subscribe()
-    }
-  }
-
-  protected onJoinDropbox() {
-    const project = this.selectedProjectCache()?.item;
-
-    if (project) {         
-      this.dialog.open(ConfirmDialog, {
-        data: {
-          title: 'Join Dropbox',
-          message: `Are you sure you want to <strong>join</strong> Dropbox in this project? It can't be reversed.`
-        },
-        disableClose: true,
-        width: '420px'
-      })
-      .afterClosed().pipe(
-        switchMap(confirmed => {
-          if (confirmed) return this.projectService.joinDropbox(project.id);
-          return EMPTY;
-        }),
-        switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
-      )
       .subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
-      });
+      })
     }
+  }
+
+  protected onJoinDropbox() {
+    this.project.onJoinDropbox();
   }
 
   protected onTaskDelete() {
@@ -363,15 +386,24 @@ export class Task {
       }))
       .subscribe({
         next: response => {
-          this.snackBar.open(this.getTaskDeleteMessage(response), 'Dismiss', {
+          this.router.navigateByUrl(`/projects/${task.projectId}`);
+          let message = `You have successfully deleted task <strong>${task.name}</strong>.`;
+                    
+          if (response.dropboxFolderDeleted.status !== ThirdPartyOperationStatus.SUCCESS
+                && response.dropboxFolderDeleted.status !== ThirdPartyOperationStatus.NOT_APPLICABLE) {
+            message = `You have successfully deleted task ${task.name}, but there was a Dropbox 
+                issue: ${getDefaultMessageForExternalError(response.dropboxFolderDeleted)}`;
+          }
+          this.snackBar.open(message, 'Dismiss', {
             duration: 10000
           });
-          this.router.navigateByUrl(`/projects/${task.projectId}`);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error));
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+            duration: 10000
+          });
         }
       });
     }
@@ -409,20 +441,5 @@ export class Task {
             priority: task.priority,
             newAssigneeId: task.assigneeId, 
             labelIds: task.labelIds };
-  }
-
-  private getTaskDeleteMessage(response: TaskDeleteResponse) : string {
-    let message = `Task ${response.taskName} has been successfully deleted.`;
-    if (response.dropboxFolderDeleted.status === 'SKIPPED') {
-      message += ' An error occured while deleting the task\'s Dropbox folder. You might have to delete it manually.';
-    } else if (response.dropboxFolderDeleted.status === 'FAILED') {
-      message += ' Was not able to delete the task\'s Dropbox folder, because your account is not connected to Dropbox. It should be deleted manually.'
-    }
-    if (response.dropboxFolderDeleted.status === 'SKIPPED') {
-      message += ' An error occured while deleting the task\'s Calendar events. You might have to delete them manually.';
-    } else if (response.dropboxFolderDeleted.status === 'FAILED') {
-      message += ' Was not able to delete the task\'s Calendar events, because your account is not connected to Dropbox. They should be deleted manually.'
-    }
-    return message;
   }
 }

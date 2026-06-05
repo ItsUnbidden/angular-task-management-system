@@ -49,6 +49,10 @@
     overflow: auto;
 }
 
+.description-field {
+    white-space: pre-wrap;
+}
+
 .description-edit {
     display: flex;
     flex-direction: column;

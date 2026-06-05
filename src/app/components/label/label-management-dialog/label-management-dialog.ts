@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, Inject, signal } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
-import { LabelResponse, SimpleApiError } from '../../../models';
 import { LabelService } from '../../../service/label.service';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -16,6 +15,8 @@ import { switchMap, tap } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { LabelColor, LabelResponse } from '../../../models/label.model';
+import { SimpleApiError } from '../../../models/error.model';
 
 interface LabelManagementDialogData {
   projectId: number;
@@ -30,10 +31,9 @@ interface LabelManagementDialogData {
 })
 export class LabelManagementDialog {
   protected readonly NAME_MAX_LENGTH = ValidationBoundaries.LABEL_NAME_MAX_LENGTH;
+  protected readonly palette = Object.values(LabelColor);
 
   private readonly labelStore = inject(LabelStore);
-
-  protected labelStoreClass = LabelStore;
 
   protected readonly displayedColumns = ['chip', 'edit', 'delete'];
 

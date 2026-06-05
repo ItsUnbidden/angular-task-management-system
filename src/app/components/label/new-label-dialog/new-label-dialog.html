@@ -16,7 +16,7 @@
 
         <div>
             <mat-chip-listbox formControlName="color">
-                @for (paletteItem of labelStore.PALETTE_ITEMS; track paletteItem) {
+                @for (paletteItem of palette; track paletteItem) {
                     <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
                         <span class="dot" aria-hidden="true"></span>
                     </mat-chip-option>
@@ -28,7 +28,10 @@
         </div>
 
         @if (isSendingRequest()) {
-            <mat-spinner>Please wait...</mat-spinner>
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Please wait...</span>
+            </div>
         }
         @else {
             <mat-error>{{ error() }}</mat-error>

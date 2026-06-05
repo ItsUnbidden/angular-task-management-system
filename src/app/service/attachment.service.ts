@@ -1,7 +1,9 @@
 import { Injectable } from '@angular/core';
-import { AttachmentResponse, Page } from '../models';
-import { Observable } from 'rxjs';
-import { HttpClient, HttpEvent } from '@angular/common/http';
+import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpEvent } from '@angular/common/http';
+import { AttachmentResponse } from '../models/attachment.model';
+import { Page } from '../models/general.model';
+import { error } from 'console';
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +25,19 @@ export class AttachmentService {
   }
 
   downloadFile(attachmentId: number) : Observable<Blob> {
-    return this.http.get(`/api/attachments/${attachmentId}`, { responseType: 'blob' });
+    return this.http.get(`/api/attachments/${attachmentId}`, { responseType: 'blob' })
+        .pipe(catchError((err: HttpErrorResponse) => {
+      const errorBlob = err.error;
+
+      if (errorBlob instanceof Blob && errorBlob.type.includes("application/json")) {
+        return from(errorBlob.text()).pipe(switchMap(text => {
+          const parsedError = JSON.parse(text);
+
+          return throwError(() => parsedError);
+        }))
+      }
+      return throwError(() => err);
+    }));
   }
 
   deleteAttachment(attachmentId: number): Observable<void> {

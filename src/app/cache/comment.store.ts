@@ -1,8 +1,9 @@
-import { computed, Injectable, signal } from '@angular/core';
+import { computed, Injectable } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { CommentResponse, Page } from '../models';
 import { MessageService } from '../service/message.service';
-import { Observable, tap } from 'rxjs';
+import { catchError, Observable, tap } from 'rxjs';
+import { CommentResponse } from '../models/message.model';
+import { Page } from '../models/general.model';
 
 @Injectable({
   providedIn: 'root'
@@ -29,6 +30,7 @@ export class CommentStore extends AbstractStore<CommentResponse, never> {
       next: (commentsPage) => {
         this.postLoading(commentsPage, true);
       }
-    }));
+    }),
+    catchError(this.catchErrorDefault));
   }
 }

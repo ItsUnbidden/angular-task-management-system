@@ -1,6 +1,5 @@
 import { Component, effect, inject } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
-import { UserResponse } from '../../../models';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSortModule, Sort } from '@angular/material/sort';
@@ -13,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { UserActionsDialog } from './user-actions-dialog/user-actions-dialog';
 import { getUserRole } from '../../../utils';
 import { UserStore } from '../../../cache/user.store';
+import { UserResponse } from '../../../models/user.model';
 
 @Component({
   selector: 'app-manager-control-panel',

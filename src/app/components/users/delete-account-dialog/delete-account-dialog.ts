@@ -4,11 +4,11 @@ import { MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dial
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
-import { UserDeleteResponse } from '../../../models';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { EMPTY, switchMap } from 'rxjs';
 import { UserStore } from '../../../cache/user.store';
+import { UserDeleteResponse } from '../../../models/user.model';
 
 @Component({
   selector: 'app-delete-account-dialog',

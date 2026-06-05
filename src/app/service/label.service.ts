@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { LabelCreateRequest, LabelResponse, LabelUpdateRequest, Page } from '../models';
+import { LabelCreateRequest, LabelResponse, LabelUpdateRequest } from '../models/label.model';
+import { Page } from '../models/general.model';
 
 @Injectable({
   providedIn: 'root',

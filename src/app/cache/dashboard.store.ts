@@ -1,8 +1,10 @@
-import { inject, Injectable, signal } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { ProjectStore } from './project.store';
 import { TaskStore } from './task.store';
-import { Page, ProjectResponse, TableState, TaskResponse } from '../models';
 import { Observable } from 'rxjs';
+import { Page, TableState } from '../models/general.model';
+import { ProjectResponse } from '../models/project.model';
+import { TaskResponse } from '../models/task.model';
 
 @Injectable({
   providedIn: 'root'

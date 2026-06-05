@@ -21,7 +21,7 @@
             </mat-form-field>
 
             <mat-chip-listbox formControlName="color">
-                @for (paletteItem of labelStoreClass.PALETTE_ITEMS; track paletteItem) {
+                @for (paletteItem of palette; track paletteItem) {
                     <mat-chip-option [value]="paletteItem" class="label-chip" [attr.data-color]="paletteItem">
                         <span class="dot" aria-hidden="true"></span>
                     </mat-chip-option>

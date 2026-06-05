@@ -3,7 +3,6 @@ import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatButtonModule } from "@angular/material/button";
-import { GeneralApiError, ProjectCreateRequest } from '../../../models';
 import { MatInputModule } from '@angular/material/input';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -14,6 +13,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
 import { finalize } from 'rxjs';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { ProjectCreateRequest } from '../../../models/project.model';
+import { GeneralApiError } from '../../../models/error.model';
 
 @Component({
   selector: 'app-new-project-dialog',

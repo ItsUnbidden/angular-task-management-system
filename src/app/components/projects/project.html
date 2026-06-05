@@ -99,7 +99,7 @@
                                 <p class="description-field">{{ projectCache().item?.description ?? "" }}</p>
                             } 
                             @else {
-                                <p class="description-field">No description</p>
+                                <p class="description-none">No description</p>
                             }
                             @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDescriptionEdit()">
@@ -246,7 +246,7 @@
                                     </button>
                                 }
                             }
-                            @else if (projectCache().item?.isDropboxConnected) {
+                            @else if (projectCache().item?.isDropboxConnected && !isConnectedToDropboxInProject()) {
                                 <button matButton="elevated" (click)="onJoinDropbox()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Dropbox
@@ -268,7 +268,7 @@
                                     </button>
                                 }
                             }
-                            @else if (projectCache().item?.isCalendarConnected) {
+                            @else if (projectCache().item?.isCalendarConnected && !isConnectedToCalendarInProject()) {
                                 <button matButton="elevated" (click)="onJoinCalendar()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                                     Join Calendar

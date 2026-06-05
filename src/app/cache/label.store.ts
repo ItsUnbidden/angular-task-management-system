@@ -1,9 +1,10 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, inject, Injectable } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { LabelResponse, Page } from '../models';
 import { catchError, Observable, of, tap } from 'rxjs';
 import { LabelService } from '../service/label.service';
 import { TaskStore } from './task.store';
+import { LabelResponse } from '../models/label.model';
+import { Page } from '../models/general.model';
 
 @Injectable({
   providedIn: 'root'
@@ -16,8 +17,6 @@ export class LabelStore extends AbstractStore<LabelResponse, never> {
 
     return task ? this.cache().page?.content?.filter(l => l.taskIds.includes(task.id)) ?? [] : [];
   });
-
-  public static readonly PALETTE_ITEMS = ['blue', 'green', 'red', 'yellow', 'cyan', 'deep-blue', 'magenta', 'purple', 'orange', 'pink', 'yellow-green'];
 
   private projectId = 0;
 

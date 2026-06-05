@@ -17,8 +17,8 @@
             }
         </mat-form-field>
 
-        @if (error()) {
-            <mat-error>{{ error() }}</mat-error>
+        @if (selectedProjectCache().error) {
+            <mat-error>{{ selectedProjectCache().error }}</mat-error>
         }
         @if (selectedProjectCache().isLoading) {
             <div class="spinner-container">

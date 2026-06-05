@@ -7,9 +7,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProjectStore } from '../../../cache/project.store';
 import { HttpErrorResponse } from '@angular/common/http';
-import { SimpleApiError } from '../../../models';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { SimpleApiError } from '../../../models/error.model';
+import { ProjectWithDropboxResultResponse } from '../../../models/project.model';
 
 @Component({
   selector: 'app-add-user-dialog',
@@ -26,8 +27,6 @@ export class AddUserDialog {
 
   protected readonly selectedProjectCache = this.projectStore.selectedProjectCache.asReadonly();
 
-  protected readonly error = signal<string | null>(null);
-
   protected readonly addUserForm = new FormGroup({
     username: new FormControl('', {
       nonNullable: true,
@@ -39,22 +38,16 @@ export class AddUserDialog {
     })
   })
 
-  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, boolean>) {}
+  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, ProjectWithDropboxResultResponse>) {}
 
   protected submit() {
     if (this.addUserForm.valid) {
       const username = this.addUserForm.value.username;
 
       if (username) {
-        this.error.set(null);
         this.projectStore.addUserToProject(username).subscribe({
-          next: () => {
-            this.dialogRef.close(true);
-          },
-          error: (err: HttpErrorResponse) => {
-            const error = err.error as SimpleApiError;
-
-            this.error.set(getDefaultErrorMessageForType(error));
+          next: (response) => {
+            this.dialogRef.close(response);
           }
         });
       }

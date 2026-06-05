@@ -37,7 +37,10 @@
         <mat-checkbox formControlName="isPrivate">Private project</mat-checkbox>
 
         @if (isSendingRequest()) {
-            <mat-spinner>Please wait...</mat-spinner>
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>Please wait...</span>
+            </div>
         }
         @else {
             <mat-error>{{ error() }}</mat-error>

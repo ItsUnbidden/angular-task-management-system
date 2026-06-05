@@ -1,8 +1,8 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, switchMap, tap} from 'rxjs';
-import { LoginRequest, RegistrationRequest, UserResponse } from '../models';
 import { UserStore } from '../cache/user.store';
+import { LoginRequest, RegistrationRequest, UserResponse } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',

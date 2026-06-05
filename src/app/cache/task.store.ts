@@ -1,10 +1,12 @@
 import { Injectable, signal } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { Page, SimpleApiError, SingleItemCache, TableState, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
 import { TaskService } from '../service/task.service';
 import { catchError, EMPTY, finalize, Observable, of, Subject, takeUntil, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getDefaultErrorMessageForType } from '../utils';
+import { TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models/task.model';
+import { Page, SingleItemCache, TableState } from '../models/general.model';
+import { SimpleApiError } from '../models/error.model';
 
 @Injectable({
   providedIn: 'root'
@@ -86,12 +88,13 @@ export class TaskStore extends AbstractStore<TaskResponse, TaskFilter | string> 
     return this.taskService.getTaskById(taskId).pipe(tap({
       next: t => {
         this.selectedTaskCache.set({ item: t, isLoading: false, error: null });
-      },
-      error: (err: HttpErrorResponse) => {
-        const error = err.error as SimpleApiError;
-
-        this.setSelectedTaskError(getDefaultErrorMessageForType(error));
       }
+    }),
+    catchError((err: HttpErrorResponse) => {
+      const error = err.error as SimpleApiError;
+
+      this.setSelectedTaskError(getDefaultErrorMessageForType(error));
+      return EMPTY;
     }));
   }
 
@@ -102,11 +105,7 @@ export class TaskStore extends AbstractStore<TaskResponse, TaskFilter | string> 
       const next = (t: TaskResponse) => {
         this.selectedTaskCache.set({ item: t, isLoading: false, error: null });
       };
-      const error = (err: HttpErrorResponse) => {
-        const error = err.error as SimpleApiError;
-
-        this.setSelectedTaskError(error.message);
-      }
+      const error = () => this.setSelectedTaskIsLoading(false);
 
       this.setSelectedTaskIsLoading(true);
       return this.isStatusUpdateRequest(request)
@@ -122,9 +121,9 @@ export class TaskStore extends AbstractStore<TaskResponse, TaskFilter | string> 
       tap({
         next: () => {
           this.clearSelectedTask();
-        }
-      }),
-      finalize(() => this.setSelectedTaskIsLoading(false))
+        },
+        error: () => this.setSelectedTaskIsLoading(false)
+      })
     );
   }
 

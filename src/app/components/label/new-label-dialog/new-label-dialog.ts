@@ -2,7 +2,6 @@ import { Component, Inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { LabelService } from '../../../service/label.service';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { GeneralApiError, LabelCreateRequest } from '../../../models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +12,8 @@ import { getDefaultErrorMessageForType } from '../../../utils';
 import { finalize } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { LabelColor, LabelCreateRequest } from '../../../models/label.model';
+import { GeneralApiError } from '../../../models/error.model';
 
 interface NewLabelData {
   projectId: number,
@@ -27,7 +28,7 @@ interface NewLabelData {
 })
 export class NewLabelDialog {
   protected readonly NAME_MAX_LENGTH = ValidationBoundaries.LABEL_NAME_MAX_LENGTH;
-  protected readonly labelStore = LabelStore;
+  protected readonly palette = Object.values(LabelColor);
 
   protected readonly error = signal('');
   protected readonly isSendingRequest = signal(false);

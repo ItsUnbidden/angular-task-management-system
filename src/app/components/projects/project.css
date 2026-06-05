@@ -40,6 +40,10 @@
     flex-direction: column;
 }
 
+.description-field {
+    white-space: pre-wrap;
+}
+
 .actions {
     display: flex;
     gap: 10px;
