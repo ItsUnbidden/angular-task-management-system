@@ -1,8 +1,9 @@
 import { signal } from "@angular/core";
-import { Entity, Page, PageCache, SimpleApiError } from "../models";
 import { HttpErrorResponse } from "@angular/common/http";
 import { EMPTY } from "rxjs";
 import { getDefaultErrorMessageForType } from "../utils";
+import { Entity, Page, PageCache } from "../models/general.model";
+import { SimpleApiError } from "../models/error.model";
 
 export abstract class AbstractStore<T extends Entity, F> {
   readonly cache = signal<PageCache<T, F>>({ pageIndex: 0, pageSize: 10, sort: '', direction: '', isLoading: false, error: null });

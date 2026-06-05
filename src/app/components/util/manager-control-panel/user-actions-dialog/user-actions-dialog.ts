@@ -1,6 +1,5 @@
 import { Component, inject, Inject, signal } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
-import { GeneralApiError, UserResponse } from '../../../../models';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { getDefaultErrorMessageForType, getUserRole } from '../../../../utils';
@@ -8,6 +7,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UserStore } from '../../../../cache/user.store';
 import { UserService } from '../../../../service/user.service';
+import { UserResponse } from '../../../../models/user.model';
+import { GeneralApiError } from '../../../../models/error.model';
 
 @Component({
   selector: 'app-user-actions-dialog',

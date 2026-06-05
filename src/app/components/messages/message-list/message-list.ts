@@ -7,7 +7,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MessageService } from '../../../service/message.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CommentResponse, GeneralApiError, MessageResponse, SimpleApiError } from '../../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIcon } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -16,12 +15,13 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, map, switchMap } from 'rxjs';
 import { MessageStore } from '../../../cache/message.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
-import { FlattenedReply } from '../../../cache/reply.store';
 import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { GeneralApiError, SimpleApiError } from '../../../models/error.model';
+import { CommentResponse, FlattenedReply, MessageResponse } from '../../../models/message.model';
 
 @Component({
   selector: 'app-message-list',

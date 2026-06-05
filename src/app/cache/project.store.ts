@@ -1,12 +1,14 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { Page, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, SimpleApiError, SingleItemCache, TableState, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
 import { ProjectService } from '../service/project.service';
 import { catchError, EMPTY, Observable, of, Subject, takeUntil, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getDefaultErrorMessageForType } from '../utils';
 import { UserStore } from './user.store';
 import { Router } from '@angular/router';
+import { ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectWithDropboxResultResponse } from '../models/project.model';
+import { Page, SingleItemCache, TableState } from '../models/general.model';
+import { GeneralApiError } from '../models/error.model';
 
 @Injectable({
   providedIn: 'root'
@@ -38,6 +40,16 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
     const projectRole = this.currentProjectRole();
 
     return (projectRole) ? projectRole.roleType === 'CONTRIBUTOR' || projectRole.roleType === 'ADMIN' || projectRole.roleType === 'CREATOR' : false;
+  });
+  readonly isConnectedToDropboxInProject = computed(() => {
+    const projectRole = this.currentProjectRole();
+
+    return projectRole ? projectRole.isDropboxConnected : false;
+  });
+  readonly isConnectedToCalendarInProject = computed(() => {
+    const projectRole = this.currentProjectRole();
+
+    return projectRole ? projectRole.isCalendarConnected : false;
   });
 
   private readonly cancelProjectsLoading$ = new Subject<void>();
@@ -83,8 +95,6 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
   }
 
   cacheSelectedProject(projectId: number, forceReload?: boolean) : Observable<ProjectResponse> {
-    this.setSelectedProjectError(null);
-
     if (!forceReload) {
       const cachedProject = this.cache().page?.content.find(p => p.id === projectId);
   
@@ -102,11 +112,7 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         }
       }),
       catchError((err: HttpErrorResponse) => {
-        const error = err.error as SimpleApiError;
-
-        if (err.status === 403) {
-          this.router.navigateByUrl('/forbidden');
-        }
+        const error = err.error as GeneralApiError;
 
         this.setSelectedProjectError(getDefaultErrorMessageForType(error));
         return EMPTY;
@@ -120,54 +126,47 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
     if (project) {
       this.setSelectedProjectIsLoading(true);
   
-      return this.projectService.updateProject(project.id, request).pipe(
-        tap({
-          next: response => {
-            this.selectedProjectCache.set({ item: response, isLoading: false, error: null })
-          }
-        }),
-        catchError((err: HttpErrorResponse) => {
-          const error = err.error as SimpleApiError;
-  
-          this.setSelectedProjectError(getDefaultErrorMessageForType(error));
-          return EMPTY;
-        })
-      );
+      return this.projectService.updateProject(project.id, request).pipe(tap({
+        next: response => {
+          this.selectedProjectCache.set({ item: response, isLoading: false, error: null })
+        },
+        error: () => this.setSelectedProjectIsLoading(false)
+      }));
     }
     return EMPTY;
   }
 
-  addUserToProject(username: string) : Observable<UserAddToProjectResponse> {
+  addUserToProject(username: string) : Observable<ProjectWithDropboxResultResponse> {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
       this.setSelectedProjectIsLoading(true);
       return this.projectService.addUserToProject(project.id, username).pipe(tap({
         next: response => {
-          this.selectedProjectCache.set({ item: response.project, isLoading: false, error: null });
+          this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
   }
 
-  removeUserFromProject(userId: number) : Observable<UserRemoveFromProjectResponse> {
+  removeUserFromProject(userId: number) : Observable<ProjectWithDropboxResultResponse> {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
       this.setSelectedProjectIsLoading(true);
       return this.projectService.removeUserFromProject(project.id, userId).pipe(tap({
         next: response => {
-          this.selectedProjectCache.set({ item: response.project, isLoading: false, error: null });
+          this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
   }
 
-  changeMemberRole(userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectResponse> {
+  changeMemberRole(userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectWithDropboxResultResponse> {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
@@ -176,13 +175,13 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: project => {
           this.selectedProjectCache.set({ item: project, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
   }
 
-  changeStatus(status: 'IN_PROGRESS' | 'COMPLETED') {
+  changeStatus(status: 'IN_PROGRESS' | 'COMPLETED') : Observable<ProjectResponse> {
     const project = this.selectedProjectCache().item;
 
     if (project) {
@@ -191,8 +190,8 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: project => {
           this.selectedProjectCache.set({ item: project, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
-      }))
+        error: () => this.setSelectedProjectIsLoading(false)
+      }));
     }
     return EMPTY;
   }
@@ -206,13 +205,13 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: () => {
           this.clearSelectedProject();
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
   }
 
-  quitProject() : Observable<UserRemoveFromProjectResponse> {
+  quitProject() : Observable<ProjectWithDropboxResultResponse> {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
@@ -221,13 +220,13 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: () => {
           this.clearSelectedProject();
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
   }
 
-  connectProjectToDropbox(): Observable<ProjectResponse> {
+  connectProjectToDropbox(): Observable<ProjectWithDropboxResultResponse> {
     const project = this.selectedProjectCache()?.item;
 
     if (project) {
@@ -236,7 +235,7 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: response => {
           this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
@@ -251,7 +250,37 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         next: response => {
           this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
         },
-        finalize: () => this.setSelectedProjectIsLoading(false)
+        error: () => this.setSelectedProjectIsLoading(false)
+      }));
+    }
+    return EMPTY;
+  }
+
+  joinDropbox() : Observable<ProjectWithDropboxResultResponse> {
+    const project = this.selectedProjectCache()?.item;
+
+    if (project) {
+      this.setSelectedProjectIsLoading(true);
+      return this.projectService.joinDropbox(project.id).pipe(tap({
+        next: response => {
+          this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
+        },
+        error: () => this.setSelectedProjectIsLoading(false)
+      }));
+    }
+    return EMPTY;
+  }
+
+  disconnectDropbox() : Observable<ProjectWithDropboxResultResponse> {
+    const project = this.selectedProjectCache()?.item;
+
+    if (project) {
+      this.setSelectedProjectIsLoading(true);
+      return this.projectService.disconnectDropbox(project.id).pipe(tap({
+        next: response => {
+          this.selectedProjectCache.set({ item: response, isLoading: false, error: null });
+        },
+        error: () => this.setSelectedProjectIsLoading(false)
       }));
     }
     return EMPTY;
@@ -268,6 +297,8 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
   }
 
   setSelectedProjectError(error: string | null) {
-    this.selectedProjectCache.set({ isLoading: false, error });
+    this.selectedProjectCache.update(cache => {
+      return { ...cache, isLoading: false, error }
+    });
   }
 }

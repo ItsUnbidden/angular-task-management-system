@@ -7,48 +7,52 @@ import { registerIcons } from './app.config';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UserStore } from './cache/user.store';
+import { AuthService } from './service/auth.service';
 
 @Component({
-    selector: 'app-root',
-    imports: [RouterOutlet, Header],
-    templateUrl: './app.html',
-    styleUrl: './app.css'
+  selector: 'app-root',
+  imports: [RouterOutlet, Header],
+  templateUrl: './app.html',
+  styleUrl: './app.css'
 })
 export class App implements OnInit {
-    protected readonly title = signal('Task Management System');
+  protected readonly title = signal('Task Management System');
 
-    constructor(private userStore: UserStore, private oauth2Service: OAuth2Service, private router: Router,
-            private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
-        effect(() => {
-            const user = userStore.userCache().item;
+  constructor(private userStore: UserStore, private authService: AuthService,
+              private oauth2Service: OAuth2Service, private router: Router,
+              private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+    effect(() => {
+      const user = userStore.userCache().item;
 
-            if (user) {
-                this.oauth2Service.checkCalendarStatus().subscribe();
-                this.oauth2Service.checkDropboxStatus().subscribe();
-            }
-        })
+      if (user) {
+        this.oauth2Service.checkCalendarStatus().subscribe();
+        this.oauth2Service.checkDropboxStatus().subscribe();
+      }
+    })
 
-        registerIcons(iconRegistry, sanitizer);
-    }
+    registerIcons(iconRegistry, sanitizer);
+  }
 
-    ngOnInit(): void {
-        this.router.routerState.root.queryParamMap.subscribe({
-            next: paramMap => {
-                const provider = paramMap.get('oauth');
-                const result = paramMap.get('result');
+  ngOnInit(): void {
+    this.router.routerState.root.queryParamMap.subscribe({
+      next: paramMap => {
+        const provider = paramMap.get('oauth');
+        const result = paramMap.get('result');
 
-                if (provider && result) {
-                    if (result === 'success') {
-                        this.snackBar.open(`${provider} has been successfully connected.`, 'Dismiss', {
-                            duration: 3000
-                        })
-                    } else {
-                        this.snackBar.open(`An error occured during an attempt to connect ${provider}.`, 'Dismiss', {
-                            duration: 5000
-                        })
-                    }
-                }
-            }
-        });
-    }
+        if (provider && result) {
+          if (result === 'success') {
+            this.snackBar.open(`${provider} has been successfully connected.`, 'Dismiss', {
+              duration: 3000
+            })
+          } else {
+            this.snackBar.open(`An error occured during an attempt to connect ${provider}.`, 'Dismiss', {
+              duration: 5000
+            })
+          }
+        }
+      }
+    });
+
+    this.authService.forceCsrfTokenResolve().subscribe();
+  }
 }

@@ -4,7 +4,6 @@ import { MatIconModule } from "@angular/material/icon";
 import { EventType, Router } from '@angular/router';
 import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { GeneralApiError, UserDeleteResponse } from '../../../models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
@@ -17,6 +16,8 @@ import { UpdateUserDetailsDialog } from '../../users/update-user-details-dialog/
 import { DeleteAccountDialog } from '../../users/delete-account-dialog/delete-account-dialog';
 import { UserStore } from '../../../cache/user.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
+import { GeneralApiError } from '../../../models/error.model';
+import { UserDeleteResponse } from '../../../models/user.model';
 
 @Component({
   selector: 'app-header',

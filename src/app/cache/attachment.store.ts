@@ -1,11 +1,10 @@
 import { computed, effect, inject, Injectable } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { AttachmentResponse, Page, SimpleApiError } from '../models';
-import { catchError, EMPTY, Observable, tap } from 'rxjs';
+import { catchError, Observable, tap } from 'rxjs';
 import { AttachmentService } from '../service/attachment.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { getDefaultErrorMessageForType } from '../utils';
 import { TaskStore } from './task.store';
+import { AttachmentResponse } from '../models/attachment.model';
+import { Page } from '../models/general.model';
 
 @Injectable({
   providedIn: 'root'
@@ -38,12 +37,7 @@ export class AttachmentStore extends AbstractStore<AttachmentResponse, never> {
           this.postLoading(page);
         }
       }),
-      catchError((err: HttpErrorResponse) => {
-        const error = err.error as SimpleApiError;
-
-        this.postLoading(getDefaultErrorMessageForType(error));
-        return EMPTY;
-      })
+      catchError(this.catchErrorDefault)
     );
   }
 }

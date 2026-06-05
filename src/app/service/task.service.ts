@@ -1,7 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Page, TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models';
 import { Observable } from 'rxjs';
+import { TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models/task.model';
+import { Page } from '../models/general.model';
 
 @Injectable({
   providedIn: 'root',

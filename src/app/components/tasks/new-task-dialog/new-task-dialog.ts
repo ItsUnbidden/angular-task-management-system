@@ -1,7 +1,6 @@
 import { Component, inject, Inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { EssentialUserResponse, GeneralApiError, TaskCreateRequest, TaskPriority, UserResponse } from '../../../models';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatNativeDateModule } from '@angular/material/core';
@@ -18,6 +17,9 @@ import { EMPTY, switchMap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { NewLabelDialog } from '../../label/new-label-dialog/new-label-dialog';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { EssentialUserResponse, UserResponse } from '../../../models/user.model';
+import { TaskCreateRequest, TaskPriority } from '../../../models/task.model';
+import { GeneralApiError } from '../../../models/error.model';
 
 interface TaskPriorityOption {
   priority: TaskPriority;

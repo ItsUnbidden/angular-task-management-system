@@ -1,9 +1,10 @@
 import { inject, Injectable, signal } from '@angular/core';
-import { CommentResponse, Page } from '../models';
 import { MessageService } from '../service/message.service';
-import { Observable, tap } from 'rxjs';
-import { FlattenedReply, ReplyStore } from './reply.store';
+import { catchError, Observable, tap } from 'rxjs';
+import { ReplyStore } from './reply.store';
 import { CommentStore } from './comment.store';
+import { Page } from '../models/general.model';
+import { CommentResponse, FlattenedReply } from '../models/message.model';
 
 export interface MessageState {
   isReplying: boolean;
@@ -43,9 +44,6 @@ export class MessageStore {
       }
     }));
   }
-
-  cacheMoreReplies(commentId: number) : Observable<FlattenedReply[]>;
-  cacheMoreReplies(commentId: number, page: number) : Observable<FlattenedReply[]>;
 
   cacheMoreReplies(commentId: number, page?: number) : Observable<FlattenedReply[]> {
     let store = this.replyStores().get(commentId);

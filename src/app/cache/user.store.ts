@@ -1,10 +1,12 @@
 import { computed, Injectable, signal } from '@angular/core';
-import { LoginRequest, Page, SimpleApiError, SingleItemCache, TableState, UserDeleteResponse, UserResponse, UserUpdateRequest } from '../models';
 import { catchError, EMPTY, finalize, Observable, of, shareReplay, tap } from 'rxjs';
 import { UserService } from '../service/user.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getDefaultErrorMessageForType } from '../utils';
 import { AbstractStore } from './abstract.store';
+import { LoginRequest, UserDeleteResponse, UserResponse, UserUpdateRequest } from '../models/user.model';
+import { Page, SingleItemCache, TableState } from '../models/general.model';
+import { SimpleApiError } from '../models/error.model';
 
 @Injectable({
   providedIn: 'root',

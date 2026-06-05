@@ -5,12 +5,12 @@ import { MatDialogModule, MatDialogRef } from "@angular/material/dialog";
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../../utils';
-import { GeneralApiError } from '../../../models';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { UserStore } from '../../../cache/user.store';
 import { ValidationBoundaries } from '../../validation-boundaries';
+import { GeneralApiError } from '../../../models/error.model';
 
 @Component({
   selector: 'app-update-user-details-dialog',

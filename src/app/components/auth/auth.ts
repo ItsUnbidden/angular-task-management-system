@@ -11,8 +11,8 @@ import { finalize, switchMap } from 'rxjs';
 import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../utils';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
-import { SimpleApiError } from '../../models';
 import { ValidationBoundaries } from '../validation-boundaries';
+import { SimpleApiError } from '../../models/error.model';
 
 @Component({
     selector: 'app-auth',

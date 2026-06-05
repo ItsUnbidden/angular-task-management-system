@@ -1,6 +1,5 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { ProjectService } from '../../service/project.service';
-import { GeneralApiError, ProjectRoleResponse, ProjectUpdateRequest } from '../../models';
 import { MatCardModule } from "@angular/material/card";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatIconModule } from '@angular/material/icon';
@@ -24,10 +23,13 @@ import { AddUserDialog } from '../users/add-user-dialog/add-user-dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, getDefaultErrorMessageForType, toLocalDateString } from '../../utils';
+import { getChipColor, getChipText, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
 import { ProjectStore } from '../../cache/project.store';
 import { UserStore } from '../../cache/user.store';
 import { ValidationBoundaries } from '../validation-boundaries';
+import { ProjectRoleResponse, ProjectUpdateRequest, ProjectWithDropboxResultResponse } from '../../models/project.model';
+import { GeneralApiError } from '../../models/error.model';
+import { ThirdPartyOperationStatus } from '../../models/external.model';
 
 @Component({
   selector: 'app-overview',
@@ -63,6 +65,8 @@ export class Project {
   protected readonly isUserConnectedToDropbox = this.oauth2Service.isDropboxConnected;
   protected readonly isUserConnectedToCalendar = this.oauth2Service.isCalendarConnected;
 
+  protected readonly isConnectedToDropboxInProject = this.projectStore.isConnectedToDropboxInProject;
+  protected readonly isConnectedToCalendarInProject = this.projectStore.isConnectedToCalendarInProject;
   protected readonly isCreator = this.projectStore.isCreator;
   protected readonly isAdmin = this.projectStore.isAdmin;
   protected readonly isContributor = this.projectStore.isContributor;
@@ -173,7 +177,15 @@ export class Project {
 
       if (request) {
         request.name = this.nameEditForm.value.projectName;
-        this.projectStore.updateCachedProject(request).subscribe();
+        this.projectStore.updateCachedProject(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingName.set(false);
@@ -200,7 +212,15 @@ export class Project {
 
       if (request) {
         request.description = this.descriptionEditForm.value.projectDescription ?? undefined;
-        this.projectStore.updateCachedProject(request).subscribe();
+        this.projectStore.updateCachedProject(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingDescription.set(false);
@@ -230,7 +250,15 @@ export class Project {
 
       this.isSavingPrivacy.set(false);
       return EMPTY;
-    })).subscribe();
+    })).subscribe({
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+          duration: 10000
+        });
+      }
+    });
   }
 
   protected onProjectDatesEdit() {
@@ -251,7 +279,15 @@ export class Project {
           request.startDate = toLocalDateString(this.datesEditForm.value.startDate) ?? '';
         }
         request.endDate = toLocalDateString(this.datesEditForm.value.endDate ?? null);
-        this.projectStore.updateCachedProject(request).subscribe();
+        this.projectStore.updateCachedProject(request).subscribe({
+          error: (err: HttpErrorResponse) => {
+            const error = err.error as GeneralApiError;
+
+            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+              duration: 10000
+            });
+          }
+        });
       }
     }
     this.isEditingDates.set(false);
@@ -261,11 +297,26 @@ export class Project {
     this.dialog.open(AddUserDialog, {
       disableClose: true,
       width: '420px'
-    })
-    .afterClosed()
-    .subscribe(confirmed => {
-      if (confirmed) {
-        console.log('User added successfuly.')
+    }).afterClosed().subscribe({
+      next: (response: ProjectWithDropboxResultResponse) => {
+        if (response) {
+          let message = 'User has been successfully added to the project.';
+
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `User has been successfully added, but there was a Dropbox 
+                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          } 
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 10000
+          });
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        const error = err.error as GeneralApiError;
+
+        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
+          duration: 10000
+        });
       }
     });
   }
@@ -284,29 +335,18 @@ export class Project {
         switchMap(confirmed => {
           if (confirmed) return this.projectStore.removeUserFromProject(projectRole.userId);
           return EMPTY;
-        }),
-        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
+        })
       ).subscribe({
         next: response => {
-          let message = `${projectRole.username} has been removed from this project. `;
-          if (response.dropboxDisconnected.status === 'FAILED') {
-            message += 'Dropbox was not disconnected properly. ';
-          }
-          if (response.calendarDisconnected.status === 'FAILED') {
-            message += 'Calendar was not disconnected properly.';
+          let message = `${projectRole.username} has been removed from this project.`;
+          
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `User has been successfully removed, but there was a Dropbox 
+                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
           }
           this.snackBar.open(message, 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
-        },
-        error: (err: HttpErrorResponse) => {
-          const error = err.error as GeneralApiError;
-
-          if (error) {
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 5000
-            });
-          }
         }
       });
     }
@@ -328,17 +368,23 @@ export class Project {
         if (confirmed) return this.projectStore.quitProject();
         return EMPTY;
       })).subscribe({
-        next: () => {
+        next: (response) => {
           this.router.navigateByUrl('/dashboard');
-          this.snackBar.open(`You have successfuly left project ${project.name}`, 'Dismiss', {
-            duration: 3000
+          let message = `You have successfully left project ${project.name}.`;
+          
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `You have successfully left project ${project.name}, but there was a Dropbox 
+                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          }
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 10000
           });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -362,15 +408,15 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open(`${projectRole.username} is now an admin`, 'Dismiss', {
-            duration: 3000
+          this.snackBar.open(`${projectRole.username} is now an admin.`, 'Dismiss', {
+            duration: 5000
           })
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -394,15 +440,15 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open(`${projectRole.username} is now a contributor`, 'Dismiss', {
-            duration: 3000
+          this.snackBar.open(`${projectRole.username} is now a contributor.`, 'Dismiss', {
+            duration: 5000
           })
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -425,16 +471,22 @@ export class Project {
         if (confirmed) return this.projectStore.changeMemberRole(projectRole.userId, { newRole: 'CREATOR'});
         return EMPTY;
       })).subscribe({
-        next: () => {
-          this.snackBar.open(`${projectRole.username} is now the creator. You are now an admin.`, 'Dismiss', {
-            duration: 3000
-          })
+        next: response => {
+          let message = `The project has been successfully transfered to ${projectRole.username}. You are now an admin.`;
+          
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `The project has been successfully transfered to ${projectRole.username} and you are now an admin.
+                There was a Dropbox issue, however: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          }
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 15000
+          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -457,17 +509,23 @@ export class Project {
         if (confirmed) return this.projectStore.deleteProject();
         return EMPTY;
       })).subscribe({
-        next: () => {
+        next: response => {
           this.router.navigateByUrl('/dashboard');
-          this.snackBar.open(`You have successfuly deleted ${project.name}`, 'Dismiss', {
-            duration: 3000
-          })
+          let message = `You have successfuly deleted ${project.name}`;
+
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `You have successfuly deleted ${project.name}, but there was a Dropbox issue: 
+                ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          }
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 10000
+          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -481,7 +539,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Connect Dropbox',
-          message: `Are you sure you want to <strong>connect</strong> Dropbox to this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+          message: `Are you sure you want to <strong>connect</strong> Dropbox to this project? It might take a <strong>significant</strong> amount of time.`
         },
         disableClose: true,
         width: '420px'
@@ -492,14 +550,14 @@ export class Project {
       })).subscribe({
         next: () => {
           this.snackBar.open('Dropbox has been successfully connected to this project.', 'Dismiss', {
-            duration: 3000
+            duration: 5000
           });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -513,7 +571,7 @@ export class Project {
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Connect Calendar',
-          message: `Are you sure you want to <strong>connect</strong> Calendar to this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+          message: `Are you sure you want to <strong>connect</strong> Calendar to this project? It might take a <strong>significant</strong> amount of time.`
         },
         disableClose: true,
         width: '420px'
@@ -524,44 +582,48 @@ export class Project {
       })).subscribe({
         next: () => {
           this.snackBar.open('Calendar has been successfully connected to this project.', 'Dismiss', {
-            duration: 3000
+            duration: 5000
           });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });     
     }
   }
 
-  protected onJoinDropbox() {
+  public onJoinDropbox() {
     const project = this.projectCache()?.item;
 
     if (project) {         
       this.dialog.open(ConfirmDialog, {
         data: {
           title: 'Join Dropbox',
-          message: `Are you sure you want to <strong>join</strong> Dropbox in this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+          message: `Are you sure you want to <strong>join</strong> Dropbox in this project?.`
         },
         disableClose: true,
         width: '420px'
       })
       .afterClosed().pipe(
         switchMap(confirmed => {
-          if (confirmed) return this.projectService.joinDropbox(project.id); 
+          if (confirmed) return this.projectStore.joinDropbox(); 
           return EMPTY;   
-        }),
-        switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
+        })
       ).subscribe({
+        next: () => {
+          this.snackBar.open('You have successfully joined Dropbox in this project. ', 'Dismiss', {
+            duration: 5000
+          });
+        },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       }); 
@@ -587,11 +649,16 @@ export class Project {
         }),
         switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
       ).subscribe({       
+        next: () => {
+          this.snackBar.open('You have successfully joined Calendar in this project.', 'Dismiss', {
+            duration: 5000
+          });
+        },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });   
@@ -612,24 +679,27 @@ export class Project {
       })
       .afterClosed().pipe(
         switchMap(confirmed => {
-          if (confirmed) return this.projectService.disconnectDropbox(project.id);
+          if (confirmed) return this.projectStore.disconnectDropbox();
           return EMPTY;
-        }),
-        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
+        })
       ).subscribe({
-        next: result => {
-          if (result.isDropboxFolderDeleted !== undefined) this.snackBar.open(
-            result.isDropboxFolderDeleted ? 'Dropbox has been disconnected successfully.'
-            : 'Dropbox has been disconnected from this project, but the shared folder on Dropbox has '
-            + 'not been deleted due to an error. You might have to delete it manually.', 'Dismiss', {
-              duration: 7000
-            });
+        next: response => {
+          let message = `You have successfully disconnected this project from Dropbox.`;
+
+          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
+            message = `You have successfuly disconnected this project from Dropbox ${project.name},
+                but there was an issue with deleting the shared folder: 
+                ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          }
+          this.snackBar.open(message, 'Dismiss', {
+            duration: 15000
+          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -667,7 +737,7 @@ export class Project {
           const error = err.error as GeneralApiError;
 
           this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
+            duration: 10000
           });
         }
       });
@@ -680,7 +750,7 @@ export class Project {
         const error = err.error as GeneralApiError;
 
         this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 5000
+          duration: 10000
         });
       }
     });

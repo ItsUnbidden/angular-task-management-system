@@ -1,7 +1,9 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { Page, ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectUpdateStatusRequest, ThirdPartyProjectDisconnectionResponse, UserAddToProjectResponse, UserRemoveFromProjectResponse } from '../models';
+import { ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectUpdateStatusRequest, ProjectWithDropboxResultResponse } from '../models/project.model';
+import { Page } from '../models/general.model';
+import { ThirdPartyProjectDisconnectionResponse } from '../models/external.model';
 
 @Injectable({
   providedIn: 'root',
@@ -29,28 +31,28 @@ export class ProjectService {
     return this.http.get<Page<ProjectResponse>>(`/api/projects/search`, { params })
   }
 
-  createProject(request: ProjectCreateRequest) : Observable<ProjectResponse> {
-    return this.http.post<ProjectResponse>(`/api/projects`, request);
+  createProject(request: ProjectCreateRequest) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.post<ProjectWithDropboxResultResponse>(`/api/projects`, request);
   }
 
   updateProject(projectId: number, request: ProjectUpdateRequest) : Observable<ProjectResponse> {
     return this.http.put<ProjectResponse>(`/api/projects/${projectId}`, request);
   }
 
-  addUserToProject(projectId: number, username: string) : Observable<UserAddToProjectResponse> {
-    return this.http.post<UserAddToProjectResponse>(`/api/projects/${projectId}/users/${username}/add`, {});
+  addUserToProject(projectId: number, username: string) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.post<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/users/${username}/add`, {});
   }
 
-  removeUserFromProject(projectId: number, userId: number) : Observable<UserRemoveFromProjectResponse> {
-    return this.http.delete<UserRemoveFromProjectResponse>(`/api/projects/${projectId}/users/${userId}/remove`);
+  removeUserFromProject(projectId: number, userId: number) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.delete<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/users/${userId}/remove`);
   }
 
-  quitProject(projectId: number) : Observable<UserRemoveFromProjectResponse> {
-    return this.http.delete<UserRemoveFromProjectResponse>(`/api/projects/${projectId}/quit`);
+  quitProject(projectId: number) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.delete<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/quit`);
   }
 
-  changeMemberRole(projectId: number, userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectResponse> {
-    return this.http.patch<ProjectResponse>(`/api/projects/${projectId}/users/${userId}/roles`, request);
+  changeMemberRole(projectId: number, userId: number, request: ProjectRoleUpdateRequest) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.patch<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/users/${userId}/roles`, request);
   }
 
   changeStatus(projectId: number, request: ProjectUpdateStatusRequest) : Observable<ProjectResponse> {
@@ -61,24 +63,24 @@ export class ProjectService {
     return this.http.delete<ProjectDeleteResponse>(`/api/projects/${projectId}`);
   }
 
-  connectProjectToDropbox(projectId: number): Observable<ProjectResponse> {
-    return this.http.patch<ProjectResponse>(`/api/projects/${projectId}/dropbox/connect`, {});
+  connectProjectToDropbox(projectId: number): Observable<ProjectWithDropboxResultResponse> {
+    return this.http.patch<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/dropbox/connect`, {});
   }
 
   connectProjectToCalendar(projectId: number): Observable<ProjectResponse> {
     return this.http.patch<ProjectResponse>(`/api/projects/${projectId}/calendar/connect`, {});
   }
 
-  joinDropbox(projectId: number) : Observable<void> {
-    return this.http.patch<void>(`/api/projects/${projectId}/dropbox/join`, {});
+  joinDropbox(projectId: number) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.patch<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/dropbox/join`, {});
   }
 
   joinCalendar(projectId: number) : Observable<void> {
     return this.http.patch<void>(`/api/projects/${projectId}/calendar/join`, {});
   }
 
-  disconnectDropbox(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {
-    return this.http.delete<ThirdPartyProjectDisconnectionResponse>(`/api/projects/${projectId}/dropbox/disconnect`);
+  disconnectDropbox(projectId: number) : Observable<ProjectWithDropboxResultResponse> {
+    return this.http.delete<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/dropbox/disconnect`);
   }
 
   disconnectCalendar(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {

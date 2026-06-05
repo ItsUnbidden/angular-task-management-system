@@ -1,12 +1,8 @@
-import { computed, signal } from '@angular/core';
+import { computed } from '@angular/core';
 import { AbstractStore } from './abstract.store';
-import { Page, ReplyResponse } from '../models';
-import { map, Observable, tap } from 'rxjs';
+import { catchError, map, Observable } from 'rxjs';
 import { MessageService } from '../service/message.service';
-
-export interface FlattenedReply extends ReplyResponse {
-  depth: number;
-}
+import { FlattenedReply, ReplyResponse } from '../models/message.model';
 
 export class ReplyStore extends AbstractStore<ReplyResponse, never> {
   static readonly ITEMS_PER_PAGE = 10;
@@ -28,7 +24,8 @@ export class ReplyStore extends AbstractStore<ReplyResponse, never> {
       map((replies) => {
         this.postLoading(replies, true);
         return this.flattenReplies(replies.content, 0);
-      }
+      },
+      catchError(this.catchErrorDefault)
     ));
   }
 

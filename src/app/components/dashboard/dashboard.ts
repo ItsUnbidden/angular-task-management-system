@@ -8,7 +8,6 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs'
 import { ProjectService } from '../../service/project.service';
-import { EssentialUserResponse, ProjectResponse, TaskResponse } from '../../models';
 import { MatDialog } from '@angular/material/dialog';
 import { NewProjectDialog } from '../projects/new-project/new-project-dialog';
 import { Router } from '@angular/router';
@@ -20,6 +19,9 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { DashboardStore } from '../../cache/dashboard.store';
 import { UserStore } from '../../cache/user.store';
+import { ProjectResponse } from '../../models/project.model';
+import { TaskResponse } from '../../models/task.model';
+import { EssentialUserResponse } from '../../models/user.model';
 
 @Component({
   selector: 'app-dashboard',

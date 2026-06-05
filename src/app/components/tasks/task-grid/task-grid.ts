@@ -5,7 +5,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { EssentialUserResponse, Page, TaskPriority, TaskResponse, TaskStatus } from '../../../models';
 import { MatDialog } from '@angular/material/dialog';
 import { NewTaskDialog } from '../new-task-dialog/new-task-dialog';
 import { CommonModule } from '@angular/common';
@@ -22,6 +21,9 @@ import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
 import { LabelStore } from '../../../cache/label.store';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TaskStatus, TaskPriority, TaskResponse } from '../../../models/task.model';
+import { EssentialUserResponse } from '../../../models/user.model';
+import { Page } from '../../../models/general.model';
 
 interface TaskStatusOption {
   status: TaskStatus;

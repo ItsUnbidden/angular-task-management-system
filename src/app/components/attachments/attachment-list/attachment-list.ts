@@ -3,7 +3,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
-import { AttachmentResponse, SimpleApiError } from '../../../models';
 import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
@@ -14,7 +13,9 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, switchMap } from 'rxjs';
 import { AttachmentStore } from '../../../cache/attachment.store';
 import { TaskStore } from '../../../cache/task.store';
-import { getDefaultErrorMessageForExternalResult, getDefaultErrorMessageForType, isExternalError } from '../../../utils';
+import { getDefaultErrorMessageForType, isExternalError } from '../../../utils';
+import { GeneralApiError, SimpleApiError } from '../../../models/error.model';
+import { AttachmentResponse } from '../../../models/attachment.model';
 
 @Component({
   selector: 'app-attachment-list',
@@ -62,11 +63,10 @@ export class AttachmentList {
       .subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as SimpleApiError;
-          const message = isExternalError(error) ? getDefaultErrorMessageForExternalResult(error) : getDefaultErrorMessageForType(error);
 
           this.isProgressBarActive.set(false);
 
-          this.snackBar.open(message, 'Dismiss', {
+          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
             duration: 5000
           });
         }
@@ -83,6 +83,14 @@ export class AttachmentList {
         a.download = attachment.filename;
         a.click();
         window.URL.revokeObjectURL(url);
+      },
+      error: (err: SimpleApiError) => {
+        this.isProgressBarActive.set(false);
+
+        this.snackBar.open(getDefaultErrorMessageForType(err), 'Dismiss');
+        const selectedTask = this.taskStore.selectedTaskCache().item;
+
+        if (selectedTask) this.attachmentStore.cacheAttachmentsForTask(selectedTask.id).subscribe();
       }
     });
   }
@@ -108,6 +116,9 @@ export class AttachmentList {
         const task = this.taskStore.selectedTaskCache()?.item;
 
         this.isProgressBarActive.set(false);
+        this.snackBar.open(`Attachment ${attachment.filename} has been deleted successfully.`, 'Dismiss', {
+          duration: 5000
+        });
         if (task) return this.attachmentStore.cacheAttachmentsForTask(task.id);
         return EMPTY;
       })
