@@ -30,17 +30,17 @@ export function getChipColor(status: string | null): string {
   }
 }
 
-export function getChipText(status: string | null): string {
+export function getChipTextKey(status: string | null): string {
   switch (status) {
-    case 'INITIATED': return 'Initiated';
-    case 'NOT_STARTED': return 'Not started';
-    case 'IN_PROGRESS': return 'In Progress';
-    case 'COMPLETED': return 'Completed';
-    case 'OVERDUE': return 'Overdue';
-    case 'LOW': return 'Low';
-    case 'MEDIUM': return 'Medium';
-    case 'HIGH': return 'High';
-    default: return 'Unknown';
+    case 'INITIATED': return 'common.title.status.initiated';
+    case 'NOT_STARTED': return 'common.title.status.notStarted';
+    case 'IN_PROGRESS': return 'common.title.status.inProgress';
+    case 'COMPLETED': return 'common.title.status.completed';
+    case 'OVERDUE': return 'common.title.status.overdue';
+    case 'LOW': return 'task.title.priority.low';
+    case 'MEDIUM': return 'task.title.priority.medium';
+    case 'HIGH': return 'task.title.priority.high';
+    default: return 'common.title.unknown';
   }
 }
 

@@ -50,7 +50,7 @@ export interface TaskFilter {
 export interface TaskDeleteResponse {
   taskName: string;
   dropboxFolderDeleted: DropboxOperationResult;
-  calendarFolderDeleted: ThirdPartyOperationResult;
+  calendarDeleted: ThirdPartyOperationResult;
 }
 
 export type TaskStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';

@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from "@angular/material/select";
 import { TaskService } from '../../../service/task.service';
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
-import { getDefaultErrorMessageForType } from '../../../utils';
+import { getChipTextKey, getDefaultErrorMessageForType } from '../../../utils';
 import { MatChipsModule } from '@angular/material/chips';
 import { LabelStore } from '../../../cache/label.store';
 import { EMPTY, switchMap } from 'rxjs';
@@ -20,11 +20,7 @@ import { ValidationBoundaries } from '../../validation-boundaries';
 import { EssentialUserResponse, UserResponse } from '../../../models/user.model';
 import { TaskCreateRequest, TaskPriority } from '../../../models/task.model';
 import { GeneralApiError } from '../../../models/error.model';
-
-interface TaskPriorityOption {
-  priority: TaskPriority;
-  priorityView: string;
-}
+import { TranslatePipe } from '@ngx-translate/core';
 
 export interface NewTaskDialogData {
   projectMembers: EssentialUserResponse[];
@@ -36,7 +32,7 @@ export interface NewTaskDialogData {
   imports: [MatDialogModule, MatFormFieldModule, MatInputModule,
             ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule,
             MatButtonModule, MatIconModule, MatSelectModule,
-            MatProgressSpinnerModule, MatChipsModule],
+            MatProgressSpinnerModule, MatChipsModule, TranslatePipe],
   templateUrl: './new-task-dialog.html',
   styleUrl: './new-task-dialog.css',
 })
@@ -68,11 +64,7 @@ export class NewTaskDialog {
     labels: new FormControl<number[]>([], { nonNullable: true })
   });
 
-  protected readonly priorityOptions: TaskPriorityOption[] = [
-    { priority: 'LOW', priorityView: 'Low' },
-    { priority: 'MEDIUM', priorityView: 'Medium' },
-    { priority: 'HIGH', priorityView: 'High' },
-  ];
+  protected readonly priorityOptions: TaskPriority[] = ['LOW', 'MEDIUM', "HIGH"];
 
   constructor(private readonly dialogRef: MatDialogRef<NewTaskDialog, boolean>,
               private readonly dialog: MatDialog,
@@ -142,5 +134,9 @@ export class NewTaskDialog {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  protected getChipTextLocal(status: string | null) : string {
+    return getChipTextKey(status)
   }
 }

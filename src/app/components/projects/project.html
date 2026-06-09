@@ -3,33 +3,30 @@
         @if (projectCache().isLoading) {
             <div class="spinner-container">
                 <mat-spinner diameter="30"></mat-spinner>
-                <span>Loading project...</span>
+                <span>{{ 'project.title.loading.single' | translate }}</span>
             </div>
         }
         @else {
             @if (projectCache().error) {
                 <mat-card-header>
-                    <mat-card-title class="card-title">Error</mat-card-title>
+                    <mat-card-title class="card-title">{{ 'error.title.error' | translate }}</mat-card-title>
                 </mat-card-header>
 
                 <mat-card-content>
-                    <p>{{ projectCache().error }}</p>
+                    <p>{{ projectCache().error | translate }}</p>
                 </mat-card-content>
 
                 <mat-card-actions class="error-actions-container">
                     <button matButton="elevated" (click)="onReload()">
                         <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
-                        Reload
+                        {{ 'common.button.reload' | translate }}
                     </button>
                 </mat-card-actions>
             }
             @else {
                 <mat-card-header>
                     <mat-card-title>
-                        Overview
-                        @if (isManager()) {
-                            (Manager privilege)
-                        }
+                        {{ (isManager() ? 'common.title.overview.privilege' : 'common.title.overview.normal') | translate }}
                     </mat-card-title>
                 </mat-card-header>
     
@@ -39,17 +36,17 @@
                     @if (isEditingName()) {
                         <form class="edit-input-form" [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
                             <mat-form-field class="inline-form-field">
-                                <mat-label>New project name</mat-label>
+                                <mat-label>{{ 'project.title.newName' | translate }}</mat-label>
                                 <input matInput type="text" formControlName="projectName">
                                 <mat-hint align="end">{{ nameEditForm.value.projectName?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                                 @if (nameEditForm.hasError('required', 'projectName')) {
-                                    <mat-error>This field is required.</mat-error>
+                                    <mat-error>{{ 'project.validation.name.required' | translate }}</mat-error>
                                 }
                                 @if (nameEditForm.hasError('minlength', 'projectName')) {
-                                    <mat-error>Project name must be at least {{ NAME_MIN_LENGTH }} characters long.</mat-error>
+                                    <mat-error>{{ 'project.validation.name.minLength' | translate:{ minLength: NAME_MIN_LENGTH } }}</mat-error>
                                 }
                                 @if (nameEditForm.hasError('maxlength', 'projectName')) {
-                                    <mat-error>Project name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
+                                    <mat-error>{{ 'project.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
                                 }
                             </mat-form-field>
                             <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid || projectCache().isLoading">
@@ -76,11 +73,11 @@
                     @if (isEditingDescription()) {
                         <form [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
                             <mat-form-field class="description-input" appearance="outline">
-                                <mat-label>New project description</mat-label>
+                                <mat-label>{{ 'project.title.newDescription' | translate }}</mat-label>
                                 <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>
                                 <mat-hint align="end">{{ descriptionEditForm.value.projectDescription?.length }} / {{ DESCRIPTION_MAX_LENGTH }}</mat-hint>
                                 @if (descriptionEditForm.hasError('maxlength', 'description')) {
-                                    <mat-error>Project description cannot be longer than {{ DESCRIPTION_MAX_LENGTH }} characters.</mat-error>
+                                    <mat-error>{{ 'project.validation.description.maxLength' | translate:{ maxLength: DESCRIPTION_MAX_LENGTH } }}</mat-error>
                                 }
                             </mat-form-field>
                             <div class="actions">
@@ -99,7 +96,7 @@
                                 <p class="description-field">{{ projectCache().item?.description ?? "" }}</p>
                             } 
                             @else {
-                                <p class="description-none">No description</p>
+                                <p class="description-none">{{ 'project.title.noDescription' | translate }}</p>
                             }
                             @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDescriptionEdit()">
@@ -111,7 +108,7 @@
                     @if (isEditingDates()) {
                         <form class="edit-input-form" [formGroup]="datesEditForm" (ngSubmit)="onSubmitProjectDates()">
                             <mat-form-field appearance="outline">
-                                <mat-label>New project dates</mat-label>
+                                <mat-label>{{ 'project.title.newDates' | translate }}</mat-label>
                                 <mat-date-range-input [rangePicker]="picker">
                                     <input matStartDate formControlName="startDate" placeholder="Start">
                                     <input matEndDate formControlName="endDate" placeholder="End">
@@ -134,11 +131,11 @@
                             <div class = "muted">
                                 {{ projectCache().item?.startDate | date:'mediumDate' }}
                                 —
-                                {{ projectCache().item?.endDate ? (projectCache().item?.endDate | date:'mediumDate') : 'No end date'}}
+                                {{ projectCache().item?.endDate ? (projectCache().item?.endDate | date:'mediumDate') : ('project.title.noEndDate' | translate) }}
                             </div>
     
                             <mat-chip [ngClass]="getChipColorLocal(projectCache().item?.status ?? null)">
-                                {{ getChipTextLocal(projectCache().item?.status ?? null) }}
+                                {{ getChipTextLocal(projectCache().item?.status ?? null) | translate }}
                             </mat-chip>      
                             @if (isAdmin() || isManager()) {
                                 <button mat-icon-button (click)="onProjectDatesEdit()">
@@ -151,10 +148,10 @@
                     <mat-accordion>
                         <mat-expansion-panel>
                             <mat-expansion-panel-header>
-                                <mat-panel-title>Project members</mat-panel-title>
+                                <mat-panel-title>{{ 'project.title.projectMembers' | translate }}</mat-panel-title>
                                 <mat-panel-description>
                                     <div class="row">
-                                        <h4>Creator:</h4> {{ creator()?.username }}
+                                        <h4>{{ 'project.title.creator' | translate }}</h4> {{ creator()?.username }}
                                     </div>
                                     <mat-icon fontSet="material-symbols-outlined">account_circle</mat-icon>
                                 </mat-panel-description>
@@ -162,7 +159,7 @@
                             @if (isAdmin() || isManager()) {
                                 <button matButton="elevated" (click)="onAddUser()">
                                     <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-                                    Add user
+                                    {{ 'project.button.addUser' | translate }}
                                 </button>
                             }                  
                             @if (admins().length !== 0) {
@@ -173,17 +170,17 @@
                                         @if (isCreator() || isManager()) {
                                             <button matButton="elevated" (click)="onTransferOwnership(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">crown</mat-icon>
-                                                Make owner
+                                                {{ 'project.button.makeOwner' | translate }}
                                             </button>
                                             <button matButton="elevated" (click)="onRemoveAdmin(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove_moderator</mat-icon>
-                                                Remove admin
+                                                {{ 'project.button.removeAdmin' | translate }}
                                             </button>
                                         }     
                                         @if ((isAdmin() || isManager()) && currentUser().item?.id !== admin.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(admin)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
-                                                Remove
+                                                {{ 'project.button.removeUser' | translate }}
                                             </button>
                                         }                                                           
                                     </div>
@@ -197,13 +194,13 @@
                                         @if (isCreator() || isManager()) {
                                             <button matButton="elevated" (click)="onMakeAdmin(contributor)">
                                                 <mat-icon fontSet="material-symbols-outlined">add_moderator</mat-icon>
-                                                Make admin
+                                                {{ 'project.button.makeAdmin' | translate }}
                                             </button>
                                         }
                                         @if ((isAdmin() || isManager()) && currentUser().item?.id !== contributor.userId) {
                                             <button matButton="elevated" (click)="onRemoveUser(contributor)">
                                                 <mat-icon fontSet="material-symbols-outlined">remove</mat-icon>
-                                                Remove
+                                                {{ 'project.button.removeUser' | translate }}
                                             </button>
                                         }                               
                                     </div>
@@ -216,40 +213,40 @@
                 <mat-divider></mat-divider>
                 <mat-card-actions class="project-actions-container">
                     <mat-slide-toggle [formControl]="isPrivateCtrl" (change)="onIsPrivateToggleChange($event.checked)">
-                        Private
+                        {{ 'project.title.private' | translate }}
                     </mat-slide-toggle>
                     <div class="project-buttons-container">
                         @if (isCreator() || isManager()) {
-                            <button matButton="elevated" (click)="onDeleteProject()">Delete project</button>                           
+                            <button matButton="elevated" (click)="onDeleteProject()">{{ 'project.button.delete' | translate }}</button>                           
                         }
                         @if (!isCreator() && isContributor()) {
-                            <button matButton="elevated" (click)="onQuitProject()">Quit project</button>
+                            <button matButton="elevated" (click)="onQuitProject()">{{ 'project.button.quit' | translate }}</button>
                         }     
                         @if (projectCache().item?.status === 'COMPLETED') {
-                            <button matButton="elevated" (click)="onChangeStatus('IN_PROGRESS')">Mark as in progress</button>
+                            <button matButton="elevated" (click)="onChangeStatus('IN_PROGRESS')">{{ 'project.button.inProgress' | translate }}</button>
                         }
                         @if (projectCache().item?.status !== 'COMPLETED') {
-                            <button matButton="elevated" (click)="onChangeStatus('COMPLETED')">Mark as completed</button>
+                            <button matButton="elevated" (click)="onChangeStatus('COMPLETED')">{{ 'project.button.completed' | translate }}</button>
                         }
                         @if (isUserConnectedToDropbox()) {
                             @if (isCreator()) {
                                 @if (projectCache().item?.isDropboxConnected) {
                                     <button matButton="elevated" (click)="onDisconnectDropbox()">
                                         <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                                        Disconnect Dropbox
+                                        {{ 'project.button.dropbox.disconnect' | translate }}
                                     </button>
                                 }
                                 @else {
                                     <button matButton="elevated" (click)="onConnectDropbox()">
                                         <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                        Connect Dropbox
+                                        {{ 'project.button.dropbox.connect' | translate }}
                                     </button>
                                 }
                             }
                             @else if (projectCache().item?.isDropboxConnected && !isConnectedToDropboxInProject()) {
                                 <button matButton="elevated" (click)="onJoinDropbox()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                    Join Dropbox
+                                    {{ 'project.button.dropbox.join' | translate }}
                                 </button>                               
                             }
                         }
@@ -258,20 +255,20 @@
                                 @if (projectCache().item?.isCalendarConnected) {
                                     <button matButton="elevated" (click)="onDisconnectCalendar()">
                                         <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                                        Disconnect Calendar
+                                        {{ 'project.button.calendar.disconnect' | translate }}
                                     </button>
                                 }
                                 @else {
                                     <button matButton="elevated" (click)="onConnectCalendar()">
                                         <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                        Connect Calendar
+                                        {{ 'project.button.calendar.connect' | translate }}
                                     </button>
                                 }
                             }
                             @else if (projectCache().item?.isCalendarConnected && !isConnectedToCalendarInProject()) {
                                 <button matButton="elevated" (click)="onJoinCalendar()">
                                     <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                                    Join Calendar
+                                    {{ 'project.button.calendar.join' | translate }}
                                 </button>
                             }
                         }

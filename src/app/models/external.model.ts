@@ -1,3 +1,5 @@
+import { ProjectResponse } from "./project.model";
+
 export interface ThirdPartyOperationResult {
   status: ThirdPartyOperationStatus;
 }
@@ -26,9 +28,9 @@ export interface OAuth2StatusResponse {
   aquiredAt: string;
 }
 
-export interface ThirdPartyProjectDisconnectionResponse {
-  isDropboxFolderDeleted?: boolean;
-  isCalendarDeleted?: boolean;
+export interface ProjectCalendarDisconnectionResponseDto {
+  project: ProjectResponse,
+  calendarDeleted: ThirdPartyOperationResult
 }
 
 export type OAuth2Status = 'OK' | 'EXPIRED' | 'NOT_CONNECTED';

@@ -1,17 +1,23 @@
 import { Component, Inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogContent, MatDialogRef, MatDialogTitle, MatDialogActions } from "@angular/material/dialog";
+import { TranslatePipe } from '@ngx-translate/core';
 
-export type ConfirmDialogData = {
-  title?: string,
-  message: string,
-  cancelButton?: string,
-  submitButton?: string
+export interface Key {
+  key: string;
+  params?: Object;
+}
+
+export interface ConfirmDialogData {
+  title?: Key;
+  message: Key;
+  cancelButton?: string;
+  submitButton?: string;
 }
 
 @Component({
   selector: 'app-confirm-dialog',
-  imports: [MatDialogContent, MatDialogTitle, MatDialogActions, MatButtonModule],
+  imports: [MatDialogContent, MatDialogTitle, MatDialogActions, MatButtonModule, TranslatePipe],
   templateUrl: './confirm-dialog.html',
   styleUrl: './confirm-dialog.css',
 })

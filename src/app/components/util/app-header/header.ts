@@ -4,7 +4,6 @@ import { MatIconModule } from "@angular/material/icon";
 import { EventType, Router } from '@angular/router';
 import { AuthService } from '../../../service/auth.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { OAuth2Service } from '../../../service/oauth2.service';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../confirm-dialog/confirm-dialog';
@@ -19,10 +18,12 @@ import { getDefaultErrorMessageForType } from '../../../utils';
 import { GeneralApiError } from '../../../models/error.model';
 import { UserDeleteResponse } from '../../../models/user.model';
 import { ThirdPartyOperationStatus } from '../../../models/external.model';
+import { NotificationService } from '../../../service/notification.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-header',
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatMenuModule],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatMenuModule, TranslatePipe],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -60,8 +61,13 @@ export class Header {
   protected readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
 
   constructor(private readonly authService: AuthService,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
+              private readonly translate: TranslateService,
               private readonly dialog: MatDialog) {}
+
+  public snackBarMessage() {
+
+  }
 
   protected onConnectDropbox() {
     const returnUrl = this.router.url;
@@ -76,8 +82,8 @@ export class Header {
   protected onLogoutDropbox() {
     this.dialog.open(ConfirmDialog, {
       data: {
-        title: 'Disconnect Dropbox',
-        message: 'Are you sure you want to <strong>disconnect</strong> Dropbox?',
+        title: { key: 'dropbox.confirm.logout.title' },
+        message: { key: 'dropbox.confirm.logout.message' },
       },
       disableClose: true,
       width: '420px'
@@ -88,16 +94,12 @@ export class Header {
     }))
     .subscribe({
       next: () => {
-        this.snackBar.open('Dropbox disconnected successfully.', 'Dismiss', {
-          duration: 3000
-        });
+        this.notification.info('dropbox.success.logout', 5000);
       },
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -105,8 +107,8 @@ export class Header {
   protected onLogoutCalendar() {
     this.dialog.open(ConfirmDialog, {
       data: {
-        title: 'Disconnect Google Calendar',
-        message: 'Are you sure you want to <strong>disconnect</strong> Google Calendar?',
+        title: { key: 'calendar.confirm.logout.title' },
+        message: { key: 'calendar.confirm.logout.message' },
       },
       disableClose: true,
       width: '420px'
@@ -117,16 +119,12 @@ export class Header {
     }))
     .subscribe({
       next: () => {
-        this.snackBar.open('Google Calendar disconnected successfully.', 'Dismiss', {
-          duration: 3000
-        });
+        this.notification.info('calendar.success.logout', 5000);
       },
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -134,8 +132,8 @@ export class Header {
   protected onLogout() {
     this.dialog.open(ConfirmDialog, {
       data: {
-        title: 'Logout',
-        message: 'Are you sure you want to log out?',
+        title: { key: 'auth.confirm.logout.title' },
+        message: { key: 'auth.confirm.logout.message' },
       },
       disableClose: true,
       width: '420px'
@@ -150,16 +148,12 @@ export class Header {
     .subscribe({
       next: () => {
         this.router.navigateByUrl('/auth');
-        this.snackBar.open('Logged out successfully.', 'Dismiss', {
-          duration: 3000
-        });
+        this.notification.info('auth.success.logout', 5000);
       },
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -187,9 +181,7 @@ export class Header {
     .afterClosed()
     .subscribe((response: UserDeleteResponse) => {
       if (response) {
-        this.snackBar.open(this.getDeletionConfirmationMessage(response), 'Dismiss', {
-          duration: 10000
-        });
+        this.notification.info(this.getDeletionConfirmationMessage(response), 10000);
         this.userStore.clearUser();
         this.router.navigateByUrl('/auth')
       }
@@ -197,9 +189,7 @@ export class Header {
   }
 
   private getDeletionConfirmationMessage(response: UserDeleteResponse): string {
-    let message = `You account has been successfully deleted. 
-        Deleted ${response.deletedProjects.length} projects and 
-        quitted ${response.quittedProjects.length} projects. `;
+    let message = this.translate.instant('user.success.delete.base', { numberOfDeletedProjects: response.deletedProjects.length, numberOfQuittedProjects: response.quittedProjects.length });
 
     let numberOfDropboxConnectedProjects = 0;
     let numberOfFailedDeletions = 0;
@@ -212,8 +202,7 @@ export class Header {
       }
     });
     if (numberOfFailedDeletions > 0) {
-      message += `The shared folders of ${numberOfFailedDeletions} out of ${numberOfDropboxConnectedProjects} 
-          projects that were connected to Dropbox were not deleted. You might need to remove them manually. `;
+      message += this.translate.instant('user.success.delete.dropboxDeletionIssue', { numberOfFailedDeletions, numberOfDropboxConnectedProjects });
     }
 
     let numberOfOtherDropboxConnectedProjects = 0;
@@ -227,8 +216,7 @@ export class Header {
       }
     });
     if (numberOfFailedQuits > 0) {
-      message += `The shared folders of ${numberOfFailedQuits} out of ${numberOfOtherDropboxConnectedProjects} 
-          projects that you were a member of were not properly disconnected. You might need to remove them manually.`;
+      message += this.translate.instant('user.success.delete.dropboxQuitIssue', { numberOfFailedQuits, numberOfOtherDropboxConnectedProjects });
     }
     return message;
   }

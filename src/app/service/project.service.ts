@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectUpdateStatusRequest, ProjectWithDropboxResultResponse } from '../models/project.model';
 import { Page } from '../models/general.model';
-import { ThirdPartyProjectDisconnectionResponse } from '../models/external.model';
+import { ProjectCalendarDisconnectionResponseDto } from '../models/external.model';
 
 @Injectable({
   providedIn: 'root',
@@ -83,7 +83,7 @@ export class ProjectService {
     return this.http.delete<ProjectWithDropboxResultResponse>(`/api/projects/${projectId}/dropbox/disconnect`);
   }
 
-  disconnectCalendar(projectId: number) : Observable<ThirdPartyProjectDisconnectionResponse> {
-    return this.http.delete<ThirdPartyProjectDisconnectionResponse>(`/api/projects/${projectId}/google/disconnect`);
+  disconnectCalendar(projectId: number) : Observable<ProjectCalendarDisconnectionResponseDto> {
+    return this.http.delete<ProjectCalendarDisconnectionResponseDto>(`/api/projects/${projectId}/google/disconnect`);
   }
 }

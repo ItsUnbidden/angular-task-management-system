@@ -1,0 +1,515 @@
+{
+    "common": {
+        "title": {
+            "appTitle": "Task Management System",
+            "yes": "Yes",
+            "no": "No",
+            "unknown": "Unknown",
+            "forbidden": {
+                "title": "Forbidden",
+                "message": "You do not have the authority to access this resource."
+            },
+            "overview": {
+                "normal": "Overview",
+                "privilege": "Overview (Manager privilege)"
+            },
+            "status": {
+                "initiated": "Initiated",
+                "notStarted": "Not started",
+                "inProgress": "In progress",
+                "completed": "Completed",
+                "overdue": "Overdue"
+            }
+        },
+        "button": {
+            "delete": "Delete",
+            "dismiss": "Dismiss",
+            "close": "Close",
+            "logout": "Logout",
+            "edit": "Edit",
+            "cancel": "Cancel",
+            "reload": "Reload",
+            "remove": "Remove",
+            "clearFilters": "Clear filters",
+            "start": "Start",
+            "add": "Add",
+            "confirm": "Confirm"
+        },
+        "confirm": {
+            "title": "Confirm"
+        }
+    },
+    "header": {
+        "button": {
+            "dashboard": "To dashboard",
+            "managerPanel": "Manager control panel"
+        }
+    },
+    "attachment": {
+        "none": "There are currently no attachments.",
+        "title": {
+            "loading": "Loading attachments...",
+            "notJoined": "This project is connected to Dropbox, but you haven't joined yet.",
+            "onlyMembers": "Only project members can access attachments.",
+            "userNotConnected": "You need to log into Dropbox to use attachments.",
+            "projectNotConnected": {
+                "creator": "Connect the project to Dropbox to access attachments.",
+                "member": "The creator of this project hasn't connected it to Dropbox yet."
+            }
+        },
+        "confirm": {
+            "delete": {
+                "title": "Delete attachment",
+                "message": "Are you sure you want to delete file <strong>{{filename}}</strong>? It will be deleted in the project's Dropbox folder too."
+            }
+        },
+        "button": {
+            "new": "New attachment",
+            "download": "Download"
+        },
+        "success": {
+            "delete": "Attachment {{filename}} has been deleted successfully."
+        },
+        "error": {
+            "fileTooLarge": "The selected file is too large. Max file size is 150 MB."
+        }
+    },
+    "auth": {
+        "title": {
+            "alreadyRegistered": "Already have an account?",
+            "notRegistered": "Don't have an account?",
+            "loading": "Loading...",
+            "signin": "Sign in",
+            "signup": "Sign up",
+            "username": "Username",
+            "password": "Password",
+            "repeatPassword": "Repeat password",
+            "email": "Email"
+        },
+        "confirm": {
+            "logout": {
+                "title": "Logout",
+                "message": "Are you sure you want to log out?"
+            }
+        },
+        "success": {
+            "logout": "Logged out successfully."
+        },
+        "validation": {
+            "atLeastOneRequired": "At least one field must have a value.",
+            "username": {
+                "required": "Username is required.",
+                "minLength": "Username must be at least {{minLength}} characters long.",
+                "maxLength": "Username cannot be more than {{maxLength}} characters long."
+            },
+            "password": {
+                "required": "Password is required.",
+                "minLength": "Password must be at least {{minLength}} characters long.",
+                "maxLength": "Password cannot be more than {{maxLength}} characters long."
+            },
+            "repeatPassword": {
+                "required": "This field is required.",
+                "mismatch": "Passwords do not match."
+            },
+            "email": {
+                "required": "Email is required.",
+                "email": "This does not look like an email."
+            }
+        }
+    },
+    "user": {
+        "title": {
+            "addUserToProject": "Add a new user",
+            "delete":"Delete account",
+            "deleteWarning": "Are you sure you want to delete your account? All of your projects will be deleted. This action is not reversable and might take some time. Please provide your credentials to confirm.",
+            "update": "Update user details",
+            "updateHint": "If you don't want to change a field, leave it empty.",
+            "users": "Users",
+            "filterUsers": "Filter users",
+            "bannedInfo": "This user is currently banned.",
+            "table": {
+                "id": "ID",
+                "username": "Username",
+                "email": "Email",
+                "role": "Role",
+                "locked": "Locked"
+            },
+            "loading": {
+                "single": "Loading user...",
+                "plural": "Loading users...",
+                "addUserToProject": "Adding the user..."
+            }
+        },
+        "button": {
+            "delete": "Delete account",
+            "edit": "Edit user details",
+            "promote": "Promote",
+            "demote": "Demote",
+            "locked": {
+                "lift": "Lift ban",
+                "ban": "Ban user"
+            }
+        },
+        "confirm": {
+            "delete": {
+                "message": "Are you sure you want to delete your account? This action is irreversible."
+            }
+        },
+        "success": {
+            "delete": {
+                "base": "Your account has been successfully deleted. Deleted {{numberOfDeletedProjects}} projects and quitted {{numberOfQuittedProjects}} projects. ",
+                "dropboxDeletionIssue": "The shared folders of {{numberOfFailedDeletions}} out of {{numberOfDropboxConnectedProjects}} projects that were connected to Dropbox were not deleted. You might need to remove them manually. ",
+                "dropboxQuitIssue": "The shared folders of {{numberOfFailedQuits}} out of {{numberOfOtherDropboxConnectedProjects}} projects that you were a member of were not properly disconnected. You might need to remove them manually."
+            },
+            "update": "User details have been updated."
+        }
+    },
+    "project": {
+        "title": {
+            "filterProjects": "Filter projects",
+            "newProject": "New project",
+            "name": "Project name",
+            "newName": "New project name",
+            "description": "Description",
+            "newDescription": "New project description",
+            "noDescription": "This project has no description.",
+            "dates": "Project dates",
+            "newDates": "New project dates",
+            "noEndDate": "This project does not have an end date.",
+            "private": "Private project",
+            "projectMembers": "Project members",
+            "creator": "Creator: ",
+            "projects": {
+                "my": "My projects",
+                "public": "Public projects",
+                "all": "All projects (Manager privilege)"
+            },
+            "table": {
+                "name": "Name",
+                "startDate": "Starts",
+                "endDate": "Ends",
+                "status": "Status",
+                "creator": "Creator",
+                "private": "Private"
+            },
+            "loading": {
+                "single": "Loading project...",
+                "plural": "Loading projects...",
+                "create": "Creating project..."
+            }
+        },
+        "button": {
+            "new": "New project",
+            "create": "Create project",
+            "addUser": "Add user",
+            "removeUser": "Remove user",
+            "makeOwner": "Make owner",
+            "makeAdmin": "Make admin",
+            "removeAdmin": "Remove admin",
+            "delete": "Delete project",
+            "quit": "Quit project",
+            "inProgress": "Mark as \"In Progress\"",
+            "completed": "Mark as \"Completed\"",
+            "dropbox": {
+                "connect": "Connect Dropbox",
+                "disconnect": "Disconnect Dropbox",
+                "join": "Join Dropbox"
+            },
+            "calendar": {
+                "connect": "Connect Calendar",
+                "disconnect": "Disconnect Calendar",
+                "join": "Join Calendar"
+            }
+        },
+        "confirm": {
+            "private": {
+                "title": "Change project visibility",
+                "message": {
+                    "on": "Are you sure you want to make this project <strong>private</strong>?",
+                    "off": "Are you sure you want to make this project <strong>public</strong>?"
+                }
+            },
+            "removeUser": {
+                "title": "Remove <strong>{{username}}</strong>",
+                "message": "Are you sure you want to remove <strong>{{username}}</strong> from the project?"
+            },
+            "quit": {
+                "title": "Quit project",
+                "message": "Are you sure you want to <strong>quit</strong> this project?"
+            },
+            "makeAdmin": {
+                "title": "Make admin",
+                "message": "Are you sure you want to make <strong>{{username}}</strong> an admin in this project?"
+            },
+            "removeAdmin": {
+                "title": "Remove admin",
+                "message": "Are you sure you want to reduce privileges for <strong>{{username}}</strong> in this project?"
+            },
+            "transfer": {
+                "title": "Trasfer ownership",
+                "message": "Are you sure you want to transfer ownership of this project to <strong>{{username}}</strong>?"
+            },
+            "delete": {
+                "title": "Delete project",
+                "message": "Are you sure you want to <strong>delete</strong> this project? This operation is irreversible."
+            },
+            "connectDropbox": {
+                "title": "Connect Dropbox",
+                "message": "Are you sure you want to <strong>connect</strong> Dropbox to this project? It might take a <strong>significant</strong> amount of time."
+            },
+            "connectCalendar": {
+                "title": "Connect Calendar",
+                "message": "Are you sure you want to <strong>connect</strong> Calendar to this project? It might take a <strong>significant</strong> amount of time."
+            },
+            "joinDropbox": {
+                "title": "Join Dropbox",
+                "message": "Are you sure you want to <strong>join</strong> Dropbox in this project?"
+            },
+            "joinCalendar": {
+                "title": "Join Calendar",
+                "message": "Are you sure you want to <strong>join</strong> Calendar in this project?"
+            },
+            "disconnectDropbox": {
+                "title": "Disconnect Dropbox",
+                "message": "Are you sure you want to <strong>disconnect</strong> Dropbox from this project? This will delete <strong>all attachments</strong> in the project."
+            },
+            "disconnectCalendar": {
+                "title": "Disconnect Calendar",
+                "message": "Are you sure you want to <strong>disconnect</strong> Calendar from this project? This will delete the calendar and all its events."
+            }
+        },
+        "success": {
+            "addUser": {
+                "full": "{{username}} has been successfully added to the project.",
+                "dropboxFailed": "{{username}} has been successfully added to the project, but there was a Dropbox issue: {{dropboxMessage}}"
+            },
+            "removeUser": {
+                "full": "{{username}} has been removed from this project.",
+                "dropboxFailed": "User has been successfully removed, but there was a Dropbox issue: {{dropboxMessage}}"
+            },
+            "quit": {
+                "full": "You have successfully left project {{projectName}}.",
+                "dropboxFailed": "You have successfully left project {{projectName}}, but there was a Dropbox issue: {{dropboxMessage}}"
+            },
+            "transfer": {
+                "full": "The project has been successfully transfered to {{username}}. You are now an admin.",
+                "dropboxFailed": "The project has been successfully transfered to {{username}} and you are now an admin. There was a Dropbox issue, however: {{dropboxMessage}}"
+            },
+            "delete": {
+                "full": "You have successfuly deleted {{projectName}}.",
+                "dropboxFailed": "You have successfuly deleted {{projectName}}, but there was a Dropbox issue: {{dropboxMessage}}"
+            },
+            "disconnectDropbox": {
+                "full": "You have successfully disconnected this project from Dropbox.",
+                "dropboxFailed": "You have successfuly disconnected this project from Dropbox, but there was an issue with deleting the shared folder: {{dropboxMessage}}"
+            },
+            "disconnectCalendar": {
+                "full": "Calendar has been disconnected successfully.",
+                "calendarFailed": "Calendar has been disconnected from this project, but the actual Google Calendar has not been deleted due to an error. You might need to delete it manually."
+            },
+            "makeAdmin": "{{username}} is now an admin.",
+            "removeAdmin": "{{username}} is now a contributor.",
+            "connectDropbox": "Dropbox has been successfully connected to this project.",
+            "connectCalendar": "Calendar has been successfully connected to this project.",
+            "joinDropbox": "You have successfully joined Dropbox in this project.",
+            "joinCalendar": "You have successfully joined Calendar in this project."
+        },
+        "validation": {
+            "name": {
+                "required": "Project name is required.",
+                "minLength": "Project name must be at least {{minLength}} characters long.",
+                "maxLength": "Project name cannot be more than {{maxLength}} characters long."
+            },
+            "description": {
+                "maxLength": "Project description cannot be more than {{maxLength}} characters long."
+            }
+        }
+    },
+    "task": {
+        "title": {
+            "myTasks": "My tasks",
+            "tasks": "Tasks",
+            "filterTasks": "Filter tasks",
+            "newTask": "New task",
+            "name": "Task name",
+            "newName": "New task name",
+            "description": "Description",
+            "newDescription": "New task description",
+            "noDescription": "This task has no description.",
+            "assignee": "Assignee",
+            "dueDate": "Due date",
+            "newDueDate": "New due date",
+            "noDueDate": "This task does not have a due date.",
+            "dates": "Dates",
+            "table": {
+                "name": "Name",
+                "priority": "Priority",
+                "status": "Status",
+                "dueDate": "Due date"
+            },
+            "loading": {
+                "single": "Loading task...",
+                "plural": "Loading tasks...",
+                "create": "Creating task..."
+            },
+            "priority": {
+                "priority": "Priority",
+                "newPriority": "New priority",
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High"
+            },
+            "card": {
+                "assignee": "Assignee: {{username}}",
+                "priority": "Priority: "
+            }
+        },
+        "button": {
+            "new": "Create task",
+            "notStarted": "Mark as \"Not started\"",
+            "inProgress": "Mark as \"In progress\"",
+            "completed": "Mark as \"Completed\""
+        },
+        "confirm": {
+            "delete": {
+                "title": "Delete task",
+                "message": "Are you sure you want to delete task <strong>{{name}}</strong>?"
+            }
+        },
+        "success": {
+            "delete": {
+                "full": "You have successfully deleted task <strong>{{name}}</strong>.",
+                "dropboxFailed": "You have successfully deleted task {{name}}, but there was a Dropbox issue: {{dropboxMessage}}"
+            }
+        },
+        "validation": {
+            "name": {
+                "required": "Task name is required.",
+                "minLength": "Task name must be at least {{minLength}} characters long.",
+                "maxLength": "Task name cannot be more than {{maxLength}} characters long."
+            },
+            "description": {
+                "maxLength": "Task description cannot be more than {{maxLength}} characters long."
+            },
+            "priority": {
+                "required": "Priority is required."
+            }
+        }
+    },
+    "label": {
+        "title": {
+            "label": "Label",
+            "edit": "Edit {{name}}",
+            "delete": "Delete {{name}}",
+            "name": "Label name",
+            "labelManagement": "Label management",
+            "new": "New label",
+            "loading": {
+                "plural": "Loading labels...",
+                "edit": "Updating label...",
+                "new": "Adding new label..."
+            }
+        },
+        "button": {
+            "new": "Create label"
+        },
+        "confirm": {
+            "delete": {
+                "base": "Are you sure you want to delete label {{name}}?",
+                "withTasks": "Be aware that this action will remove this label from {{numberOfAffectedTasks}} other tasks."
+            }
+        },
+        "success": {
+            "delete": "Label {{name}} has been deleted.",
+            "edit": "Label {{name}} has been updated."
+        },
+        "validation": {
+            "name": {
+                "required": "Label name is required.",
+                "maxLength": "Label name cannot be longer than {{maxLength}} characters."
+            },
+            "color": {
+                "required": "Email is required."
+            }
+        }
+    },
+    "message": {
+        "title": {
+            "messages": "{{numberOfMessages}} Messages",
+            "placeholder": {
+                "comment": "Your comment...",
+                "reply": "Your reply..."
+            },
+            "loading": {
+                "comment": "Loading comments...",
+                "reply": "Loading replies..."
+            }
+        },
+        "button": {
+            "send": "Send",
+            "showReplies": "Show replies ({{numberOfReplies}})",
+            "reply": "Reply",
+            "hideComments": "Hide comments",
+            "showMoreComments": "Show more comments",
+            "hideReplies": "Hide replies",
+            "showMoreReplies": "Show more replies"
+        },
+        "confirm": {
+            "delete": {
+                "title": "Delete message",
+                "message": "Are you sure you want to delete this message?"
+            }
+        },
+        "validation": {
+            "comment": {
+                "maxLength": "A comment cannot be longer than {{maxLength}} characters."
+            },
+            "reply": {
+                "maxLength": "A reply cannot be longer than {{maxLength}} characters."
+            }
+        }
+    },
+    "error": {
+        "title": {
+            "error": "Error"
+        }
+    },
+    "dropbox": {
+        "title": {
+            "loading": {
+                "healthCheck": "Checking Dropbox status..."
+            }
+        },
+        "button": {
+            "connect": "Connect Dropbox"
+        },
+        "confirm": {
+            "logout": {
+                "title": "Disconnect Dropbox",
+                "message": "Are you sure you want to <strong>disconnect</strong> Dropbox?"
+            }
+        },
+        "success": {
+            "logout": "Dropbox has been disconnected successfully."
+        }
+    },
+    "calendar": {
+        "title": {
+            "loading": {
+                "healthCheck": "Checking Calendar status..."
+            }
+        },
+        "button": {
+            "connect": "Connect Calendar"
+        },
+        "confirm": {
+            "logout": {
+                "title": "Disconnect Google Calendar",
+                "message": "Are you sure you want to <strong>disconnect</strong> Google Calendar?"
+            }
+        },
+        "success": {
+            "logout": "Calendar has been disconnected successfully."
+        }
+    }
+}

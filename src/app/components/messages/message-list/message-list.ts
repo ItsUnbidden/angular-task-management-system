@@ -7,7 +7,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MessageService } from '../../../service/message.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatIcon } from "@angular/material/icon";
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
@@ -22,10 +21,14 @@ import { ActivatedRoute } from '@angular/router';
 import { ValidationBoundaries } from '../../validation-boundaries';
 import { GeneralApiError, SimpleApiError } from '../../../models/error.model';
 import { CommentResponse, FlattenedReply, MessageResponse } from '../../../models/message.model';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NotificationService } from '../../../service/notification.service';
 
 @Component({
   selector: 'app-message-list',
-  imports: [MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatCardModule, MatButtonModule, MatListModule, MatIcon, MatProgressSpinnerModule],
+  imports: [MatFormFieldModule, ReactiveFormsModule, MatInputModule,
+            MatCardModule, MatButtonModule, MatListModule,
+            MatIcon, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './message-list.html',
   styleUrl: './message-list.css',
 })
@@ -82,7 +85,7 @@ export class MessageList {
   });
 
   constructor(private readonly messageService: MessageService,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               private readonly dialog: MatDialog) {
     effect(() => {
       const taskId = this.taskId();
@@ -116,9 +119,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as SimpleApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          })
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       })
     }
@@ -152,9 +153,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -171,8 +170,8 @@ export class MessageList {
     if (task) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Delete message',
-          message: 'Are you sure you want to delete this message?'
+          title: { key: 'message.confirm.delete.title' },
+          message: { key: 'message.confirm.delete.message' }
         }
       })
       .afterClosed()
@@ -194,9 +193,7 @@ export class MessageList {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -240,9 +237,7 @@ export class MessageList {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }

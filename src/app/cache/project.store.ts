@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { AbstractStore } from './abstract.store';
 import { ProjectService } from '../service/project.service';
-import { catchError, EMPTY, Observable, of, Subject, takeUntil, tap } from 'rxjs';
+import { catchError, EMPTY, map, Observable, of, Subject, takeUntil, tap } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { getDefaultErrorMessageForType } from '../utils';
 import { UserStore } from './user.store';
@@ -9,6 +9,7 @@ import { Router } from '@angular/router';
 import { ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectWithDropboxResultResponse } from '../models/project.model';
 import { Page, SingleItemCache, TableState } from '../models/general.model';
 import { GeneralApiError } from '../models/error.model';
+import { ProjectCalendarDisconnectionResponseDto, ThirdPartyOperationResult } from '../models/external.model';
 
 @Injectable({
   providedIn: 'root'
@@ -282,6 +283,22 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
         },
         error: () => this.setSelectedProjectIsLoading(false)
       }));
+    }
+    return EMPTY;
+  }
+
+  disconnectCalendar() : Observable<ThirdPartyOperationResult> {
+    const project = this.selectedProjectCache()?.item;
+
+    if (project) {
+      this.setSelectedProjectIsLoading(true);
+      return this.projectService.disconnectCalendar(project.id).pipe(tap({
+        next: response => {
+          this.selectedProjectCache.set({ item: response.project, isLoading: false, error: null });
+        },
+        error: () => this.setSelectedProjectIsLoading(false)
+      }),
+      map(response => response.calendarDeleted));
     }
     return EMPTY;
   }

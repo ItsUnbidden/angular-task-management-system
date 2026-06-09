@@ -3,10 +3,10 @@
         <p>Logo here</p>
         <div class="left-side-actions-container">
             @if (isLoggedIn() && !isOnDashboard()) {
-                <button matButton="outlined" (click)="onToDashboard()">To dashboard</button>
+                <button matButton="outlined" (click)="onToDashboard()">{{ 'header.button.dashboard' | translate }}</button>
             }
             @if (isManager() && !isOnControlPanel()) {
-                <button matButton="filled" (click)="onManagerActions()">Manager control panel</button>
+                <button matButton="filled" (click)="onManagerActions()">{{ 'header.button.managerPanel' | translate }}</button>
             }
         </div>
     </div>
@@ -15,40 +15,40 @@
             @if (isCheckingDropbox()) {
                 <div class="spinner-container">
                     <mat-spinner diameter="30"></mat-spinner>
-                    <span>Checking Dropbox status...</span>
+                    <span>{{ 'dropbox.title.loading.healthCheck' | translate }}</span>
                 </div>
             }
             @else {
                 @if (isDropboxConnected()) {
                     <button matButton="elevated" (click)="onLogoutDropbox()">
                         <mat-icon svgIcon="dropbox"></mat-icon>
-                        Logout
+                        {{ 'common.button.logout' | translate }}
                     </button>
                 }
                 @else {
                     <button matButton="elevated" (click)="onConnectDropbox()">
                         <mat-icon svgIcon="dropbox"></mat-icon>
-                        Connect Dropbox
+                        {{ 'dropbox.button.connect' | translate }}
                     </button>
                 }
             }
             @if (isCheckingGoogleCalendar()) {
                 <div class="spinner-container">
                     <mat-spinner diameter="30"></mat-spinner>
-                    <span>Checking Calendar status...</span>
+                    <span>{{ 'calendar.title.loading.healthCheck' | translate }}</span>
                 </div>
             }
             @else {
                 @if (isGoogleCalendarConnected()) {
                     <button matButton="elevated" (click)="onLogoutCalendar()">
                         <mat-icon svgIcon="google-calendar"></mat-icon>
-                        Logout
+                        {{ 'common.button.logout' | translate }}
                     </button>
                 }
                 @else {
                     <button matButton="elevated" (click)="onConnectCalendar()">
                         <mat-icon svgIcon="google-calendar"></mat-icon>
-                        Connect Calendar
+                        {{ 'calendar.button.connect' | translate }}
                     </button>
                 }
             }
@@ -56,16 +56,16 @@
             <mat-menu #menu="matMenu">
                 <button mat-menu-item (click)="onChangeUserDetails()">
                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                    Edit user details
+                    {{ 'user.button.edit' | translate }}
                 </button>
                 <button mat-menu-item (click)="onLogout()">
                     <mat-icon fontSet="material-symbols-outlined">logout</mat-icon>
-                    Logout
+                    {{ 'common.button.logout' | translate }}
                 </button>
                 @if (!isOwner()) {
                     <button mat-menu-item (click)="onDeleteAccount()">
                         <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
-                        Delete account
+                        {{ 'user.button.delete' | translate }}
                     </button>
                 }
             </mat-menu>

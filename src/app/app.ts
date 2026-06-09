@@ -16,8 +16,6 @@ import { AuthService } from './service/auth.service';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  protected readonly title = signal('Task Management System');
-
   constructor(private userStore: UserStore, private authService: AuthService,
               private oauth2Service: OAuth2Service, private router: Router,
               private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {

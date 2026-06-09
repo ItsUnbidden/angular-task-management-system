@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -6,16 +6,15 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProjectStore } from '../../../cache/project.store';
-import { HttpErrorResponse } from '@angular/common/http';
-import { getDefaultErrorMessageForType } from '../../../utils';
 import { ValidationBoundaries } from '../../validation-boundaries';
-import { SimpleApiError } from '../../../models/error.model';
 import { ProjectWithDropboxResultResponse } from '../../../models/project.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-add-user-dialog',
   imports: [MatDialogModule, MatFormFieldModule, ReactiveFormsModule,
-            MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+            MatInputModule, MatButtonModule, MatProgressSpinnerModule,
+            TranslatePipe],
   templateUrl: './add-user-dialog.html',
   styleUrl: './add-user-dialog.css',
 })
@@ -38,7 +37,7 @@ export class AddUserDialog {
     })
   })
 
-  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, ProjectWithDropboxResultResponse>) {}
+  constructor(private readonly dialogRef: MatDialogRef<AddUserDialog, [ProjectWithDropboxResultResponse, string]>) {}
 
   protected submit() {
     if (this.addUserForm.valid) {
@@ -47,7 +46,7 @@ export class AddUserDialog {
       if (username) {
         this.projectStore.addUserToProject(username).subscribe({
           next: (response) => {
-            this.dialogRef.close(response);
+            this.dialogRef.close([response, username]);
           }
         });
       }

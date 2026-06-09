@@ -14,7 +14,7 @@ import { FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from "@angular/material/icon";
-import { getChipColor, getChipText, toLocalDateString } from '../../../utils';
+import { getChipColor, getChipTextKey, toLocalDateString } from '../../../utils';
 import { EMPTY, map, Observable, switchMap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { TaskStore } from '../../../cache/task.store';
@@ -24,25 +24,15 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TaskStatus, TaskPriority, TaskResponse } from '../../../models/task.model';
 import { EssentialUserResponse } from '../../../models/user.model';
 import { Page } from '../../../models/general.model';
-
-interface TaskStatusOption {
-  status: TaskStatus;
-  statusView: string;
-  class: string;
-}
-
-interface TaskPriorityOption {
-  priority: TaskPriority;
-  priorityView: string;
-  class: string;
-}
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-task-grid',
   imports: [CommonModule, MatCardModule, MatDividerModule,
             MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule,
             MatButtonModule, MatSelectModule, ReactiveFormsModule,
-            MatDatepickerModule, MatNativeDateModule, MatIconModule],
+            MatDatepickerModule, MatNativeDateModule, MatIconModule,
+            TranslatePipe],
   templateUrl: './task-grid.html',
   styleUrl: './task-grid.css',
 })
@@ -83,19 +73,6 @@ export class TaskGrid {
     this.route.paramMap.pipe(map(p => Number(p.get('projectId')))), { initialValue: 0 }
   );
 
-  protected readonly statusOptions: TaskStatusOption[] = [
-    { status: 'NOT_STARTED', statusView: 'Not started', class: 'status-initiated' },
-    { status: 'IN_PROGRESS', statusView: 'In progress', class: 'status-in-progress' },
-    { status: 'COMPLETED', statusView: 'Completed', class: 'status-completed' },
-    { status: 'OVERDUE', statusView: 'Overdue', class: 'status-overdue' }
-  ]
-
-  protected readonly priorityOptions: TaskPriorityOption[] = [
-    { priority: 'LOW', priorityView: 'Low', class: 'priority-low' },
-    { priority: 'MEDIUM', priorityView: 'Medium', class: 'priority-medium' },
-    { priority: 'HIGH', priorityView: 'High', class: 'priority-high' }
-  ]
-
   protected readonly filterForm = new FormGroup({
     assigneeId: new FormControl<number | null>(this.currentFilter()?.assigneeId ?? null),
     status: new FormControl<TaskStatus | null>(this.currentFilter()?.status ?? null),
@@ -104,6 +81,9 @@ export class TaskGrid {
     dueDateTo: new FormControl<Date | null>(this.getDate(this.currentFilter()?.dueDateTo)),
     labelIds: new FormControl<number[]>(this.currentFilter()?.labelIds ?? [])
   });
+
+  protected readonly priorityOptions: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
+  protected readonly statusOptions: TaskStatus[] = ['NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'OVERDUE'];
 
   constructor(private readonly dialog: MatDialog,
               private readonly router: Router) {
@@ -208,7 +188,7 @@ export class TaskGrid {
   }
 
   protected getChipTextLocal(status: string | null): string {
-    return getChipText(status);
+    return getChipTextKey(status);
   }
 
   private getDate(value?: string) : Date | null {

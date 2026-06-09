@@ -7,14 +7,16 @@ import { MatInputModule } from '@angular/material/input';
 import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../../utils';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { UserStore } from '../../../cache/user.store';
 import { ValidationBoundaries } from '../../validation-boundaries';
 import { GeneralApiError } from '../../../models/error.model';
+import { NotificationService } from '../../../service/notification.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-update-user-details-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule],
+  imports: [MatDialogModule, MatButtonModule, MatFormFieldModule, MatInputModule,
+            ReactiveFormsModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './update-user-details-dialog.html',
   styleUrl: './update-user-details-dialog.css',
 })
@@ -47,7 +49,7 @@ export class UpdateUserDetailsDialog {
   }, { validators: [ passwordMatchValidator(), this.emptyFormValidator() ] });
 
   constructor(private readonly dialogRef: MatDialogRef<UpdateUserDetailsDialog, boolean>,
-              private readonly snackBar: MatSnackBar) {}
+              private readonly notification: NotificationService) {}
 
   protected onSubmit() {
     const user = this.userCache().item;
@@ -67,17 +69,13 @@ export class UpdateUserDetailsDialog {
         repeatPassword
       }).subscribe({
         next: () => {
-          this.snackBar.open('User details have been updated.', 'Dismiss', {
-            duration: 3000
-          });
+          this.notification.info('user.success.update', 5000);
           this.dialogRef.close();
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
