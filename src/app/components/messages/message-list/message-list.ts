@@ -18,7 +18,7 @@ import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { GeneralApiError, SimpleApiError } from '../../../models/error.model';
 import { CommentResponse, FlattenedReply, MessageResponse } from '../../../models/message.model';
 import { TranslatePipe } from '@ngx-translate/core';

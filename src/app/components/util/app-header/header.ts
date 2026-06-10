@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, effect, inject, untracked } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from "@angular/material/icon";
 import { EventType, Router } from '@angular/router';
@@ -20,10 +20,18 @@ import { UserDeleteResponse } from '../../../models/user.model';
 import { ThirdPartyOperationStatus } from '../../../models/external.model';
 import { NotificationService } from '../../../service/notification.service';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { MatSelectModule } from '@angular/material/select';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { LanguageCode, languageConfig, LanguageOption } from '../../../config/languages';
+import { LanguageService } from '../../../service/language.service';
 
 @Component({
   selector: 'app-header',
-  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule, MatMenuModule, TranslatePipe],
+  imports: [MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+            MatMenuModule, TranslatePipe, MatSelectModule,
+            ReactiveFormsModule, MatFormFieldModule],
   templateUrl: './header.html',
   styleUrl: './header.css',
 })
@@ -31,8 +39,9 @@ export class Header {
   private readonly router = inject(Router);
   private readonly oauth2Service = inject(OAuth2Service);
   private readonly userStore = inject(UserStore);
+  private readonly languageService = inject(LanguageService);
 
-  protected readonly userCache = this.userStore.userCache;
+  protected readonly userCache = this.userStore.userCache.asReadonly();
   protected readonly isLoggedIn = computed(() => {
     const user = this.userCache().item;
 
@@ -54,19 +63,44 @@ export class Header {
   protected readonly isManager = this.userStore.isManager;
   protected readonly isOwner = this.userStore.isOwner;
 
-  protected readonly isDropboxConnected = this.oauth2Service.isDropboxConnected;
-  protected readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox;
+  protected readonly isDropboxConnected = this.oauth2Service.isDropboxConnected.asReadonly();
+  protected readonly isCheckingDropbox = this.oauth2Service.isCheckingDropbox.asReadonly();
 
-  protected readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected;
-  protected readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar;
+  protected readonly isGoogleCalendarConnected = this.oauth2Service.isCalendarConnected.asReadonly();
+  protected readonly isCheckingGoogleCalendar = this.oauth2Service.isCheckingCalendar.asReadonly();
+
+  protected readonly langOptions = languageConfig.supportedLangs;
+  protected readonly currentLang = this.languageService.currentLanguage.asReadonly();
+
+  protected readonly langSelectForm = new FormGroup({
+    lang: new FormControl<LanguageCode | null>(null)
+  });
 
   constructor(private readonly authService: AuthService,
               private readonly notification: NotificationService,
+              private readonly snackBar: MatSnackBar,
               private readonly translate: TranslateService,
-              private readonly dialog: MatDialog) {}
+              private readonly dialog: MatDialog) {
+    effect(() => {
+      const currentLang = this.currentLang();
 
-  public snackBarMessage() {
+      if (currentLang) {
+        untracked(() => {
+          this.langSelectForm.patchValue({
+            lang: languageConfig.supportedLangs.find(sl => sl.key === currentLang)?.key
+          });
+        });
+      }
+    });
+    this.langSelectForm.valueChanges.subscribe({
+      next: value => {
+        const lang = value.lang;
 
+        if (lang) {
+          this.languageService.setLanguage(lang);
+        }
+      }
+    });
   }
 
   protected onConnectDropbox() {
@@ -181,7 +215,7 @@ export class Header {
     .afterClosed()
     .subscribe((response: UserDeleteResponse) => {
       if (response) {
-        this.notification.info(this.getDeletionConfirmationMessage(response), 10000);
+        this.snackBar.open(this.getDeletionConfirmationMessage(response), this.translate.instant('common.button.dismiss'), { duration: 10000 });
         this.userStore.clearUser();
         this.router.navigateByUrl('/auth')
       }

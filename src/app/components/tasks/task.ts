@@ -28,7 +28,7 @@ import { ProjectStore } from '../../cache/project.store';
 import { TaskStore } from '../../cache/task.store';
 import { UserStore } from '../../cache/user.store';
 import { LabelStore } from '../../cache/label.store';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { TaskStatus, TaskUpdateRequest, TaskPriority } from '../../models/task.model';
 import { GeneralApiError } from '../../models/error.model';
 import { Project } from '../projects/project';

@@ -11,6 +11,18 @@
         </div>
     </div>
     <div class="right-side-container">
+        @if (langOptions.length > 1) {
+            <form [formGroup]="langSelectForm">
+                <mat-form-field>
+                    <mat-label>{{ 'header.title.lang' | translate }}</mat-label>
+                    <mat-select formControlName="lang">
+                        @for (lang of langOptions; track lang.key) {
+                            <mat-option [value]="lang.key">{{ lang.view }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </form>
+        }
         @if (isLoggedIn()) {
             @if (isCheckingDropbox()) {
                 <div class="spinner-container">

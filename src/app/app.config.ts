@@ -11,6 +11,7 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { delayInterceptor } from './interceptor/delay.interceptor';
+import { languageConfig } from './config/languages';
 
 export function registerIcons(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
   iconRegistry.addSvgIcon('dropbox', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/dropbox.svg'));
@@ -28,8 +29,8 @@ export const appConfig: ApplicationConfig = {
     })),
     provideTranslateService({
       loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json'}),
-      fallbackLang: 'en',
-      lang: 'en'
+      fallbackLang: languageConfig.fallbackLang,
+      lang: languageConfig.defaultLang
     }),
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
     provideAnimations(),

@@ -6,7 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ProjectStore } from '../../../cache/project.store';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { ProjectWithDropboxResultResponse } from '../../../models/project.model';
 import { TranslatePipe } from '@ngx-translate/core';
 

@@ -13,7 +13,7 @@ import { MatIcon } from "@angular/material/icon";
 import { switchMap, tap } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { LabelColor, LabelResponse } from '../../../models/label.model';
 import { SimpleApiError } from '../../../models/error.model';
 import { NotificationService } from '../../../service/notification.service';

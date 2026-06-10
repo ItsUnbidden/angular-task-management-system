@@ -12,7 +12,7 @@ import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
 import { finalize } from 'rxjs';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { ProjectCreateRequest } from '../../../models/project.model';
 import { GeneralApiError } from '../../../models/error.model';
 import { TranslatePipe } from '@ngx-translate/core';

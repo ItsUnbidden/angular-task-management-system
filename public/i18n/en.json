@@ -1,7 +1,6 @@
 {
     "common": {
         "title": {
-            "appTitle": "Task Management System",
             "yes": "Yes",
             "no": "No",
             "unknown": "Unknown",
@@ -40,6 +39,9 @@
         }
     },
     "header": {
+        "title": {
+            "lang": "Language"
+        },
         "button": {
             "dashboard": "To dashboard",
             "managerPanel": "Manager control panel"
@@ -490,7 +492,11 @@
             }
         },
         "success": {
-            "logout": "Dropbox has been disconnected successfully."
+            "logout": "Dropbox has been disconnected successfully.",
+            "connect": "Dropbox has been connected successfully."
+        },
+        "error": {
+            "connect": "Failed to connect Dropbox due to an error."
         }
     },
     "calendar": {
@@ -509,7 +515,11 @@
             }
         },
         "success": {
-            "logout": "Calendar has been disconnected successfully."
+            "logout": "Calendar has been disconnected successfully.",
+            "connect": "Calendar has been connected successfully."
+        },
+        "error": {
+            "connect": "Failed to connect Calendar due to an error."
         }
     }
 }

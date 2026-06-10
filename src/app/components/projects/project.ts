@@ -26,7 +26,7 @@ import { OAuth2Service } from '../../service/oauth2.service';
 import { getChipColor, getChipTextKey, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
 import { ProjectStore } from '../../cache/project.store';
 import { UserStore } from '../../cache/user.store';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { ProjectRoleResponse, ProjectUpdateRequest, ProjectWithDropboxResultResponse } from '../../models/project.model';
 import { GeneralApiError } from '../../models/error.model';
 import { ThirdPartyOperationStatus } from '../../models/external.model';

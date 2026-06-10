@@ -8,7 +8,7 @@ import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../../
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
 import { UserStore } from '../../../cache/user.store';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { GeneralApiError } from '../../../models/error.model';
 import { NotificationService } from '../../../service/notification.service';
 import { TranslatePipe } from '@ngx-translate/core';

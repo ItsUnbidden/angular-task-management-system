@@ -10,7 +10,7 @@ import { MatChipsModule } from "@angular/material/chips";
 import { MatInputModule } from '@angular/material/input';
 import { getDefaultErrorMessageForType } from '../../../utils';
 import { finalize } from 'rxjs';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { LabelColor, LabelCreateRequest } from '../../../models/label.model';
 import { GeneralApiError } from '../../../models/error.model';
 import { TranslatePipe } from '@ngx-translate/core';

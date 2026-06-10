@@ -16,7 +16,7 @@ import { LabelStore } from '../../../cache/label.store';
 import { EMPTY, switchMap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { NewLabelDialog } from '../../label/new-label-dialog/new-label-dialog';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { EssentialUserResponse, UserResponse } from '../../../models/user.model';
 import { TaskCreateRequest, TaskPriority } from '../../../models/task.model';
 import { GeneralApiError } from '../../../models/error.model';

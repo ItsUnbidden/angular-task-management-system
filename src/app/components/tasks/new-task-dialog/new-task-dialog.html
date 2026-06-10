@@ -29,7 +29,7 @@
                 <mat-label>{{ 'task.title.priority.priority' | translate }}</mat-label>
                 <mat-select formControlName="priority" >
                     @for (option of priorityOptions; track option) {
-                        <mat-option [value]="option">{{ getChipTextLocal(option) }}</mat-option>
+                        <mat-option [value]="option">{{ getChipTextLocal(option) | translate }}</mat-option>
                     }
                 </mat-select>
                 @if (taskForm.hasError('required', 'priority')) {

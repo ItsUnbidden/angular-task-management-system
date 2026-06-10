@@ -11,7 +11,7 @@ import { finalize, switchMap } from 'rxjs';
 import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../utils';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { SimpleApiError } from '../../models/error.model';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
