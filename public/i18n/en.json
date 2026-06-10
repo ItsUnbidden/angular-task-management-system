@@ -4,6 +4,7 @@
             "yes": "Yes",
             "no": "No",
             "unknown": "Unknown",
+            "error": "Error",
             "forbidden": {
                 "title": "Forbidden",
                 "message": "You do not have the authority to access this resource."
@@ -36,6 +37,14 @@
         },
         "confirm": {
             "title": "Confirm"
+        },
+        "error": {
+            "fieldValidation": "Some of the submitted data is invalid.",
+            "misformedRequest": "Unable to parse request.",
+            "forbidden": "You do not have the authority to access this resource.",
+            "interrupted": "An internal server error has occured. Please try again later.",
+            "internal": "An unknown internal error has occured. The issue is being investigated. Please try again later.",
+            "unknown": "An unknown error has occured."
         }
     },
     "header": {
@@ -73,7 +82,11 @@
             "delete": "Attachment {{filename}} has been deleted successfully."
         },
         "error": {
-            "fileTooLarge": "The selected file is too large. Max file size is 150 MB."
+            "notFound": "The requested attachment was not found.",
+            "fileTooLarge": "The selected file is too large. Max file size is 150 MB.",
+            "uploadFailure": "An issue has occured during file upload.",
+            "downloadFailure": "An issue has occured while trying to download the file.",
+            "fileDeleteFailure": "Failed to delete the file on Dropbox. The attachment will be deleted regardless."
         }
     },
     "auth": {
@@ -96,6 +109,26 @@
         },
         "success": {
             "logout": "Logged out successfully."
+        },
+        "error": {
+            "general": "Provided credentials are invalid.",
+            "registration": {
+                "usernameTaken": "This username is already in use by a different user.",
+                "emailTaken": "This email is already in use by a different user."
+            },
+            "refreshToken": {
+                "expired": "The refresh token has expired. Please log in again.",
+                "revoked": "The refresh token has been revoked. Please log in again.",
+                "invalid": "The refresh token is invalid. Please log in again.",
+                "none": "No refresh token was found. Please log in again."
+            },
+            "oauth": {
+                "internal": "An internal issue has occured during the authorization process. Please try again later.",
+                "externalIdTaken": "This external account is already in use by a different user.",
+                "alreadyAuthorized": "You have already authorized the use of this service.",
+                "noStateFound": "The authorization attempt took too long. Please try again.",
+                "callbackFailure": "Failed to complete the authorization process. Please try again later."
+            }
         },
         "validation": {
             "atLeastOneRequired": "At least one field must have a value.",
@@ -164,6 +197,9 @@
                 "dropboxQuitIssue": "The shared folders of {{numberOfFailedQuits}} out of {{numberOfOtherDropboxConnectedProjects}} projects that you were a member of were not properly disconnected. You might need to remove them manually."
             },
             "update": "User details have been updated."
+        },
+        "error": {
+            "notFound": "The requested user was not found."
         }
     },
     "project": {
@@ -316,6 +352,11 @@
             "joinDropbox": "You have successfully joined Dropbox in this project.",
             "joinCalendar": "You have successfully joined Calendar in this project."
         },
+        "error": {
+            "notFound": "The requested project was not found.",
+            "inconsistentDate": "The specified date interval is invalid. Please make sure that the end date is after the start date.",
+            "dropboxConnectionError": "Failed to connect this project to Dropbox."
+        },
         "validation": {
             "name": {
                 "required": "Project name is required.",
@@ -384,6 +425,11 @@
                 "dropboxFailed": "You have successfully deleted task {{name}}, but there was a Dropbox issue: {{dropboxMessage}}"
             }
         },
+        "error": {
+            "notFound": "The requested task was not found.",
+            "dateBeforeProjectStart": "The specified due date is before the start of the project. Please make sure the date is valid.",
+            "dateWrongInterval": "The specified due date does not align with the project's start and end dates. Please make sure the date is valid."
+        },
         "validation": {
             "name": {
                 "required": "Task name is required.",
@@ -425,6 +471,9 @@
             "delete": "Label {{name}} has been deleted.",
             "edit": "Label {{name}} has been updated."
         },
+        "error": {
+            "notFound": "The requested label was not found."
+        },
         "validation": {
             "name": {
                 "required": "Label name is required.",
@@ -462,6 +511,13 @@
                 "message": "Are you sure you want to delete this message?"
             }
         },
+        "error": {
+            "notFound": {
+                "message": "The requested message was not found.",
+                "comment": "The requested comment was not found.",
+                "reply": "The requested reply was not found."
+            }
+        },
         "validation": {
             "comment": {
                 "maxLength": "A comment cannot be longer than {{maxLength}} characters."
@@ -469,11 +525,6 @@
             "reply": {
                 "maxLength": "A reply cannot be longer than {{maxLength}} characters."
             }
-        }
-    },
-    "error": {
-        "title": {
-            "error": "Error"
         }
     },
     "dropbox": {
@@ -496,7 +547,22 @@
             "connect": "Dropbox has been connected successfully."
         },
         "error": {
-            "connect": "Failed to connect Dropbox due to an error."
+            "connect": "Failed to connect Dropbox due to an error.",
+            "unknown": "An external Dropbox issue has occured. Please try again later.",
+            "status": {
+                "notApplicable": "This action is not allowed. Try reloading the page to ensure the state is up to date.",
+                "ranOutOfRetries": "There were too many retry attempts. Please try again later."
+            },
+            "tag": {
+                "ioException": "An internal server error has occured. Please try again later.",
+                "lookup": {
+                    "notFound": "Failed to find the Dropbox object. It might have been moved by someone outside of the app."
+                },
+                "write": {
+                    "conflict": "Something is in the way of the new object. It might need to be moved manually.",
+                    "notEnoughSpace": "There is not enough space in the user's Dropbox."
+                }
+            }
         }
     },
     "calendar": {
