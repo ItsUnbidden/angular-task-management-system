@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
 import { debounceTime, distinctUntilChanged, EMPTY, switchMap } from 'rxjs';
-import { getChipColor, getChipText, getProjectCreator } from '../../utils';
+import { getChipColor, getChipTextKey, getProjectCreator } from '../../utils';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCardModule } from '@angular/material/card';
 import { DashboardStore } from '../../cache/dashboard.store';
@@ -22,12 +22,13 @@ import { UserStore } from '../../cache/user.store';
 import { ProjectResponse } from '../../models/project.model';
 import { TaskResponse } from '../../models/task.model';
 import { EssentialUserResponse } from '../../models/user.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-dashboard',
   imports: [CommonModule, MatCardModule, MatTabsModule, MatTableModule,
     MatButtonModule, MatPaginatorModule, MatSortModule, MatFormFieldModule,
-    MatInputModule, MatProgressSpinnerModule, MatChipsModule, ReactiveFormsModule],
+    MatInputModule, MatProgressSpinnerModule, MatChipsModule, ReactiveFormsModule, TranslatePipe],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -44,7 +45,7 @@ export class Dashboard {
 
   protected readonly projectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator', 'isPrivate'];
   protected readonly publicProjectColumns: string[] = ['name', 'startDate', 'endDate', 'status', 'creator'];
-  protected readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate', 'assignee.username'];
+  protected readonly taskColumns: string[] = ['name', 'priority', 'status', 'dueDate'];
 
   protected readonly myProjectsFilterForm = new FormGroup({
     filter: new FormControl<string>('')
@@ -245,7 +246,7 @@ export class Dashboard {
   }
 
   protected getChipTextLocal(value: string | null): string {
-    return getChipText(value);
+    return getChipTextKey(value);
   }
 
   protected getProjectCreatorLocal(project: ProjectResponse) : EssentialUserResponse {

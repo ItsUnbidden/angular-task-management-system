@@ -1,33 +1,33 @@
 <div class="main-container">
     <mat-card>
         <mat-card-header>
-            <mat-card-title class="card-title">{{ taskCache().item?.amountOfMessages }} Messages</mat-card-title>
+            <mat-card-title class="card-title">{{ 'message.title.messages' | translate:{ numberOfMessages: taskCache().item?.amountOfMessages ?? 0 } }}</mat-card-title>
         </mat-card-header>
         <mat-divider></mat-divider>
         <mat-card-content>
             <form [formGroup]="newCommentForm">
                 <mat-form-field class="large-field">
-                    <textarea matInput type="text" formControlName="comment" placeholder="Here goes your comment..."></textarea>
+                    <textarea matInput type="text" formControlName="comment" [placeholder]="'message.title.placeholder.comment' | translate"></textarea>
                     <mat-hint align="end">{{ newCommentForm.value.comment?.length }} / {{ MAX_LENGTH }}</mat-hint>
                     @if (newCommentForm.hasError('maxlength', 'comment')) {
-                        <mat-error>A comment cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                        <mat-error>{{ 'message.validation.comment.maxLength' | translate:{ maxLength: MAX_LENGTH } }}</mat-error>
                     }
                 </mat-form-field>
             </form>
         </mat-card-content>
         <mat-card-actions class="new-comment-actions-container">
-            <button matButton="elevated" type="button" (click)="onNewCommentSubmit()" [disabled]="newCommentForm.invalid || commentCache().isLoading">Comment</button>
+            <button matButton="elevated" type="button" (click)="onNewCommentSubmit()" [disabled]="newCommentForm.invalid || commentCache().isLoading">{{ 'message.button.send' | translate }}</button>
         </mat-card-actions>
     </mat-card>
     
     @if (commentCache().isLoading) {
         <div class="spinner-container">
             <mat-spinner diameter="30"></mat-spinner>
-            <span>Loading comments...</span>
+            <span>{{ 'message.title.loading.comment' | translate }}</span>
         </div>
     }
     @else if (commentCache().error) {
-        <div class="simple-error-message">{{ commentCache().error }}</div>
+        <div class="simple-error-message">{{ commentCache().error | translate }}</div>
     }
     @else {
         <mat-list>
@@ -42,18 +42,18 @@
                         <mat-card-content>
                             <form [formGroup]="editMessageForm">
                                 <mat-form-field class="large-field">
-                                    <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                    <textarea matInput type="text" formControlName="message" [placeholder]="'message.title.placeholder.comment' | translate"></textarea>
                                     <mat-hint align="end">{{ editMessageForm.value.message?.length }} / {{ MAX_LENGTH }}</mat-hint>
                                     @if (newCommentForm.hasError('maxlength', 'message')) {
-                                        <mat-error>A message cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                        <mat-error>{{ 'message.validation.comment.maxLength' | translate:{ maxLength: MAX_LENGTH } }}</mat-error>
                                     }
                                 </mat-form-field>
                             </form>
                         </mat-card-content>
 
                         <mat-card-actions class="message-actions-container">
-                            <button matButton="elevated" type="button" (click)="onEditMessageSubmit(comment, null)" [disabled]="editMessageForm.invalid">Edit</button>
-                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">Cancel</button>
+                            <button matButton="elevated" type="button" (click)="onEditMessageSubmit(comment, null)" [disabled]="editMessageForm.invalid">{{ 'common.button.edit' | translate }}</button>
+                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">{{ 'common.button.cancel' | translate }}</button>
                         </mat-card-actions>
                     }
                     @else {
@@ -65,23 +65,23 @@
                             @if (userCache().item?.id === comment.userId || isManager()) {
                                 <button matButton="elevated" (click)="onEditMessage(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                                    Edit
+                                    {{ 'common.button.edit' | translate }}
                                 </button>
                                 <button matButton="outlined" (click)="onDeleteMessage(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
-                                    Delete
+                                    {{ 'common.button.delete' | translate }}
                                 </button>
                             }
                             @if (comment.amountOfReplies > 0 && !isCommentExpanded(comment.id)) {
                                 <button matButton="elevated" (click)="onOpenCommentReplies(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                                    Show replies ({{ comment.amountOfReplies }})
+                                    {{ 'message.button.showReplies' | translate:{ numberOfReplies: comment.amountOfReplies } }}
                                 </button>
                             } 
                             @else if ((userCache().item?.id !== comment.userId || isManager()) && !isReplying(comment.id)) {
                                 <button matButton="elevated" type="button" (click)="onReply(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
-                                    Reply
+                                    {{ 'message.button.reply' | translate }}
                                 </button>
                             }
                         </mat-card-actions>
@@ -90,16 +90,16 @@
                             <div class="new-reply">
                                 <form [formGroup]="newReplyForm">
                                     <mat-form-field class="large-field">
-                                        <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                        <textarea matInput type="text" formControlName="reply" [placeholder]="'message.title.placeholder.reply' | translate"></textarea>
                                         <mat-hint align="end">{{ newReplyForm.value.reply?.length }} / {{ MAX_LENGTH }}</mat-hint>
                                         @if (newCommentForm.hasError('maxlength', 'reply')) {
-                                            <mat-error>A reply cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                            <mat-error>{{ 'message.validation.reply.maxLength' | translate:{ maxLength: MAX_LENGTH } }}</mat-error>
                                         }
                                     </mat-form-field>
                                 </form>
                                 <div class="message-actions-container">
-                                    <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(comment, null)">Reply</button>
-                                    <button matButton="outlined" type="button" (click)="disableReplying()">Cancel</button>
+                                    <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(comment, null)">{{ 'message.button.send' | translate }}</button>
+                                    <button matButton="outlined" type="button" (click)="disableReplying()">{{ 'common.button.cancel' | translate }}</button>
                                 </div>
                             </div>
                         }
@@ -107,7 +107,7 @@
                         @if (isCommentExpanded(comment.id)) {
                             @if (isLoadingRepliesForComment(comment.id)) {
                                 <mat-spinner></mat-spinner>
-                                <span>Loading replies...</span>
+                                <span>{{ 'message.title.loading.reply' | translate }}</span>
                             }
                             @else {
                                 <div class="replies-container">                                      
@@ -119,15 +119,15 @@
                                                 @if (isEditing(flattenedReply.id)) {
                                                     <form [formGroup]="editMessageForm" (ngSubmit)="onEditMessageSubmit(flattenedReply, comment)">
                                                         <mat-form-field class="large-field">
-                                                            <textarea matInput type="text" formControlName="message" placeholder="New message..."></textarea>
+                                                            <textarea matInput type="text" formControlName="message" [placeholder]="'message.title.placeholder.reply' | translate"></textarea>
                                                             <mat-hint align="end">{{ editMessageForm.value.message?.length }} / {{ MAX_LENGTH }}</mat-hint>
                                                             @if (newCommentForm.hasError('maxlength', 'message')) {
-                                                                <mat-error>A message cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                                                <mat-error>{{ 'message.validation.reply.maxLength' | translate:{ maxLength: MAX_LENGTH } }}</mat-error>
                                                             }
                                                         </mat-form-field>
                                                         <div class="message-actions-container">
-                                                            <button matButton="elevated" type="submit" [disabled]="editMessageForm.invalid">Edit</button>
-                                                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">Cancel</button>
+                                                            <button matButton="elevated" type="submit" [disabled]="editMessageForm.invalid">{{ 'common.button.edit' | translate }}</button>
+                                                            <button matButton="elevated" type="button" (click)="onEditMessageCancel()">{{ 'common.button.cancel' | translate }}</button>
                                                         </div>
                                                     </form>
                                                 }
@@ -138,16 +138,16 @@
                                                     <div class="new-reply">
                                                         <form [formGroup]="newReplyForm">
                                                             <mat-form-field class="large-field">
-                                                                <textarea matInput type="text" formControlName="reply" placeholder="Your reply..."></textarea>
+                                                                <textarea matInput type="text" formControlName="reply" [placeholder]="'message.title.placeholder.reply' | translate"></textarea>
                                                                 <mat-hint align="end">{{ newReplyForm.value.reply?.length }} / {{ MAX_LENGTH }}</mat-hint>
                                                                 @if (newCommentForm.hasError('maxlength', 'reply')) {
-                                                                    <mat-error>A reply cannot be longer than {{ MAX_LENGTH }} characters.</mat-error>
+                                                                    <mat-error>{{ 'message.validation.reply.maxLength' | translate:{ maxLength: MAX_LENGTH } }}</mat-error>
                                                                 }
                                                             </mat-form-field>
                                                         </form>
                                                         <div class="message-actions-container">
-                                                            <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(flattenedReply, comment)">Reply</button>
-                                                            <button matButton="outlined" type="button" (click)="disableReplying()">Cancel</button>
+                                                            <button matButton="elevated" type="button" [disabled]="newReplyForm.invalid" (click)="onNewReplySubmit(flattenedReply, comment)">{{ 'message.button.send' | translate }}</button>
+                                                            <button matButton="outlined" type="button" (click)="disableReplying()">{{ 'common.button.cancel' | translate }}</button>
                                                         </div>
                                                     </div>
                                                 }
@@ -156,23 +156,23 @@
                                                         @if (userCache().item?.id === flattenedReply.userId || isManager()) {
                                                             <button matButton="elevated" (click)="onEditMessage(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
-                                                                Edit
+                                                                {{ 'common.button.edit' | translate }}
                                                             </button>
                                                             <button matButton="elevated" (click)="onDeleteMessage(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
-                                                                Delete
+                                                                {{ 'common.button.delete' | translate }}
                                                             </button>
                                                             @if (isManager()) {
                                                                 <button matButton="elevated" (click)="onReply(flattenedReply)">
                                                                     <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
-                                                                    Reply
+                                                                    {{ 'message.button.reply' | translate }}
                                                                 </button>       
                                                             }
                                                         }     
                                                         @else if (!isReplying(flattenedReply.id)) {                                                            
                                                             <button matButton="elevated" (click)="onReply(flattenedReply)">
                                                                 <mat-icon fontSet="material-symbols-outlined">reply</mat-icon>
-                                                                Reply
+                                                                {{ 'message.button.reply' | translate }}
                                                             </button>                                                                                                                                                                                                           
                                                         }                                                                                                      
                                                     }
@@ -185,14 +185,14 @@
                             <mat-card-actions class="message-actions-container">
                                 @if (isLastRepliesPage(comment.id)) {
                                     <button matButton="outlined" (click)="onHideReplies(comment.id)">
-                                        Hide replies
+                                        {{ 'message.button.hideReplies' | translate }}
                                         <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
                                     </button>
                                 }
                                 @else {
                                     <button matButton="elevated" (click)="onMoreReplies(comment.id)">
                                         <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                                        See more replies
+                                        {{ 'message.button.showMoreReplies' | translate }}
                                     </button>
                                 }
                             </mat-card-actions>
@@ -206,7 +206,7 @@
         @if (commentCache().page?.last) {
             @if (commentCache().pageIndex !== 0) {
                 <button matButton="outlined" (click)="onHideComments()">
-                    Hide comments
+                    {{ 'message.button.hideComments' | translate }}
                     <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
                 </button>
             }
@@ -214,7 +214,7 @@
         @else {
             <button matButton="elevated" (click)="onMoreComments()">
                 <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                See more comments
+                {{ 'message.button.showMoreComments' | translate }}
             </button>
         }
     </div>

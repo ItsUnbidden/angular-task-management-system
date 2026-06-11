@@ -2,23 +2,23 @@
     @if (selectedTaskCache().isLoading) {
         <div class="spinner-container">
             <mat-spinner diameter="30"></mat-spinner>
-            <span>Loading task...</span>
+            <span>{{ 'task.title.loading.single' | translate }}</span>
         </div>
     }
     @else {
         @if (selectedProjectCache().error || selectedTaskCache().error) {
             <mat-card-header>
-                <mat-card-title class="error-card-title">Error</mat-card-title>
+                <mat-card-title class="error-card-title">{{ 'common.title.error' | translate }}</mat-card-title>
             </mat-card-header>
 
             <mat-card-content>
-                <p>{{ selectedTaskCache().error ?? selectedProjectCache().error }}</p>
+                <p>{{ (selectedTaskCache().error ?? selectedProjectCache().error) | translate }}</p>
             </mat-card-content>
 
             <mat-card-actions class="error-actions-container">
                 <button matButton="elevated" (click)="onTryAgain()">
                     <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
-                    Reload
+                    {{ 'common.button.reload' | translate }}
                 </button>
             </mat-card-actions>
         }
@@ -31,17 +31,17 @@
                     @if (isEditingName()) {
                         <form [formGroup]="nameEditForm" (ngSubmit)="onSubmitTaskName()">
                             <mat-form-field class="inline-form-field">
-                                <mat-label>New task name</mat-label>
+                                <mat-label>{{ 'task.title.newName' | translate }}</mat-label>
                                 <input matInput type="text" formControlName="taskName">
                                 <mat-hint align="end">{{ nameEditForm.value.taskName?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                                 @if (nameEditForm.hasError('required', 'taskName')) {
-                                    <mat-error>This field is required.</mat-error>
+                                    <mat-error>{{ 'task.validation.name.required' | translate }}</mat-error>
                                 }
                                 @if (nameEditForm.hasError('minlength', 'taskName')) {
-                                    <mat-error>Task name must be at least {{ NAME_MIN_LENGTH }} characters long.</mat-error>
+                                    <mat-error>{{ 'task.validation.name.minLength' | translate:{ minLength: NAME_MIN_LENGTH } }}</mat-error>
                                 }
                                 @if (nameEditForm.hasError('maxlength', 'taskName')) {
-                                    <mat-error>Task name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
+                                    <mat-error>{{ 'task.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
                                 }
                             </mat-form-field>
                             <button mat-icon-button type="submit" [disabled]="nameEditForm.invalid">
@@ -69,11 +69,11 @@
                 @if (isEditingDescription()) {
                     <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
                         <mat-form-field class="description-input" appearance="outline">
-                            <mat-label>New task description</mat-label>
+                            <mat-label>{{ 'task.title.newDescription' | translate }}</mat-label>
                             <textarea matInput type="text" formControlName="taskDescription" rows="5"></textarea>
                             <mat-hint align="end">{{ descriptionEditForm.value.taskDescription?.length }} / {{ DESCRIPTION_MAX_LENGTH }}</mat-hint>
                             @if (descriptionEditForm.hasError('maxlength', 'description')) {
-                                <mat-error>Task description cannot be longer than {{ DESCRIPTION_MAX_LENGTH }} characters.</mat-error>
+                                <mat-error>{{ 'task.validation.description.maxLength' | translate:{ maxLength: DESCRIPTION_MAX_LENGTH } }}</mat-error>
                             }
                         </mat-form-field>
                         <div class="actions">
@@ -92,7 +92,7 @@
                             <p class="description-field">{{ selectedTaskCache().item?.description ?? "" }}</p>
                         } 
                         @else {
-                            <p class="description-none">No description</p>
+                            <p class="description-none">{{ 'task.title.noDescription' | translate }}</p>
                         }
                         @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskDescriptionEdit()">
@@ -104,7 +104,7 @@
                 @if (isEditingDate()) {
                     <form [formGroup]="dateEditForm" (ngSubmit)="onSubmitTaskDueDate()">
                         <mat-form-field appearance="outline">
-                            <mat-label>New task due date</mat-label>
+                            <mat-label>{{ 'task.title.newDueDate' | translate }}</mat-label>
                             <input matInput [matDatepicker]="picker" formControlName="taskDueDate">
     
                             <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
@@ -121,7 +121,7 @@
                 }
                 @else {
                     <div class="row">
-                        <p>{{ selectedTaskCache().item?.dueDate ? (selectedTaskCache().item?.dueDate | date:'mediumDate') : 'No due date' }}</p>
+                        <p>{{ selectedTaskCache().item?.dueDate ? (selectedTaskCache().item?.dueDate | date:'mediumDate') : ('task.title.noDueDate' | translate) }}</p>
                         <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.status ?? null)">
                             {{ getChipTextLocal(selectedTaskCache().item?.status ?? null) }}
                         </mat-chip>
@@ -137,10 +137,10 @@
                         <div class="row">
                             <div>
                                 <mat-form-field appearance="outline">
-                                    <mat-label>New priority</mat-label>
+                                    <mat-label>{{ 'task.title.priority.newPriority' | translate }}</mat-label>
                                     <mat-select formControlName="taskPriority">
                                         @for (option of priorityOptions; track option) {
-                                            <mat-option [value]="option.priority">{{ option.priorityView }}</mat-option>
+                                            <mat-option [value]="option">{{ getChipTextLocal(option) | translate }}</mat-option>
                                         }
                                     </mat-select>
                                 </mat-form-field>
@@ -156,11 +156,11 @@
                             <div class="task-chips-actions-container">
                                 <button matButton="elevated" type="button" (click)="onAddNewLabel()">
                                     <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
-                                    Add a new label
+                                    {{ 'label.button.new' | translate }}
                                 </button>
                                 <button matButton="elevated" type="button" (click)="onOpenLabelManagement()">
                                     <mat-icon fontSet="material-symbols-outlined">edit_attributes</mat-icon>
-                                    Label management
+                                    {{ 'label.title.labelManagement' | translate }}
                                 </button>
                                 <div>
                                     <button mat-icon-button type="submit" [disabled]="chipsEditForm.invalid">
@@ -178,7 +178,7 @@
                     <div class="row">
                         <mat-chip-set>
                             <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.priority ?? null)">
-                                {{ getChipTextLocal(selectedTaskCache().item?.priority ?? null) }}
+                                {{ getChipTextLocal(selectedTaskCache().item?.priority ?? null) | translate }}
                             </mat-chip>
                             @for (label of selectedTaskLabels(); track label.id) {
                                 <mat-chip class="label-chip" [attr.data-color]="label.color">
@@ -199,22 +199,22 @@
                 @if (isAdmin() || isManager()) {
                     <button matButton="outlined" (click)="onTaskDelete()">
                         <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
-                        Delete
+                        {{ 'common.button.delete' | translate }}
                     </button>
                 }
                 @if (selectedTaskCache().item?.assigneeId === currentUserCache().item?.id) {
                     @if (selectedTaskCache().item?.status === 'IN_PROGRESS') {
-                        <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">Mark as not started</button>
-                        <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
+                        <button matButton="outlined" (click)="onStatusChange('NOT_STARTED')">{{ 'task.button.notStarted' | translate }}</button>
+                        <button matButton="filled" (click)="onStatusChange('COMPLETED')">{{ 'task.button.completed' | translate }}</button>
                     }
                     @else if (selectedTaskCache().item?.status === 'NOT_STARTED') {
-                        <button matButton="filled" (click)="onStatusChange('IN_PROGRESS')">Start</button>
+                        <button matButton="filled" (click)="onStatusChange('IN_PROGRESS')">{{ 'common.button.start' | translate }}</button>
                     }
                     @else if (selectedTaskCache().item?.status === 'OVERDUE') {
-                        <button matButton="filled" (click)="onStatusChange('COMPLETED')">Mark as completed</button>
+                        <button matButton="filled" (click)="onStatusChange('COMPLETED')">{{ 'task.button.completed' | translate }}</button>
                     }
                     @else {
-                        <button matButton="outlined" (click)="onStatusChange('IN_PROGRESS')">Mark as in progress</button>
+                        <button matButton="outlined" (click)="onStatusChange('IN_PROGRESS')">{{ 'task.button.inProgress' | translate }}</button>
                     }                  
                 }  
             </mat-card-actions>
@@ -226,25 +226,25 @@
                     }
                     @else if (!selectedProjectCache().item?.isDropboxConnected) {
                         @if (isCreator()) {
-                            <p>Connect the project to Dropbox to access attachments.</p>
+                            <p>{{ 'attachment.title.projectNotConnected.creator' | translate }}</p>
                         }
                         @else {
-                            <p>The creator of this project hasn't connected it to Dropbox yet.</p>
+                            <p>{{ 'attachment.title.projectNotConnected.member' | translate }}</p>
                         }
                     }
                     @else if (!currentProjectRole()?.isDropboxConnected) {
-                        <p>This project is connected to Dropbox, but you haven't joined yet.</p>
+                        <p></p>
                         <button matButton="elevated" (click)="onJoinDropbox()">
                             <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                            Join Dropbox
+                            {{ 'project.button.dropbox.join' | translate }}
                         </button>
                     }
                 }
                 @else if(!isContributor()) {
-                    <p>Only project members can access attachments.</p>
+                    <p>{{ 'attachment.title.onlyMembers' | translate }}</p>
                 }
                 @else {
-                    <p>You need to log into Dropbox in order to use attachments.</p>
+                    <p>{{ 'attachment.title.userNotConnected' | translate }}</p>
                 }
                 <app-message-list></app-message-list>
             </mat-card-content>

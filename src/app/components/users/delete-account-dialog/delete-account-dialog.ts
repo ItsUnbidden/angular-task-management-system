@@ -9,10 +9,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { EMPTY, switchMap } from 'rxjs';
 import { UserStore } from '../../../cache/user.store';
 import { UserDeleteResponse } from '../../../models/user.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-delete-account-dialog',
-  imports: [MatFormFieldModule, ReactiveFormsModule, MatProgressSpinnerModule, MatDialogModule, MatInputModule, MatButtonModule],
+  imports: [MatFormFieldModule, ReactiveFormsModule, MatProgressSpinnerModule,
+            MatDialogModule, MatInputModule, MatButtonModule,
+            TranslatePipe],
   templateUrl: './delete-account-dialog.html',
   styleUrl: './delete-account-dialog.css',
 })
@@ -44,8 +47,7 @@ export class DeleteAccountDialog {
     if (username && password) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Confirm',
-          message: 'Are you sure you want to delete your account? This action is irreversible.'
+          message: { key: 'user.confirm.delete.message' }
         },
         disableClose: true,
         width: '420px'

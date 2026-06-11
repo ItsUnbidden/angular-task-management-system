@@ -12,16 +12,17 @@ import { ProjectService } from '../../../service/project.service';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { getDefaultErrorMessageForType, toLocalDateString } from '../../../utils';
 import { finalize } from 'rxjs';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { ProjectCreateRequest } from '../../../models/project.model';
 import { GeneralApiError } from '../../../models/error.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-new-project-dialog',
   imports: [MatDialogModule, MatFormFieldModule, MatInputModule,
             ReactiveFormsModule, MatNativeDateModule, MatDatepickerModule,
             MatButtonModule, MatCheckboxModule, MatIconModule,
-            MatProgressSpinnerModule],
+            MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './new-project-dialog.html',
   styleUrl: './new-project-dialog.css',
 })

@@ -1,7 +1,7 @@
 @if (isLoading()) {
     <div class="spinner-container">
         <mat-spinner diameter="30"></mat-spinner>
-        <span>Loading user...</span>
+        <span>{{ 'user.title.loading.single' | translate }}</span>
     </div>
 }
 @else {
@@ -11,22 +11,22 @@
         <p>{{ loadedUser()?.email }}</p>
         <p>{{ getUserRoleLocal() }}</p>
         @if (loadedUser()?.isLocked) {     
-            <p>This user is currently banned.</p>
+            <p>{{ 'user.title.bannedInfo' | translate }}</p>
         }
     </div>
     
     <div mat-dialog-actions>
-        <button matButton="elevated" (click)="onChangeLock()">{{ loadedUser()?.isLocked ? 'Lift ban' : 'Ban user' }}</button>
+        <button matButton="elevated" (click)="onChangeLock()">{{ (loadedUser()?.isLocked ? 'user.button.locked.lift' : 'user.button.locked.ban') | translate }}</button>
         
         @if (isOwner()) {
             @if (loadedUser()?.roles?.includes('MANAGER')) {
-                <button matButton="elevated" (click)="onSetRole('USER')">Take away privileges</button>
+                <button matButton="elevated" (click)="onSetRole('USER')">{{ 'user.button.demote' | translate }}</button>
                 
             }
             @else if (loadedUser()?.roles?.includes('USER')) {
-                <button matButton="elevated" (click)="onSetRole('MANAGER')">Make manager</button>
+                <button matButton="elevated" (click)="onSetRole('MANAGER')">{{ 'user.button.promote' | translate }}</button>
             }
         }
-        <button matButton="outlined" (click)="onClose()">Close</button>
+        <button matButton="outlined" (click)="onClose()">{{ 'common.button.close' | translate }}</button>
     </div>
 }

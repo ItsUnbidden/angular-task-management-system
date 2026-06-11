@@ -9,30 +9,32 @@ import { UserStore } from '../../../../cache/user.store';
 import { UserService } from '../../../../service/user.service';
 import { UserResponse } from '../../../../models/user.model';
 import { GeneralApiError } from '../../../../models/error.model';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NotificationService } from '../../../../service/notification.service';
 
 @Component({
   selector: 'app-user-actions-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [MatDialogModule, MatButtonModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './user-actions-dialog.html',
   styleUrl: './user-actions-dialog.css',
 })
 export class UserActionsDialog {
   private readonly userStore = inject(UserStore);
 
-  readonly isOwner = this.userStore.isOwner;
-  readonly loadedUser = signal<UserResponse | null>(null);
-  readonly isLoading = signal(false);
+  protected readonly isOwner = this.userStore.isOwner;
+  protected readonly loadedUser = signal<UserResponse | null>(null);
+  protected readonly isLoading = signal(false);
 
   private hasChanged = false;
 
   constructor(private readonly userService: UserService,
               private readonly dialogRef: MatDialogRef<UserActionsDialog, boolean>,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               @Inject(MAT_DIALOG_DATA) readonly data: UserResponse) {
     this.loadedUser.set(data);
   }
 
-  onSetRole(role: 'MANAGER' | 'USER') {
+  protected onSetRole(role: 'MANAGER' | 'USER') {
     const user = this.loadedUser();
 
     if (user) {
@@ -46,16 +48,14 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 5000);
           this.isLoading.set(false);
         }
       });
     }
   }
 
-  onChangeLock() {
+  protected onChangeLock() {
     const user = this.loadedUser();
 
     if (user) {
@@ -69,20 +69,18 @@ export class UserActionsDialog {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 5000);
           this.isLoading.set(false);
         }
       });
     }
   }
 
-  onClose() {
+  protected onClose() {
     this.dialogRef.close(this.hasChanged);
   }
 
-  getUserRoleLocal() : string {
+  protected getUserRoleLocal() : string {
     const user = this.loadedUser();
 
     return user ? getUserRole(user) : '';

@@ -1,13 +1,14 @@
-import { Component, effect, OnInit, signal } from '@angular/core';
+import { Component, effect, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { Header } from "./components/util/app-header/header";
 import { OAuth2Service } from './service/oauth2.service';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { registerIcons } from './app.config';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { UserStore } from './cache/user.store';
 import { AuthService } from './service/auth.service';
+import { NotificationService } from './service/notification.service';
+import { LanguageService } from './service/language.service';
 
 @Component({
   selector: 'app-root',
@@ -16,11 +17,11 @@ import { AuthService } from './service/auth.service';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  protected readonly title = signal('Task Management System');
-
-  constructor(private userStore: UserStore, private authService: AuthService,
-              private oauth2Service: OAuth2Service, private router: Router,
-              private snackBar: MatSnackBar, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+  constructor(private readonly authService: AuthService,
+              private readonly oauth2Service: OAuth2Service, private readonly router: Router,
+              private readonly notification: NotificationService,
+              private readonly languageService: LanguageService,
+              userStore: UserStore, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
     effect(() => {
       const user = userStore.userCache().item;
 
@@ -34,6 +35,8 @@ export class App implements OnInit {
   }
 
   ngOnInit(): void {
+    this.languageService.initialize();
+
     this.router.routerState.root.queryParamMap.subscribe({
       next: paramMap => {
         const provider = paramMap.get('oauth');
@@ -41,13 +44,9 @@ export class App implements OnInit {
 
         if (provider && result) {
           if (result === 'success') {
-            this.snackBar.open(`${provider} has been successfully connected.`, 'Dismiss', {
-              duration: 3000
-            })
+            this.notification.info(`${provider === 'dropbox' ? provider : 'calendar'}.success.connect`, 5000);
           } else {
-            this.snackBar.open(`An error occured during an attempt to connect ${provider}.`, 'Dismiss', {
-              duration: 5000
-            })
+            this.notification.info(`${provider === 'dropbox' ? provider : 'calendar'}.error.connect`, 10000);
           }
         }
       }

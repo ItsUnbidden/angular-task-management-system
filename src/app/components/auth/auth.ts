@@ -11,12 +11,13 @@ import { finalize, switchMap } from 'rxjs';
 import { getDefaultErrorMessageForType, passwordMatchValidator } from '../../utils';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { SimpleApiError } from '../../models/error.model';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'app-auth',
-    imports: [MatCardModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatButton, MatDivider, MatProgressSpinnerModule],
+    imports: [MatCardModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatButton, MatDivider, MatProgressSpinnerModule, TranslatePipe],
     templateUrl: './auth.html',
     styleUrl: './auth.css'
 })
@@ -36,7 +37,8 @@ export class Auth {
   private returnUrl = '/dashboard';
 
   constructor(private readonly route: ActivatedRoute,
-              private readonly router: Router) {
+              private readonly router: Router,
+              private readonly translate: TranslateService) {
     const ru = this.route.snapshot.queryParamMap.get('returnUrl');
     if (ru && ru.startsWith('/')) this.returnUrl = ru;
   }
@@ -84,7 +86,7 @@ export class Auth {
         error: (err: HttpErrorResponse) => {
           const error = err.error as SimpleApiError;
 
-          this.error.set(getDefaultErrorMessageForType(error));
+          this.error.set(this.translate.instant(getDefaultErrorMessageForType(error)));
         }
       });
     }
@@ -106,7 +108,7 @@ export class Auth {
           error: (err: HttpErrorResponse) => {
             const error = err.error as SimpleApiError;
 
-            this.error.set(getDefaultErrorMessageForType(error));
+            this.error.set(this.translate.instant(getDefaultErrorMessageForType(error)));
           }
         });
       }

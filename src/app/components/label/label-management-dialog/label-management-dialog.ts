@@ -3,7 +3,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
 import { LabelService } from '../../../service/label.service';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { HttpErrorResponse } from '@angular/common/http';
@@ -14,9 +13,11 @@ import { MatIcon } from "@angular/material/icon";
 import { switchMap, tap } from 'rxjs';
 import { LabelStore } from '../../../cache/label.store';
 import { getDefaultErrorMessageForType } from '../../../utils';
-import { ValidationBoundaries } from '../../validation-boundaries';
+import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { LabelColor, LabelResponse } from '../../../models/label.model';
 import { SimpleApiError } from '../../../models/error.model';
+import { NotificationService } from '../../../service/notification.service';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 interface LabelManagementDialogData {
   projectId: number;
@@ -25,7 +26,9 @@ interface LabelManagementDialogData {
 
 @Component({
   selector: 'app-label-management-dialog',
-  imports: [MatTableModule, MatChipsModule, MatButtonModule, MatFormFieldModule, MatDialogModule, MatProgressSpinnerModule, ReactiveFormsModule, MatInputModule, MatIcon],
+  imports: [MatTableModule, MatChipsModule, MatButtonModule,
+            MatFormFieldModule, MatDialogModule, MatProgressSpinnerModule,
+            ReactiveFormsModule, MatInputModule, MatIcon, TranslatePipe],
   templateUrl: './label-management-dialog.html',
   styleUrl: './label-management-dialog.css'
 })
@@ -64,7 +67,7 @@ export class LabelManagementDialog {
   private hasChangedLabels = false;
 
   constructor(private readonly dialogRef: MatDialogRef<LabelManagementDialog, boolean>,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               private readonly labelService: LabelService,
               @Inject(MAT_DIALOG_DATA) public readonly data: LabelManagementDialogData) {
     effect(() => {
@@ -100,9 +103,7 @@ export class LabelManagementDialog {
         tap({
           next: () => {
             this.hasChangedLabels = true;
-            this.snackBar.open(`Label ${label.name} has been deleted.`, 'Dismiss', {
-              duration: 3000
-            });
+            this.notification.info('label.success.delete', 5000, { name: label.name });
             this.isEditRequestRunning.set(false);
             this.onBack();
           }
@@ -131,9 +132,7 @@ export class LabelManagementDialog {
       }).subscribe({
         next: label => {
           this.hasChangedLabels = true;
-          this.snackBar.open(`Label ${label.name} has been changed.`, 'Dismiss', {
-            duration: 3000
-          });
+          this.notification.info('label.success.edit', 5000, { name: label.name });
           this.isEditRequestRunning.set(false);
           this.labelStore.replace(label);
           this.onBack();

@@ -20,27 +20,26 @@ import { CommonModule } from '@angular/common';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { AddUserDialog } from '../users/add-user-dialog/add-user-dialog';
-import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { HttpErrorResponse } from '@angular/common/http';
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
+import { getChipColor, getChipTextKey, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
 import { ProjectStore } from '../../cache/project.store';
 import { UserStore } from '../../cache/user.store';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { ProjectRoleResponse, ProjectUpdateRequest, ProjectWithDropboxResultResponse } from '../../models/project.model';
 import { GeneralApiError } from '../../models/error.model';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
+import { NotificationService } from '../../service/notification.service';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-overview',
-  imports: [CommonModule, MatCardModule,
-    MatProgressSpinnerModule, MatIconModule,
-    MatInputModule, MatFormFieldModule,
-    ReactiveFormsModule, MatButtonModule,
-    MatSlideToggleModule, MatDatepickerModule,
-    MatDivider, MatChipsModule,
-    MatPaginatorModule, RouterOutlet,
-    MatExpansionModule, MatSnackBarModule],
+  imports: [CommonModule, MatCardModule, MatProgressSpinnerModule, MatIconModule,
+    MatInputModule, MatFormFieldModule, ReactiveFormsModule, MatButtonModule,
+    MatSlideToggleModule, MatDatepickerModule, MatDivider, MatChipsModule,
+    MatPaginatorModule, RouterOutlet, MatExpansionModule, MatSnackBarModule,
+    TranslatePipe],
   templateUrl: './project.html',
   styleUrl: './project.css',
 })
@@ -103,7 +102,7 @@ export class Project {
   protected readonly isPrivateCtrl = new FormControl<boolean>(false, { nonNullable: true });
 
   constructor(private readonly dialog: MatDialog,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               private readonly router: Router,
               private readonly projectService: ProjectService) {
     effect(() => {
@@ -181,9 +180,7 @@ export class Project {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -216,9 +213,7 @@ export class Project {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -231,9 +226,8 @@ export class Project {
     this.isPrivateCtrl.setValue(!isOn, { emitEvent: false });
     this.dialog.open(ConfirmDialog, {
       data: {
-        title: 'Change project visibility?',
-        message: isOn ? 'Are you sure you want to make this project <strong>private</strong>?'
-          : 'Are you sure you want to make this project <strong>public</strong>?'
+        title: { key: 'project.confirm.private.title' },
+        message: { key: isOn ? 'project.confirm.private.message.on' : 'project.confirm.private.message.off' }
       },
       disableClose: true,
       width: '420px'
@@ -254,9 +248,7 @@ export class Project {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 10000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -283,9 +275,7 @@ export class Project {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -298,25 +288,24 @@ export class Project {
       disableClose: true,
       width: '420px'
     }).afterClosed().subscribe({
-      next: (response: ProjectWithDropboxResultResponse) => {
-        if (response) {
-          let message = 'User has been successfully added to the project.';
-
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `User has been successfully added, but there was a Dropbox 
-                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
-          } 
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 10000
-          });
+      next: (responseUsernamePair: [ProjectWithDropboxResultResponse, string]) => {
+        if (responseUsernamePair) {
+          if (responseUsernamePair[0].dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.addUser.full', 5000, {
+              username: responseUsernamePair[1]
+            });
+          } else {
+            this.notification.info('project.success.addUser.dropboxFailed', 10000, {
+              username: responseUsernamePair[1],
+              dropboxMessage: getDefaultMessageForExternalError(responseUsernamePair[0].dropboxResult)
+            });
+          }
         }
       },
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 10000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -327,8 +316,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: `Remove user <strong>${projectRole.username}</strong>?`,
-          message: `Are you sure you want to remove <strong>${projectRole.username}</strong> from the project?`
+          title: { key: 'project.confirm.removeUser.title', params: { username: projectRole.username } },
+          message: { key: 'project.confirm.removeUser.message', params: { username: projectRole.username } }
         }
       })
       .afterClosed().pipe(
@@ -338,15 +327,21 @@ export class Project {
         })
       ).subscribe({
         next: response => {
-          let message = `${projectRole.username} has been removed from this project.`;
-          
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `User has been successfully removed, but there was a Dropbox 
-                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          if (response.dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.removeUser.full', 5000, {
+              username: projectRole.username
+            });
+          } else {
+            this.notification.info('project.success.removeUser.dropboxFailed', 10000, {
+              username: projectRole.username,
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 10000
-          });
+        },
+        error: (err: HttpErrorResponse) => {
+          const error = err.error as GeneralApiError;
+
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -358,8 +353,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Quit project',
-          message: 'Are you sure you want to <strong>quit</strong> this project?'
+          title: { key: 'project.confirm.quit.title' },
+          message: { key: 'project.confirm.quit.message' }
         },
         disableClose: true,
         width: '420px'
@@ -370,22 +365,21 @@ export class Project {
       })).subscribe({
         next: (response) => {
           this.router.navigateByUrl('/dashboard');
-          let message = `You have successfully left project ${project.name}.`;
-          
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `You have successfully left project ${project.name}, but there was a Dropbox 
-                issue: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          if (response.dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.quit.full', 5000, {
+              projectName: project.name
+            });
+          } else {
+            this.notification.info('project.success.quit.dropboxFailed', 10000, {
+              projectName: project.name,
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 10000
-          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -397,8 +391,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Make admin',
-          message: `Are you sure you want to make <strong>${projectRole.username}</strong> an admin in this project?`
+          title: { key: 'project.confirm.makeAdmin.title' },
+          message: { key: 'project.confirm.makeAdmin.message', params: { username: projectRole.username } }
         },
         disableClose: true,
         width: '420px'
@@ -408,16 +402,12 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open(`${projectRole.username} is now an admin.`, 'Dismiss', {
-            duration: 5000
-          })
+          this.notification.info('project.success.makeAdmin', 5000, { username: projectRole.username });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -429,8 +419,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Remove admin',
-          message: `Are you sure you want to reduce privileges for <strong>${projectRole.username}</strong> in this project?`
+          title: { key: 'project.confirm.removeAdmin.title' },
+          message: { key: 'project.confirm.removeAdmin.message', params: { username: projectRole.username } }
         },
         disableClose: true,
         width: '420px'
@@ -440,16 +430,12 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open(`${projectRole.username} is now a contributor.`, 'Dismiss', {
-            duration: 5000
-          })
+          this.notification.info('project.success.removeAdmin', 5000, { username: projectRole.username });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -461,8 +447,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Trasfer ownership',
-          message: `Are you sure you want to transfer ownership of this project to <strong>${projectRole.username}</strong>?`
+          title: { key: 'project.confirm.transfer.title' },
+          message: { key: 'project.confirm.transfer.message', params: { username: projectRole.username } }
         },
         disableClose: true,
         width: '420px'
@@ -472,22 +458,21 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: response => {
-          let message = `The project has been successfully transfered to ${projectRole.username}. You are now an admin.`;
-          
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `The project has been successfully transfered to ${projectRole.username} and you are now an admin.
-                There was a Dropbox issue, however: ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          if (response.dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.transfer.full', 5000, {
+              username: projectRole.username
+            });
+          } else {
+            this.notification.info('project.success.transfer.dropboxFailed', 10000, {
+              username: projectRole.username,
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 15000
-          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -499,8 +484,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Delete project',
-          message: `Are you sure you want to <strong>delete</strong> this project? This operation is irreversible.`
+          title: { key: 'project.confirm.delete.title' },
+          message: { key: 'project.confirm.delete.message' }
         },
         disableClose: true,
         width: '420px'
@@ -511,22 +496,21 @@ export class Project {
       })).subscribe({
         next: response => {
           this.router.navigateByUrl('/dashboard');
-          let message = `You have successfuly deleted ${project.name}`;
-
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `You have successfuly deleted ${project.name}, but there was a Dropbox issue: 
-                ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          if (response.dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.delete.full', 5000, {
+              projectName: project.name
+            });
+          } else {
+            this.notification.info('project.success.delete.dropboxFailed', 10000, {
+              projectName: project.name,
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 10000
-          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -538,8 +522,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Connect Dropbox',
-          message: `Are you sure you want to <strong>connect</strong> Dropbox to this project? It might take a <strong>significant</strong> amount of time.`
+          title: { key: 'project.confirm.connectDropbox.title' },
+          message: { key: 'project.confirm.connectDropbox.message' }
         },
         disableClose: true,
         width: '420px'
@@ -549,16 +533,12 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open('Dropbox has been successfully connected to this project.', 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info('project.success.connectDropbox', 10000);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -570,8 +550,8 @@ export class Project {
     if (project) {      
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Connect Calendar',
-          message: `Are you sure you want to <strong>connect</strong> Calendar to this project? It might take a <strong>significant</strong> amount of time.`
+          title: { key: 'project.confirm.connectCalendar.title' },
+          message: { key: 'project.confirm.connectCalendar.message' }
         },
         disableClose: true,
         width: '420px'
@@ -581,16 +561,12 @@ export class Project {
         return EMPTY;
       })).subscribe({
         next: () => {
-          this.snackBar.open('Calendar has been successfully connected to this project.', 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info('project.success.connectCalendar', 10000);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });     
     }
@@ -602,8 +578,8 @@ export class Project {
     if (project) {         
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Join Dropbox',
-          message: `Are you sure you want to <strong>join</strong> Dropbox in this project?.`
+          title: { key: 'project.confirm.joinDropbox.title' },
+          message: { key: 'project.confirm.joinDropbox.message' }
         },
         disableClose: true,
         width: '420px'
@@ -615,16 +591,12 @@ export class Project {
         })
       ).subscribe({
         next: () => {
-          this.snackBar.open('You have successfully joined Dropbox in this project. ', 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info('project.success.joinDropbox', 10000);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       }); 
     }
@@ -636,8 +608,8 @@ export class Project {
     if (project) {         
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Join Calendar',
-          message: `Are you sure you want to <strong>join</strong> Calendar in this project? It might take a <strong>significant</strong> amount of time and can't be reversed.`
+          title: { key: 'project.confirm.joinCalendar.title' },
+          message: { key: 'project.confirm.joinCalendar.message' }
         },
         disableClose: true,
         width: '420px'
@@ -650,16 +622,12 @@ export class Project {
         switchMap(() => this.projectStore.cacheSelectedProject(project.id, true))
       ).subscribe({       
         next: () => {
-          this.snackBar.open('You have successfully joined Calendar in this project.', 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info('project.success.joinCalendar', 10000);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });   
     }
@@ -671,8 +639,8 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Disconnect Dropbox',
-          message: `Are you sure you want to <strong>disconnect</strong> Dropbox from this project? This will delete <strong>all attachments</strong> in the project.`
+          title: { key: 'project.confirm.disconnectDropbox.title' },
+          message: { key: 'project.confirm.disconnectDropbox.message' }
         },
         disableClose: true,
         width: '420px'
@@ -684,23 +652,18 @@ export class Project {
         })
       ).subscribe({
         next: response => {
-          let message = `You have successfully disconnected this project from Dropbox.`;
-
-          if (response.dropboxResult.status !== ThirdPartyOperationStatus.SUCCESS) {
-            message = `You have successfuly disconnected this project from Dropbox ${project.name},
-                but there was an issue with deleting the shared folder: 
-                ${getDefaultMessageForExternalError(response.dropboxResult)}`;
+          if (response.dropboxResult.status === ThirdPartyOperationStatus.SUCCESS) {
+            this.notification.info('project.success.disconnectDropbox.full', 10000);
+          } else {
+            this.notification.info('project.success.disconnectDropbox.dropboxFailed', 10000, {
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 15000
-          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -712,33 +675,28 @@ export class Project {
     if (project) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Disconnect Calendar',
-          message: `Are you sure you want to <strong>disconnect</strong> Calendar from this project? This will delete the calendar and all its events.`
+          title: { key: 'project.confirm.disconnectCalendar.title' },
+          message: { key: 'project.confirm.disconnectCalendar.message' }
         },
         disableClose: true,
         width: '420px'
       })
       .afterClosed().pipe(
         switchMap(confirmed => {
-          if (confirmed) return this.projectService.disconnectCalendar(project.id);
+          if (confirmed) return this.projectStore.disconnectCalendar();
           return EMPTY;
-        }),
-        switchMap(response => this.projectStore.cacheSelectedProject(project.id, true).pipe(map(() => response)))
+        })
       ).subscribe({
         next: result => {
-          if (result.isCalendarDeleted !== undefined) this.snackBar.open(
-            result.isCalendarDeleted ? 'Calendar has been disconnected successfully.'
-            : 'Calendar has been disconnected from this project, but the actual Google Calendar has '
-            + 'not been deleted due to an error. You might have to delete it manually.', 'Dismiss', {
-              duration: 7000
-            });
+          const messageKey = result.status === ThirdPartyOperationStatus.SUCCESS
+              ? 'project.success.disconnectCalendar.full' : 'project.success.disconnectCalendar.calendarFailed';
+
+          this.notification.info(messageKey, 10000);
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -749,9 +707,7 @@ export class Project {
       error: (err: HttpErrorResponse) => {
         const error = err.error as GeneralApiError;
 
-        this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-          duration: 10000
-        });
+        this.notification.info(getDefaultErrorMessageForType(error), 10000);
       }
     });
   }
@@ -765,7 +721,7 @@ export class Project {
   }
 
   protected getChipTextLocal(value: string | null): string {
-    return getChipText(value);
+    return getChipTextKey(value);
   }
 
   private makeProjectUpdateRequest() : ProjectUpdateRequest | undefined {

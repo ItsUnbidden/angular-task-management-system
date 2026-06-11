@@ -7,7 +7,7 @@ import { UserStore } from "../cache/user.store";
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private isRefreshing = false;
-  private isRefreshDone = new BehaviorSubject<boolean | null>(null);
+  private isRefreshDone = new BehaviorSubject<any | null>(null);
 
   constructor(private auth: AuthService, private userStore: UserStore) {}
   
@@ -38,7 +38,7 @@ export class AuthInterceptor implements HttpInterceptor {
           return next.handle(request);
         }),
         catchError(err => {
-          this.isRefreshDone.next(false);
+          this.isRefreshDone.next(err);
           this.userStore.clearUser();
           return throwError(() => err);
         }),
@@ -52,10 +52,10 @@ export class AuthInterceptor implements HttpInterceptor {
       filter(result => result !== null),
       take(1),
       switchMap(result => {
-        if (result) {
+        if (typeof result === 'boolean' && result) {
           return next.handle(request);
         } else {
-          return throwError(() => new Error('Not authenticated'));
+          return throwError(() => result ?? new Error('Unknown error.'))
         }
       }));
   }

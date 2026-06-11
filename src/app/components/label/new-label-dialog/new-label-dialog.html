@@ -1,16 +1,16 @@
-<h2 mat-dialog-title>New Label</h2>
+<h2 mat-dialog-title>{{ 'label.title.new' | translate }}</h2>
 
 <div mat-dialog-content>
     <form class="label-form" [formGroup]="labelForm">
         <mat-form-field class="name-field">
-            <mat-label>Label name</mat-label>
+            <mat-label>{{ 'label.title.name' | translate }}</mat-label>
             <input matInput formControlName="name">
             <mat-hint align="end">{{ labelForm.value.name?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
             @if (labelForm.hasError('required', 'name')) {
-                <mat-error>This field is required.</mat-error>
+                <mat-error>{{ 'label.validation.name.required' | translate }}</mat-error>
             }
             @if (labelForm.hasError('maxlength', 'name')) {
-                <mat-error>Label name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
+                <mat-error>{{ 'label.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
             }
         </mat-form-field>
 
@@ -23,23 +23,23 @@
                 }
             </mat-chip-listbox>
             @if (labelForm.controls.color.dirty && labelForm.hasError('required', 'color')) {
-                <mat-error>You need to choose the label color.</mat-error>
+                <mat-error>{{ 'label.validation.color.required' | translate }}</mat-error>
             }
         </div>
 
         @if (isSendingRequest()) {
             <div class="spinner-container">
                 <mat-spinner diameter="30"></mat-spinner>
-                <span>Please wait...</span>
+                <span>{{ 'label.title.loading.new' | translate }}</span>
             </div>
         }
         @else {
-            <mat-error>{{ error() }}</mat-error>
+            <mat-error>{{ error() | translate}}</mat-error>
         }
     </form>
 </div>
 
 <div mat-dialog-actions align="end">
-    <button mat-button (click)="close()" [disabled]="isSendingRequest()">Cancel</button>
-    <button mat-flat-button (click)="submit()" [disabled]="labelForm.invalid || isSendingRequest()">Create label</button>
+    <button mat-button (click)="close()" [disabled]="isSendingRequest()">{{ 'common.button.cancel' | translate }}</button>
+    <button mat-flat-button (click)="submit()" [disabled]="labelForm.invalid || isSendingRequest()">{{ 'label.button.new' | translate }}</button>
 </div>

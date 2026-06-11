@@ -5,10 +5,13 @@ import { routes } from './app.routes';
 import { HTTP_INTERCEPTORS, provideHttpClient, withFetch, withInterceptors, withInterceptorsFromDi, withXsrfConfiguration } from '@angular/common/http';
 import { AuthInterceptor } from './interceptor/auth.interceptor';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideTranslateService } from '@ngx-translate/core'
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatIconRegistry } from '@angular/material/icon';
 import { DomSanitizer } from '@angular/platform-browser';
 import { delayInterceptor } from './interceptor/delay.interceptor';
+import { languageConfig } from './config/languages';
 
 export function registerIcons(iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
   iconRegistry.addSvgIcon('dropbox', sanitizer.bypassSecurityTrustResourceUrl('assets/icons/dropbox.svg'));
@@ -24,6 +27,11 @@ export const appConfig: ApplicationConfig = {
       cookieName: 'XSRF-TOKEN',
       headerName: 'X-XSRF-TOKEN'
     })),
+    provideTranslateService({
+      loader: provideTranslateHttpLoader({ prefix: './i18n/', suffix: '.json'}),
+      fallbackLang: languageConfig.fallbackLang,
+      lang: languageConfig.defaultLang
+    }),
     {provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true},
     provideAnimations(),
     provideNativeDateAdapter()

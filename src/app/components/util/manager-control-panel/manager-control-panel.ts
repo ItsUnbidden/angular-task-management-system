@@ -13,10 +13,13 @@ import { UserActionsDialog } from './user-actions-dialog/user-actions-dialog';
 import { getUserRole } from '../../../utils';
 import { UserStore } from '../../../cache/user.store';
 import { UserResponse } from '../../../models/user.model';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-manager-control-panel',
-  imports: [MatCardModule, MatTableModule, MatPaginatorModule, MatSortModule, MatInputModule, ReactiveFormsModule, MatProgressSpinnerModule, MatRadioModule],
+  imports: [MatCardModule, MatTableModule, MatPaginatorModule,
+            MatSortModule, MatInputModule, ReactiveFormsModule,
+            MatProgressSpinnerModule, MatRadioModule, TranslatePipe],
   templateUrl: './manager-control-panel.html',
   styleUrl: './manager-control-panel.css',
 })

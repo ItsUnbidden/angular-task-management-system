@@ -1,23 +1,23 @@
 <div class="main-container">
     <mat-card class="table-card" appearance="outlined">
         <mat-card-header>
-            <mat-card-title>Users</mat-card-title>
+            <mat-card-title>{{ 'user.title.users' | translate }}</mat-card-title>
         </mat-card-header>
         <mat-card-content>
             <form [formGroup]="usersFilterForm"]>
                 <mat-form-field>
-                    <mat-label>Filter users</mat-label>
+                    <mat-label>{{ 'user.title.filterUsers' | translate }}</mat-label>
                     <input matInput type="text" formControlName="filter">
                 </mat-form-field>
                 <mat-radio-group formControlName="type">
-                    <mat-radio-button value="email">Email</mat-radio-button>
-                    <mat-radio-button value="username">Username</mat-radio-button>
+                    <mat-radio-button value="email">{{ 'auth.title.email' | translate }}</mat-radio-button>
+                    <mat-radio-button value="username">{{ 'auth.title.username' | translate }}</mat-radio-button>
                 </mat-radio-group>
             </form>
             @if (usersCache().isLoading) {
                 <div class="spinner-container">
                     <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                    <span>Loading users...</span>
+                    <span>{{ 'user.title.loading.plural' | translate }}</span>
                 </div>
             }
             @else {
@@ -28,24 +28,24 @@
                     [matSortActive]="usersCache().sort"
                     [matSortDirection]="usersCache().direction">
                     <ng-container matColumnDef="id">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header> ID </th>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'user.title.table.id' | translate }}</th>
                         <td mat-cell *matCellDef="let user">{{ user.id }}</td>
                     </ng-container>
                     <ng-container matColumnDef="username">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Username </th>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'user.title.table.username' | translate }}</th>
                         <td mat-cell *matCellDef="let user">{{ user.username }}</td>
                     </ng-container>
                     <ng-container matColumnDef="email">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Email </th>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'user.title.table.email' | translate }}</th>
                         <td mat-cell *matCellDef="let user">{{ user.email }}</td>
                     </ng-container>
                     <ng-container matColumnDef="role">
-                        <th mat-header-cell *matHeaderCellDef> Role </th>
+                        <th mat-header-cell *matHeaderCellDef>{{ 'user.title.table.role' | translate }}</th>
                         <td mat-cell *matCellDef="let user">{{ getUserRoleLocal(user) }}</td>
                     </ng-container>
                     <ng-container matColumnDef="isLocked">
-                        <th mat-header-cell *matHeaderCellDef mat-sort-header> Locked </th>
-                        <td mat-cell *matCellDef="let user">{{ user.isLocked ? 'Yes' : 'No' }}</td>
+                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'user.title.table.locked' | translate }}</th>
+                        <td mat-cell *matCellDef="let user">{{ (user.isLocked ? 'common.title.yes' : 'common.title.no') | translate }}</td>
                     </ng-container>
 
                     <tr mat-header-row *matHeaderRowDef="userColumns"></tr>

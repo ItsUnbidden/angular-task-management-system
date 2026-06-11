@@ -1,40 +1,37 @@
-<h2 mat-dialog-title>Delete account</h2>
+<h2 mat-dialog-title>{{ 'user.title.delete' | translate }}</h2>
 
 @if (userCache().isLoading) {
     <div class="spinner-container">
         <mat-spinner diameter="30"></mat-spinner>
-        <span>Loading user...</span>
+        <span>{{ 'user.title.loading.single' | translate }}</span>
     </div>
 }
 @else {
     <div mat-dialog-content>
-        <p>
-            Are you sure you want to delete your account? All of your projects will be deleted.
-            This action is not reversable and might take some time. Please provide your credentials to confirm.
-        </p>
+        <p>{{ 'user.title.deleteWarning' | translate }}</p>
         <form class="user-credentials" [formGroup]="credentialsForm">
             <mat-form-field>
-                <mat-label>Username</mat-label>
+                <mat-label>{{ 'auth.title.username' | translate }}</mat-label>
                 <input matInput formControlName="username">    
                 @if (credentialsForm.hasError('required', 'username')) {
-                    <mat-error>This field is required.</mat-error>
+                    <mat-error>{{ 'auth.validation.username.required' | translate }}</mat-error>
                 }           
             </mat-form-field>
             <mat-form-field>
-                <mat-label>Password</mat-label>
+                <mat-label>{{ 'auth.title.password' | translate }}</mat-label>
                 <input matInput type="password" formControlName="password">  
                 @if (credentialsForm.hasError('required', 'password')) {
-                    <mat-error>This field is required.</mat-error>
+                    <mat-error>{{ 'auth.validation.password.required' | translate }}</mat-error>
                 }              
             </mat-form-field>
             @if (userCache().error) {
-                <mat-error>{{ userCache().error }}</mat-error>                  
+                <mat-error>{{ userCache().error | translate }}</mat-error>                  
             }           
         </form>
     </div>
     
     <div mat-dialog-actions>
-        <button matButton="outlined" (click)="onClose()" [disabled]="userCache().isLoading">Close</button>
-        <button matButton="filled" (click)="onSubmit()" [disabled]="userCache().isLoading || credentialsForm.invalid">Confirm</button>
+        <button matButton="outlined" (click)="onClose()" [disabled]="userCache().isLoading">{{ 'common.button.close' | translate }}</button>
+        <button matButton="filled" (click)="onSubmit()" [disabled]="userCache().isLoading || credentialsForm.invalid">{{ 'common.button.confirm' | translate }}</button>
     </div>
 }

@@ -4,7 +4,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { AttachmentService } from '../../../service/attachment.service';
 import { HttpErrorResponse, HttpEventType } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSliderModule } from '@angular/material/slider'
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -13,13 +12,15 @@ import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 import { EMPTY, switchMap } from 'rxjs';
 import { AttachmentStore } from '../../../cache/attachment.store';
 import { TaskStore } from '../../../cache/task.store';
-import { getDefaultErrorMessageForType, isExternalError } from '../../../utils';
-import { GeneralApiError, SimpleApiError } from '../../../models/error.model';
+import { getDefaultErrorMessageForType } from '../../../utils';
+import { SimpleApiError } from '../../../models/error.model';
 import { AttachmentResponse } from '../../../models/attachment.model';
+import { TranslatePipe } from '@ngx-translate/core';
+import { NotificationService } from '../../../service/notification.service';
 
 @Component({
   selector: 'app-attachment-list',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './attachment-list.html',
   styleUrl: './attachment-list.css',
 })
@@ -34,7 +35,7 @@ export class AttachmentList {
   
   constructor(private readonly attachmentService: AttachmentService, 
               private readonly taskStore: TaskStore,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               private readonly dialog: MatDialog) {}
 
   protected onFileSelected(event: Event) {
@@ -44,9 +45,7 @@ export class AttachmentList {
 
     if (file && task) {
       if (file.size >= AttachmentList.MAX_FILE_SIZE) {
-        this.snackBar.open('The selected file is too large. Max file size is 150 MB.', 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info('attachment.error.fileTooLarge', 7000);
         return;
       }
       this.attachmentService.uploadFile(task.id, file).pipe(switchMap(event => {
@@ -66,9 +65,7 @@ export class AttachmentList {
 
           this.isProgressBarActive.set(false);
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 5000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -87,7 +84,7 @@ export class AttachmentList {
       error: (err: SimpleApiError) => {
         this.isProgressBarActive.set(false);
 
-        this.snackBar.open(getDefaultErrorMessageForType(err), 'Dismiss');
+        this.notification.info(getDefaultErrorMessageForType(err), 10000);
         const selectedTask = this.taskStore.selectedTaskCache().item;
 
         if (selectedTask) this.attachmentStore.cacheAttachmentsForTask(selectedTask.id).subscribe();
@@ -98,8 +95,8 @@ export class AttachmentList {
   protected onDeleteAttachment(attachment: AttachmentResponse) {
     this.dialog.open(ConfirmDialog, {
       data: {
-        title: 'Delete attachment',
-        message: `Are you sure you want to delete file <strong>${attachment.filename}</strong>? It will be deleted in the project's Dropbox folder too.`
+        title: { key: 'attachment.confirm.delete.title' },
+        message: { key: 'attachment.confirm.delete.message', params: { filename: attachment.filename } }
       },
       disableClose: true,
       width: '420px'
@@ -116,9 +113,7 @@ export class AttachmentList {
         const task = this.taskStore.selectedTaskCache()?.item;
 
         this.isProgressBarActive.set(false);
-        this.snackBar.open(`Attachment ${attachment.filename} has been deleted successfully.`, 'Dismiss', {
-          duration: 5000
-        });
+        this.notification.info('attachment.success.delete', 5000, { filename: attachment.filename });
         if (task) return this.attachmentStore.cacheAttachmentsForTask(task.id);
         return EMPTY;
       })

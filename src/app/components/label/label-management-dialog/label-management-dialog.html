@@ -3,20 +3,20 @@
         <button mat-icon-button (click)="onBack()">
             <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
         </button>
-        <h2 class="title">Edit {{ selectedLabel()?.name ?? '' }}</h2>
+        <h2 class="title">{{ 'label.title.edit' | translate:{ name: selectedLabel()?.name || 'unknown' } }}</h2>
     </div>
 
     <div mat-dialog-content>
         <form class="label-form" [formGroup]="labelForm">
             <mat-form-field class="name-field">
-                <mat-label>Label name</mat-label>
+                <mat-label>{{ 'label.title.name' | translate }}</mat-label>
                 <input matInput formControlName="name">
                 <mat-hint align="end">{{ labelForm.value.name?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
                 @if (labelForm.hasError('required', 'name')) {
-                    <mat-error>This field is required.</mat-error>
+                    <mat-error>{{ 'label.validation.name.required' | translate }}</mat-error>
                 }
                 @if (labelForm.hasError('maxlength', 'name')) {
-                    <mat-error>Label name cannot be longer than {{ NAME_MAX_LENGTH }} characters.</mat-error>
+                    <mat-error>{{ 'label.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
                 }
             </mat-form-field>
 
@@ -28,12 +28,12 @@
                 }
             </mat-chip-listbox>
             @if (labelForm.controls.color.dirty && labelForm.hasError('required', 'color')) {
-                <mat-error>You need to choose the label color.</mat-error>
+                <mat-error>{{ 'label.validation.color.required' | translate }}</mat-error>
             }
         </form>
     </div>
     <div mat-dialog-actions align="end">
-        <button mat-button (click)="onExecuteEditLabel()" [disabled]="isEditRequestRunning() || labelForm.invalid">Edit</button>
+        <button mat-button (click)="onExecuteEditLabel()" [disabled]="isEditRequestRunning() || labelForm.invalid">{{ 'common.button.edit' | translate }}</button>
     </div>
 }
 @else if (isDeleting()) {
@@ -41,25 +41,29 @@
         <button mat-icon-button (click)="onBack()">
             <mat-icon fontSet="material-symbols-outlined">arrow_back</mat-icon>
         </button>
-        <h2 class="title">Delete {{ selectedLabel()?.name ?? '' }}</h2>
+        <h2 class="title">{{ 'label.title.delete' | translate:{ name: selectedLabel()?.name || 'unknown' } }}</h2>
     </div>
 
     <div mat-dialog-content>
-        <p>Are you sure you want to delete label {{ selectedLabel()?.name ?? ''}}? @if (numberOfAffectedTasks() > 0) { Be aware that this action will remove this label from {{ numberOfAffectedTasks() }} other tasks. }</p>
+        <p>{{ 'label.confirm.delete.base' | translate:{ name: selectedLabel()?.name } }}
+            @if (numberOfAffectedTasks() > 0) {
+                {{ 'label.confirm.delete.withTasks' | translate:{ numberOfAffectedTasks: numberOfAffectedTasks() } }}
+            }
+        </p>
     </div>
 
     <div mat-dialog-actions align="end">
-        <button mat-button (click)="onExecuteDeleteLabel()">Delete</button>
+        <button mat-button (click)="onExecuteDeleteLabel()">{{ 'common.button.delete' | translate }}</button>
     </div>
 }
 @else {
-    <h2 mat-dialog-title>Label management</h2>
+    <h2 mat-dialog-title>{{ 'label.title.labelManagement' | translate }}</h2>
 
     <div mat-dialog-content>
         @if (!labelCache().isLoading) {     
             <table mat-table [dataSource]="labelCache().page?.content ?? []" class="mat-elevation-z8">
                 <ng-container matColumnDef="chip">
-                    <th mat-header-cell *matHeaderCellDef>Label</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'label.title.label' | translate }}</th>
                     <td mat-cell *matCellDef="let label">
                         <mat-chip class="label-chip" [attr.data-color]="label.color">
                             {{ label.name }}
@@ -67,18 +71,18 @@
                     </td>
                 </ng-container>
                 <ng-container matColumnDef="edit">
-                    <th mat-header-cell *matHeaderCellDef>Edit</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'common.button.edit' | translate }}</th>
                     <td mat-cell *matCellDef="let label">
                         <button matButton="elevated" (click)="onEditLabel(label)">
-                            Edit
+                            {{ 'common.button.edit' | translate }}
                         </button>
                     </td>
                 </ng-container>
                 <ng-container matColumnDef="delete">
-                    <th mat-header-cell *matHeaderCellDef>Delete</th>
+                    <th mat-header-cell *matHeaderCellDef>{{ 'common.button.delete' | translate }}</th>
                     <td mat-cell *matCellDef="let label">
                         <button matButton="elevated" (click)="onRemoveLabel(label)">
-                            Delete
+                            {{ 'common.button.delete' | translate }}
                         </button>
                     </td>
                 </ng-container>
@@ -90,23 +94,23 @@
         @else {
             <div class="spinner-container">
                 <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                <span>Loading labels...</span>
+                <span>{{ 'label.title.loading.plural' | translate }}</span>
             </div>
         }
         @if (isEditRequestRunning()) {
             <div class="spinner-container">
                 <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                <span>Please wait...</span>
+                <span>{{ 'label.title.loading.edit' | translate }}</span>
             </div>
         }
         @if (labelCache().error) {
-            <div class="simple-error-message">{{ labelCache().error }}</div>
+            <div class="simple-error-message">{{ labelCache().error | translate}}</div>
         }
         @if (editError()) {
-            <div class="simple-error-message">{{ editError() }}</div>
+            <div class="simple-error-message">{{ editError() | translate }}</div>
         }
         <div mat-dialog-actions align="end">
-            <button mat-button (click)="onClose()" [disabled]="isEditRequestRunning()">Close</button>
+            <button mat-button (click)="onClose()" [disabled]="isEditRequestRunning()">{{ 'common.button.close' | translate }}</button>
         </div>
     </div>
 }

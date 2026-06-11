@@ -16,29 +16,25 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatChipsModule } from "@angular/material/chips";
 import { MatSelectModule } from "@angular/material/select";
 import { HttpErrorResponse } from '@angular/common/http';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { NewLabelDialog } from '../label/new-label-dialog/new-label-dialog';
 import { LabelManagementDialog } from '../label/label-management-dialog/label-management-dialog';
 import { MessageList } from "../messages/message-list/message-list";
 import { AttachmentList } from "../attachments/attachment-list/attachment-list";
 import { OAuth2Service } from '../../service/oauth2.service';
-import { getChipColor, getChipText, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
+import { getChipColor, getChipTextKey, getDefaultErrorMessageForType, getDefaultMessageForExternalError, toLocalDateString } from '../../utils';
 import { ConfirmDialog } from '../util/confirm-dialog/confirm-dialog';
 import { ProjectStore } from '../../cache/project.store';
 import { TaskStore } from '../../cache/task.store';
 import { UserStore } from '../../cache/user.store';
 import { LabelStore } from '../../cache/label.store';
-import { ValidationBoundaries } from '../validation-boundaries';
+import { ValidationBoundaries } from '../../config/validation-boundaries';
 import { TaskStatus, TaskUpdateRequest, TaskPriority } from '../../models/task.model';
 import { GeneralApiError } from '../../models/error.model';
 import { Project } from '../projects/project';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
-
-interface TaskPriorityOption {
-  priority: TaskPriority;
-  priorityView: string;
-}
+import { TranslatePipe } from '@ngx-translate/core';
+import { NotificationService } from '../../service/notification.service';
 
 @Component({
   selector: 'app-task',
@@ -46,7 +42,8 @@ interface TaskPriorityOption {
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule, MessageList, AttachmentList],
+    MatChipsModule, MatSelectModule, MessageList,
+    AttachmentList, TranslatePipe],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })
@@ -117,14 +114,10 @@ export class Task {
     labels: new FormControl<number[]>([], { nonNullable: true })
   });
 
-  protected readonly priorityOptions: TaskPriorityOption[] = [
-    { priority: 'LOW', priorityView: 'Low' },
-    { priority: 'MEDIUM', priorityView: 'Medium' },
-    { priority: 'HIGH', priorityView: 'High' }
-  ];
+  protected readonly priorityOptions: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
 
   constructor(private readonly project: Project,
-              private readonly snackBar: MatSnackBar,
+              private readonly notification: NotificationService,
               private readonly dialog: MatDialog,
               private readonly router: Router) {
     effect(() => {
@@ -182,9 +175,7 @@ export class Task {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -212,9 +203,7 @@ export class Task {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -242,9 +231,7 @@ export class Task {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -274,9 +261,7 @@ export class Task {
           error: (err: HttpErrorResponse) => {
             const error = err.error as GeneralApiError;
 
-            this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-              duration: 10000
-            });
+            this.notification.info(getDefaultErrorMessageForType(error), 10000);
           }
         });
       }
@@ -302,9 +287,7 @@ export class Task {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -354,9 +337,7 @@ export class Task {
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       })
     }
@@ -372,8 +353,8 @@ export class Task {
     if (task) {
       this.dialog.open(ConfirmDialog, {
         data: {
-          title: 'Delete task',
-          message: `Are you sure you want to delete task <strong>${task.name}</strong>?`
+          title: { key: 'task.confirm.delete.title' },
+          message: { key: 'task.confirm.delete.message', params: { name: task.name } }
         },
         disableClose: true,
         width: '480px'
@@ -387,23 +368,20 @@ export class Task {
       .subscribe({
         next: response => {
           this.router.navigateByUrl(`/projects/${task.projectId}`);
-          let message = `You have successfully deleted task <strong>${task.name}</strong>.`;
-                    
-          if (response.dropboxFolderDeleted.status !== ThirdPartyOperationStatus.SUCCESS
-                && response.dropboxFolderDeleted.status !== ThirdPartyOperationStatus.NOT_APPLICABLE) {
-            message = `You have successfully deleted task ${task.name}, but there was a Dropbox 
-                issue: ${getDefaultMessageForExternalError(response.dropboxFolderDeleted)}`;
+          if (response.dropboxFolderDeleted.status === ThirdPartyOperationStatus.SUCCESS
+              || response.dropboxFolderDeleted.status === ThirdPartyOperationStatus.NOT_APPLICABLE) {
+            this.notification.info('task.success.delete.full', 5000, { name: task.name });
+          } else {
+            this.notification.info('task.success.delete.dropboxFailed', 10000, {
+              name: task.name,
+              dropboxMessage: getDefaultMessageForExternalError(response.dropboxFolderDeleted)
+            });
           }
-          this.snackBar.open(message, 'Dismiss', {
-            duration: 10000
-          });
         },
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
-          this.snackBar.open(getDefaultErrorMessageForType(error), 'Dismiss', {
-            duration: 10000
-          });
+          this.notification.info(getDefaultErrorMessageForType(error), 10000);
         }
       });
     }
@@ -427,7 +405,7 @@ export class Task {
   }
 
   protected getChipTextLocal(value: string | null): string {
-    return getChipText(value);
+    return getChipTextKey(value);
   }
 
   private makeTaskUpdateRequest() : TaskUpdateRequest | undefined {
