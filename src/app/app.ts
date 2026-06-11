@@ -44,9 +44,9 @@ export class App implements OnInit {
 
         if (provider && result) {
           if (result === 'success') {
-            this.notification.info(`${provider === 'dropbox' ? provider : 'calendar'}.success.connect`, 5000);
+            this.notification.infoAsync(`${provider === 'dropbox' ? provider : 'calendar'}.success.connect`, 5000);
           } else {
-            this.notification.info(`${provider === 'dropbox' ? provider : 'calendar'}.error.connect`, 10000);
+            this.notification.infoAsync(`${provider === 'dropbox' ? provider : 'calendar'}.error.connect`, 10000);
           }
         }
       }
