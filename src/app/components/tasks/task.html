@@ -123,7 +123,7 @@
                     <div class="row">
                         <p>{{ selectedTaskCache().item?.dueDate ? (selectedTaskCache().item?.dueDate | date:'mediumDate') : ('task.title.noDueDate' | translate) }}</p>
                         <mat-chip [ngClass]="getChipColorLocal(selectedTaskCache().item?.status ?? null)">
-                            {{ getChipTextLocal(selectedTaskCache().item?.status ?? null) }}
+                            {{ getChipTextLocal(selectedTaskCache().item?.status ?? null) | translate }}
                         </mat-chip>
                         @if (isAdmin() || isManager()) {
                             <button mat-icon-button (click)="onTaskDueDateEdit()">
