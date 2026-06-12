@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "test-angular": {
+    "task-management-system": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -62,10 +62,10 @@
           },
           "configurations": {
             "production": {
-              "buildTarget": "test-angular:build:production"
+              "buildTarget": "task-management-system:build:production"
             },
             "development": {
-              "buildTarget": "test-angular:build:development"
+              "buildTarget": "task-management-system:build:development"
             }
           },
           "defaultConfiguration": "development"
