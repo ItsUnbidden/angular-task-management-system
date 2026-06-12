@@ -24,8 +24,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatFormFieldModule } from '@angular/material/form-field';
-import { LanguageCode, languageConfig, LanguageOption } from '../../../config/languages';
+import { LanguageCode, languageConfig } from '../../../config/languages';
 import { LanguageService } from '../../../service/language.service';
+import { ProjectStore } from '../../../cache/project.store';
+import { TaskStore } from '../../../cache/task.store';
 
 @Component({
   selector: 'app-header',
@@ -80,7 +82,9 @@ export class Header {
               private readonly notification: NotificationService,
               private readonly snackBar: MatSnackBar,
               private readonly translate: TranslateService,
-              private readonly dialog: MatDialog) {
+              private readonly dialog: MatDialog,
+              private readonly projectStore: ProjectStore,
+              private readonly taskStore: TaskStore) {
     effect(() => {
       const currentLang = this.currentLang();
 
@@ -193,6 +197,8 @@ export class Header {
   }
 
   protected onToDashboard() {
+    this.projectStore.clearCache();
+    this.taskStore.clearCache();
     this.router.navigateByUrl('/dashboard');
   }
 

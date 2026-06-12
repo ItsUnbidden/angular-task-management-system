@@ -1,37 +1,31 @@
 <div class="main-container">
     <mat-card appearance="outlined" class="overview-card">
-        @if (projectCache().isLoading) {
-            <div class="spinner-container">
-                <mat-spinner diameter="30"></mat-spinner>
-                <span>{{ 'project.title.loading.single' | translate }}</span>
-            </div>
+        @if (projectCache().error) {
+            <mat-card-header>
+                <mat-card-title class="card-title">{{ 'common.title.error' | translate }}</mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+                <p>{{ projectCache().error | translate }}</p>
+            </mat-card-content>
+
+            <mat-card-actions class="error-actions-container">
+                <button matButton="elevated" (click)="onReload()">
+                    <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
+                    {{ 'common.button.reload' | translate }}
+                </button>
+            </mat-card-actions>
         }
         @else {
-            @if (projectCache().error) {
-                <mat-card-header>
-                    <mat-card-title class="card-title">{{ 'common.title.error' | translate }}</mat-card-title>
-                </mat-card-header>
-
-                <mat-card-content>
-                    <p>{{ projectCache().error | translate }}</p>
-                </mat-card-content>
-
-                <mat-card-actions class="error-actions-container">
-                    <button matButton="elevated" (click)="onReload()">
-                        <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
-                        {{ 'common.button.reload' | translate }}
-                    </button>
-                </mat-card-actions>
-            }
-            @else {
+            <div class="project-wrapper" [class.loading-blur]="projectCache().isLoading">
                 <mat-card-header>
                     <mat-card-title>
                         {{ (isManager() ? 'common.title.overview.privilege' : 'common.title.overview.normal') | translate }}
                     </mat-card-title>
                 </mat-card-header>
-    
+
                 <mat-divider></mat-divider>
-    
+
                 <mat-card-content>
                     @if (isEditingName()) {
                         <form class="edit-input-form" [formGroup]="nameEditForm" (ngSubmit)="onSubmitProjectName()">
@@ -113,7 +107,7 @@
                                     <input matStartDate formControlName="startDate" placeholder="Start">
                                     <input matEndDate formControlName="endDate" placeholder="End">
                                 </mat-date-range-input>
-    
+
                                 <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                                 <mat-date-range-picker #picker></mat-date-range-picker>
                             </mat-form-field>
@@ -133,7 +127,7 @@
                                 —
                                 {{ projectCache().item?.endDate ? (projectCache().item?.endDate | date:'mediumDate') : ('project.title.noEndDate' | translate) }}
                             </div>
-    
+
                             <mat-chip [ngClass]="getChipColorLocal(projectCache().item?.status ?? null)">
                                 {{ getChipTextLocal(projectCache().item?.status ?? null) | translate }}
                             </mat-chip>      
@@ -144,7 +138,7 @@
                             }                                            
                         </div>
                     }
-    
+
                     <mat-accordion>
                         <mat-expansion-panel>
                             <mat-expansion-panel-header>
@@ -209,7 +203,7 @@
                         </mat-expansion-panel>
                     </mat-accordion>
                 </mat-card-content>
-    
+
                 <mat-divider></mat-divider>
                 <mat-card-actions class="project-actions-container">
                     <mat-slide-toggle [formControl]="isPrivateCtrl" (change)="onIsPrivateToggleChange($event.checked)">
@@ -274,8 +268,15 @@
                         }
                     </div>
                 </mat-card-actions>
+            </div>
+            @if (projectCache().isLoading) {
+                <div class="loading-overlay">
+                    <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                    <span>{{ 'project.title.loading.single' | translate }}</span>
+                </div>
             }
         }
+        
     </mat-card>
     @if (!projectCache().error) {
         <router-outlet></router-outlet>

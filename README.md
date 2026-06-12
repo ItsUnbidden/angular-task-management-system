@@ -22,6 +22,7 @@ Generally, I used the modern Angular approach, so the frontend mainly uses these
 - Standalone components
 - CSS and SCSS
 - Cookie-based JWT auth flow with refresh tokens
+- `ngx-translate` for internationalization (i18n)
 
 ## Architecture
 In this section, I'll highlight some key architectural decisions I've made.
@@ -120,7 +121,35 @@ Depending on the case, the errors are either presented as a special text element
 
 Validation is handled by the frontend, with the backend being the last line of defence. The policy is that the frontend should identify all validation issues before the request is even sent.
 
-External services, like Dropbox, are the part that is outside of my control, so errors produced there are unpredictable. Since those services are optional, I've designed their integration in a way that does not block the actual operation of the app if something fails there. That is communicated by a special response with information about how the external operation went, therefore allowing the frontend to react accordingly. This system is not currently fully implemented, but it will be in the future.
+Since external services are optional, I've designed their integration in a way that does not block the actual operation of the app if something fails there. For example, let's imagine a situation where a user is trying to add a new member to the project, but the shared Dropbox folder has been deleted outside of the app for some reason. The user will still be added to the project, but since the external operation failed, there will be an extended message containing the reason for what went wrong.
+
+### Internationalization
+The app is localizable with all of its text content centralized in the `<language-code>.js` files, which you can find in the `/public/i18n/` directory. By default, there's only the English localization made by me, but you can add your own ones by following these steps:
+
+1. Find the [languages.ts](/src/app/config/languages.ts) file. It is located in the `/src/app/config` directory.
+2. Add the code of the new language to the `LanguageCode` type. For example, for German, it would look like this:
+    ```ts
+        export type LanguageCode = 'en' | 'de';
+    ```
+3. Add the new `LanguageOption` to the config. It must contain your new language code and the name of the language that will be displayed to the user:
+    ```ts
+        export const languageConfig: LanguageConfig = {
+            supportedLangs: [{
+                    key: 'en',
+                    view: 'English'
+                }, {                    //
+                    key: 'de',          //
+                    view: 'Deutsch'     //
+                }                       //
+            ],
+            defaultLang: 'en',      // <---- Defines the default language.
+            fallbackLang: 'en',     // <---- Defines the language that will be used in case there is no localization in the preferred language.
+        }
+    ```
+    You can also remove the English localization if you wish.
+4. Create a new localization file with the same structure as [en.json](/public/i18n/en.json) and name it using the same language code you've added in the config. For my case, that would make it `de.json`.
+
+If you have more than one localization, a language select will appear in the header. 
 
 ## Setup
 To quickly run the app on your machine, you need these things:
@@ -151,7 +180,12 @@ ng serve
 
 This will make the app available at `http://localhost:4200`. Since the app is not standalone and requires a backend, you'll need to launch that as well. You can read about it on its dedicated page [here](https://github.com/ItsUnbidden/jv-task-management-system). Be aware that by default the frontend will expect the backend to be available at `http://localhost:8080`. This can be configured in [proxy.conf.json](/proxy.conf.json).
 
-About deployment, it's much more complicated and requires integration of the frontend into the Spring backend. I haven't tried it yet, so I can't say much at the moment. I will add a more detailed guide later.
+If you want the Spring backend to serve the frontend, which is how it's supposed to work in a production setting, you will need to do this:
+```bash
+ng build
+```
+It will build the Angular project into a bunch of static chunks that the backend will be able to serve, along with all of the assets. They will appear in the `/dist/task-management-system/browser` directory. You will need to copy all of the files from this directory into the `/src/main/resources/static/` directory on the backend. After that's done, you will be able to access the entire app on the same host.
+
 
 ## Future improvements
 There are quite a few things I would like to add after I'm done fixing major bugs. Here are some of them:
@@ -159,7 +193,7 @@ There are quite a few things I would like to add after I'm done fixing major bug
 ### Subtasks and progress bars
 While using the system myself, I've found out that tasks can accidentally become too big. When that happens, it becomes hard to track progress. It would be great to add the ability to add small subtasks that you can independently check as completed. That could also be expanded on by adding a progress bar for tasks, where completing each subtask contributes to the bar. Going even further, projects themselves can have a progress bar, the value of which corresponds to the combined progress of all of the tasks. 
 
-### UI blinking
+### UI blinking (RESOLVED)
 I've made some mistakes in how I've implemented table loading: while loading, the table is **replaced** by a progress spinner. That causes the page height to change significantly, throwing the user up the page. Also, if the loading happens quickly, the spinner appears only for a moment before being replaced by a table again, causing unpleasant blinking. I will definitely revamp this soon by making the current table content stick around while the new content is being loaded.
 
 ### Async external operations
