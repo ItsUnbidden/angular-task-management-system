@@ -194,6 +194,21 @@ body {
   margin-top: 10px;
 }
 
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-blur {
+  filter: blur(2px);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .simple-error-message {
   color: #c62828;
 }

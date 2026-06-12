@@ -83,11 +83,6 @@
   align-items: center;
 }
 
-.task-spinner-container {
-  display: flex;
-  justify-content: center;  
-}
-
 .error-actions-container {
   display: flex;
   justify-content: center;

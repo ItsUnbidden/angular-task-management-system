@@ -3,7 +3,7 @@
         <button mat-flat-button color="primary" (click)="onOpenNewProjectDialog()">{{ 'project.button.new' | translate }}</button>
     </div>
     <mat-tab-group (selectedTabChange)="onTabChange($event)">
-        <mat-tab label="My projects">
+        <mat-tab [label]="'project.title.projects.my' | translate">
             <div class="table-card-container">
                 <mat-card class="table-card" appearance="outlined">
                     <mat-card-header>
@@ -16,61 +16,65 @@
                                 <input matInput type="text" formControlName="filter">
                             </mat-form-field>
                         </form>
-                        @if (projectsCache().isLoading) {
-                            <div class="spinner-container">
-                                <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                                <span>{{ 'project.title.loading.plural' | translate }}</span>
-                            </div>
-                        }
-                        @else if (projectsCache().error) {
+                        @if (projectsCache().error) {
                             <div class="simple-error-message">{{ projectsCache().error | translate }}</div>
-                        }
+                        } 
                         @else {
-                            <table mat-table [dataSource]="projectsCache().page?.content ?? []"
-                                class="mat-elevation-z8"
-                                matSort #myProjectsSort="matSort"
-                                (matSortChange)="onMyProjectsSort($event)"
-                                [matSortActive]="projectsCache().sort"
-                                [matSortDirection]="projectsCache().direction">
-                                <ng-container matColumnDef="name">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.name' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.name }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="startDate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.startDate' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.startDate | date }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="endDate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.endDate' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.endDate | date }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="status">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.status' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">
-                                        <mat-chip [ngClass]="getChipColorLocal(project.status ?? null)">{{ getChipTextLocal(project.status) | translate }}</mat-chip>
-                                    </td>
-                                </ng-container>
-                                <ng-container matColumnDef="creator">
-                                    <th mat-header-cell *matHeaderCellDef>{{ 'project.title.table.creator' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ getProjectCreatorLocal(project).username }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="isPrivate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.private' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ (project.isPrivate ? 'common.title.yes' : 'common.title.no') | translate }}</td>
-                                </ng-container>
-    
-                                <tr mat-header-row *matHeaderRowDef="projectColumns"></tr>
-                                <tr mat-row *matRowDef="let row; columns: projectColumns;" (click)="onSelectProject(row)"></tr>
-                            </table>
-    
-                            <mat-paginator #myProjectsPaginator
-                                [length]="projectsCache().page?.totalElements"
-                                [pageIndex]="projectsCache().pageIndex"
-                                [pageSize]="projectsCache().pageSize"
-                                [pageSizeOptions]="[10, 20, 30]"
-                                showFirstLastButtons="true"
-                                (page)="onMyProjectsPage($event)">
-                            </mat-paginator>
+                            <div class="table-wrapper">
+                                <table mat-table [dataSource]="projectsCache().page?.content ?? []"
+                                    class="mat-elevation-z8" [class.loading-blur]="projectsCache().isLoading"
+                                    matSort #myProjectsSort="matSort"
+                                    (matSortChange)="onMyProjectsSort($event)"
+                                    [matSortActive]="projectsCache().sort"
+                                    [matSortDirection]="projectsCache().direction">
+                                    <ng-container matColumnDef="name">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.name' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.name }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="startDate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.startDate' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.startDate | date }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="endDate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.endDate' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.endDate | date }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="status">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.status' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">
+                                            <mat-chip [ngClass]="getChipColorLocal(project.status ?? null)">{{ getChipTextLocal(project.status) | translate }}</mat-chip>
+                                        </td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="creator">
+                                        <th mat-header-cell *matHeaderCellDef>{{ 'project.title.table.creator' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ getProjectCreatorLocal(project).username }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="isPrivate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.private' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ (project.isPrivate ? 'common.title.yes' : 'common.title.no') | translate }}</td>
+                                    </ng-container>
+        
+                                    <tr mat-header-row *matHeaderRowDef="projectColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: projectColumns;" (click)="onSelectProject(row)"></tr>
+                                </table>
+        
+                                <mat-paginator #myProjectsPaginator
+                                    [class.loading-blur]="projectsCache().isLoading"
+                                    [length]="projectsCache().page?.totalElements"
+                                    [pageIndex]="projectsCache().pageIndex"
+                                    [pageSize]="projectsCache().pageSize"
+                                    [pageSizeOptions]="[10, 20, 30]"
+                                    showFirstLastButtons="true"
+                                    (page)="onMyProjectsPage($event)">
+                                </mat-paginator>
+                                
+                                @if (projectsCache().isLoading) {
+                                    <div class="loading-overlay">
+                                        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                                        <span>{{ 'project.title.loading.plural' | translate }}</span>
+                                    </div>
+                                }
+                            </div>
                         }
                     </mat-card-content>
                 </mat-card>
@@ -85,55 +89,59 @@
                                 <input matInput type="text" formControlName="filter">
                             </mat-form-field>
                         </form>
-                        @if (myTasksCache().isLoading) {
-                            <div class="spinner-container">
-                                <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                                <span>{{ 'task.title.loading.plural' | translate }}</span>
-                            </div>
-                        }
-                        @else if (myTasksCache().error) {
+                        @if (myTasksCache().error) {
                             <div class="simple-error-message">{{ myTasksCache().error }}</div>
                         }
                         @else {
-                            <table mat-table [dataSource]="myTasksCache().page?.content ?? []"
-                                class="mat-elevation-z8"
-                                matSort #tasksSort="matSort"
-                                (matSortChange)="onMyTasksSort($event)"
-                                [matSortActive]="myTasksCache().sort"
-                                [matSortDirection]="myTasksCache().direction">
-                                <ng-container matColumnDef="name">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.name' | translate }}</th>
-                                    <td mat-cell *matCellDef="let task">{{ task.name }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="priority">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.priority' | translate }}</th>
-                                    <td mat-cell *matCellDef="let task">
-                                        <mat-chip [ngClass]="getChipColorLocal(task.priority ?? null)">{{ getChipTextLocal(task.priority) | translate }}</mat-chip>
-                                    </td>
-                                </ng-container>
-                                <ng-container matColumnDef="status">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.status' | translate }}</th>
-                                    <td mat-cell *matCellDef="let task">
-                                        <mat-chip [ngClass]="getChipColorLocal(task.status ?? null)">{{ getChipTextLocal(task.status) | translate }}</mat-chip>
-                                    </td>
-                                </ng-container>
-                                <ng-container matColumnDef="dueDate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.dueDate' | translate }}</th>
-                                    <td mat-cell *matCellDef="let task">{{ task.dueDate | date }}</td>
-                                </ng-container>
-    
-                                <tr mat-header-row *matHeaderRowDef="taskColumns"></tr>
-                                <tr mat-row *matRowDef="let row; columns: taskColumns;" (click)="onSelectTask(row)"></tr>
-                            </table>
-    
-                            <mat-paginator #tasksPaginator
-                                [length]="myTasksCache().page?.totalElements"
-                                [pageIndex]="myTasksCache().pageIndex"
-                                [pageSize]="myTasksCache().pageSize"
-                                [pageSizeOptions]="[10, 20, 30]"
-                                showFirstLastButtons="true"
-                                (page)="onMyTasksPage($event)">
-                            </mat-paginator>
+                            <div class="table-wrapper">
+                                <table mat-table [dataSource]="myTasksCache().page?.content ?? []"
+                                    class="mat-elevation-z8" [class.loading-blur]="myTasksCache().isLoading"
+                                    matSort #tasksSort="matSort"
+                                    (matSortChange)="onMyTasksSort($event)"
+                                    [matSortActive]="myTasksCache().sort"
+                                    [matSortDirection]="myTasksCache().direction">
+                                    <ng-container matColumnDef="name">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.name' | translate }}</th>
+                                        <td mat-cell *matCellDef="let task">{{ task.name }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="priority">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.priority' | translate }}</th>
+                                        <td mat-cell *matCellDef="let task">
+                                            <mat-chip [ngClass]="getChipColorLocal(task.priority ?? null)">{{ getChipTextLocal(task.priority) | translate }}</mat-chip>
+                                        </td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="status">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.status' | translate }}</th>
+                                        <td mat-cell *matCellDef="let task">
+                                            <mat-chip [ngClass]="getChipColorLocal(task.status ?? null)">{{ getChipTextLocal(task.status) | translate }}</mat-chip>
+                                        </td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="dueDate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'task.title.table.dueDate' | translate }}</th>
+                                        <td mat-cell *matCellDef="let task">{{ task.dueDate | date }}</td>
+                                    </ng-container>
+        
+                                    <tr mat-header-row *matHeaderRowDef="taskColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: taskColumns;" (click)="onSelectTask(row)"></tr>
+                                </table>
+        
+                                <mat-paginator #tasksPaginator
+                                    [class.loading-blur]="projectsCache().isLoading"
+                                    [length]="myTasksCache().page?.totalElements"
+                                    [pageIndex]="myTasksCache().pageIndex"
+                                    [pageSize]="myTasksCache().pageSize"
+                                    [pageSizeOptions]="[10, 20, 30]"
+                                    showFirstLastButtons="true"
+                                    (page)="onMyTasksPage($event)">
+                                </mat-paginator>
+
+                                @if (myTasksCache().isLoading) {
+                                    <div class="loading-overlay">
+                                        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                                        <span>{{ 'task.title.loading.plural' | translate }}</span>
+                                    </div>
+                                }
+                            </div>
                         }
                     </mat-card-content>
                 </mat-card>
@@ -159,56 +167,60 @@
                                 <input matInput type="text" formControlName="filter">
                             </mat-form-field>
                         </form>
-                        @if (projectsCache().isLoading) {
-                            <div class="spinner-container">
-                                <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                                <span>{{ 'project.title.loading.plural' | translate }}</span>
-                            </div>
-                        }
-                        @else if (projectsCache().error) {
+                        @if (projectsCache().error) {
                             <div class="simple-error-message">{{ projectsCache().error | translate }}</div>
                         }
                         @else {
-                            <table mat-table [dataSource]="projectsCache().page?.content ?? []"
-                                class="mat-elevation-z8"
-                                matSort #publicProjectsSort="matSort"
-                                (matSortChange)="onPublicProjectsSort($event)"
-                                [matSortActive]="projectsCache().sort"
-                                [matSortDirection]="projectsCache().direction">
-                                <ng-container matColumnDef="name">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.name' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.name }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="startDate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.startDate' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.startDate | date }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="endDate">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.endDate' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ project.endDate | date }}</td>
-                                </ng-container>
-                                <ng-container matColumnDef="status">
-                                    <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.status' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">
-                                        <mat-chip [ngClass]="getChipColorLocal(project.status ?? null)">{{ getChipTextLocal(project.status) | translate }}</mat-chip>
-                                    </td>
-                                </ng-container>
-                                <ng-container matColumnDef="creator">
-                                    <th mat-header-cell *matHeaderCellDef>{{ 'project.title.table.creator' | translate }}</th>
-                                    <td mat-cell *matCellDef="let project">{{ getProjectCreatorLocal(project).username }}</td>
-                                </ng-container>
-                                <tr mat-header-row *matHeaderRowDef="publicProjectColumns"></tr>
-                                <tr mat-row *matRowDef="let row; columns: publicProjectColumns;" (click)="onSelectProject(row)"></tr>
-                            </table>
+                            <div class="table-wrapper">
+                                <table mat-table [dataSource]="projectsCache().page?.content ?? []"
+                                    class="mat-elevation-z8" [class.loading-blur]="projectsCache().isLoading"
+                                    matSort #publicProjectsSort="matSort"
+                                    (matSortChange)="onPublicProjectsSort($event)"
+                                    [matSortActive]="projectsCache().sort"
+                                    [matSortDirection]="projectsCache().direction">
+                                    <ng-container matColumnDef="name">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.name' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.name }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="startDate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.startDate' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.startDate | date }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="endDate">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.endDate' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ project.endDate | date }}</td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="status">
+                                        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'project.title.table.status' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">
+                                            <mat-chip [ngClass]="getChipColorLocal(project.status ?? null)">{{ getChipTextLocal(project.status) | translate }}</mat-chip>
+                                        </td>
+                                    </ng-container>
+                                    <ng-container matColumnDef="creator">
+                                        <th mat-header-cell *matHeaderCellDef>{{ 'project.title.table.creator' | translate }}</th>
+                                        <td mat-cell *matCellDef="let project">{{ getProjectCreatorLocal(project).username }}</td>
+                                    </ng-container>
+                                    <tr mat-header-row *matHeaderRowDef="publicProjectColumns"></tr>
+                                    <tr mat-row *matRowDef="let row; columns: publicProjectColumns;" (click)="onSelectProject(row)"></tr>
+                                </table>
+    
+                                <mat-paginator #publicProjectsPaginator 
+                                    [class.loading-blur]="projectsCache().isLoading"
+                                    [length]="projectsCache().page?.totalElements"
+                                    [pageIndex]="projectsCache().pageIndex"
+                                    [pageSize]="projectsCache().pageSize"
+                                    [pageSizeOptions]="[25, 50, 75]"
+                                    showFirstLastButtons="true"
+                                    (page)="onPublicProjectsPage($event)">
+                                </mat-paginator>
 
-                            <mat-paginator #publicProjectsPaginator 
-                                [length]="projectsCache().page?.totalElements"
-                                [pageIndex]="projectsCache().pageIndex"
-                                [pageSize]="projectsCache().pageSize"
-                                [pageSizeOptions]="[25, 50, 75]"
-                                showFirstLastButtons="true"
-                                (page)="onPublicProjectsPage($event)">
-                            </mat-paginator>
+                                @if (projectsCache().isLoading) {
+                                    <div class="loading-overlay">
+                                        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                                        <span>{{ 'project.title.loading.plural' | translate }}</span>
+                                    </div>
+                                }
+                            </div>
                         }
                     </mat-card-content>
                 </mat-card>               

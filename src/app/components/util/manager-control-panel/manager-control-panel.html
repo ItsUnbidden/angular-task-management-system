@@ -14,15 +14,12 @@
                     <mat-radio-button value="username">{{ 'auth.title.username' | translate }}</mat-radio-button>
                 </mat-radio-group>
             </form>
-            @if (usersCache().isLoading) {
-                <div class="spinner-container">
-                    <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
-                    <span>{{ 'user.title.loading.plural' | translate }}</span>
-                </div>
+            @if (usersCache().error) {
+                <p class="simple-error-message">{{ usersCache().error | translate }}</p>
             }
             @else {
                 <table mat-table [dataSource]="usersCache().page?.content ?? []"
-                    class="mat-elevation-z8"
+                    class="mat-elevation-z8" [class.loading-blur]="usersCache().isLoading"
                     matSort #usersSort="matSort"
                     (matSortChange)="onUsersSort($event)"
                     [matSortActive]="usersCache().sort"
@@ -53,6 +50,7 @@
                 </table>
 
                 <mat-paginator #myProjectsPaginator
+                    [class.loading-blur]="usersCache().isLoading"
                     [length]="usersCache().page?.totalElements"
                     [pageIndex]="usersCache().pageIndex"
                     [pageSize]="usersCache().pageSize"
@@ -60,6 +58,13 @@
                     showFirstLastButtons="true"
                     (page)="onUsersPage($event)">
                 </mat-paginator>
+
+                @if (usersCache().isLoading) {
+                    <div class="loading-overlay">
+                        <mat-progress-spinner mode="indeterminate" diameter="30"></mat-progress-spinner>
+                        <span>{{ 'user.title.loading.plural' | translate }}</span>
+                    </div>
+                }
             }
         </mat-card-content>
     </mat-card>

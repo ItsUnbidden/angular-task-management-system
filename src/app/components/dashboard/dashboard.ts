@@ -36,8 +36,8 @@ export class Dashboard {
   private readonly userStore = inject(UserStore);
   private readonly dashboardStore = inject(DashboardStore);
 
-  protected readonly projectsCache = this.dashboardStore.projectsCache.asReadonly();
-  protected readonly myTasksCache = this.dashboardStore.myTasksCache.asReadonly();
+  protected readonly projectsCache = this.dashboardStore.projectsCache;
+  protected readonly myTasksCache = this.dashboardStore.myTasksCache;
 
   protected readonly currentTab = signal<number>(0);
 
@@ -238,6 +238,7 @@ export class Dashboard {
   }
 
   protected onTabChange(event: MatTabChangeEvent) {
+    this.dashboardStore.clearProjectsCache();
     this.currentTab.set(event.index);
   }
 
