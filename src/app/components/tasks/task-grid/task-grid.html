@@ -60,65 +60,67 @@
                 </button>
             </mat-card-actions>
         </mat-card>
-        @if (tasks().isLoading) {
-            <div class="task-spinner-container">
-                <mat-spinner diameter="30"></mat-spinner>
-                <span>{{ 'task.title.loading.plural' | translate }}</span>
-            </div>
+        
+        @if (tasks().error) {
+            <mat-card-header>
+                <mat-card-title class="error-card-title">{{ 'error.title.error' | translate }}</mat-card-title>
+            </mat-card-header>
+
+            <mat-card-content>
+                <p>{{ tasks().error | translate }}</p>
+            </mat-card-content>
+
+            <mat-card-actions class="error-actions-container">
+                <button matButton="elevated" (click)="onTryAgain()">
+                    <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
+                    {{ 'common.button.reload' | translate }}
+                </button>
+            </mat-card-actions>
         }
         @else {
-            @if (tasks().error) {
-                <mat-card-header>
-                    <mat-card-title class="error-card-title">{{ 'error.title.error' | translate }}</mat-card-title>
-                </mat-card-header>
+            <div class="tasks-grid" [class.loading-blur]="tasks().isLoading">
+                @for (task of tasks().page?.content; track task.id) {
+                    <mat-card class="task-tile" (click)="onOpenTask(task)">
+                        <mat-card-header>
+                            <mat-card-title>{{ task.name }}</mat-card-title>
+                            <mat-card-subtitle>{{ 'task.title.card.assignee' | translate:{ username: task.assigneeUsername } }}</mat-card-subtitle>
+                        </mat-card-header>
+                        <mat-divider></mat-divider>
+                        <mat-card-content>
+                            <p class="task-description">{{ task.description ?? 'No description' }}</p>
 
-                <mat-card-content>
-                    <p>{{ tasks().error | translate }}</p>
-                </mat-card-content>
+                            <div class="task-card-priority">
+                                {{ 'task.title.card.priority' | translate }}
+                                <mat-chip [ngClass]="getChipColorLocal(task.priority)">
+                                    {{ getChipTextLocal(task.priority) | translate }}
+                                </mat-chip>
+                            </div>
+                            <div class="task-card-date">
+                                {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
+                                <mat-chip [ngClass]="getChipColorLocal(task.status)">
+                                    {{ getChipTextLocal(task.status) | translate }}
+                                </mat-chip>
+                            </div>
+                        </mat-card-content>               
+                    </mat-card>
+                }
+            </div>
 
-                <mat-card-actions class="error-actions-container">
-                    <button matButton="elevated" (click)="onTryAgain()">
-                        <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
-                        {{ 'common.button.reload' | translate }}
-                    </button>
-                </mat-card-actions>
-            }
-            @else {
-                <div class="tasks-grid">
-                    @for (task of tasks().page?.content; track task.id) {
-                        <mat-card class="task-tile" (click)="onOpenTask(task)">
-                            <mat-card-header>
-                                <mat-card-title>{{ task.name }}</mat-card-title>
-                                <mat-card-subtitle>{{ 'task.title.card.assignee' | translate:{ username: task.assigneeUsername } }}</mat-card-subtitle>
-                            </mat-card-header>
-                            <mat-divider></mat-divider>
-                            <mat-card-content>
-                                <p class="task-description">{{ task.description ?? 'No description' }}</p>
-    
-                                <div class="task-card-priority">
-                                    {{ 'task.title.card.priority' | translate }}
-                                    <mat-chip [ngClass]="getChipColorLocal(task.priority)">
-                                        {{ getChipTextLocal(task.priority) | translate }}
-                                    </mat-chip>
-                                </div>
-                                <div class="task-card-date">
-                                    {{ task.dueDate ? (task.dueDate | date:'mediumDate') : 'No due date' }}
-                                    <mat-chip [ngClass]="getChipColorLocal(task.status)">
-                                        {{ getChipTextLocal(task.status) | translate }}
-                                    </mat-chip>
-                                </div>
-                            </mat-card-content>               
-                        </mat-card>
-                    }
+            @if (tasks().isLoading) {
+                <div class="loading-overlay">
+                    <mat-spinner diameter="30"></mat-spinner>
+                    <span>{{ 'task.title.loading.plural' | translate }}</span>
                 </div>
             }
         }
-        <mat-paginator [length]="tasks().page?.totalElements"
-                        [pageIndex]="tasks().pageIndex"
-                        [pageSize]="tasks().pageSize"
-                        [pageSizeOptions]="[8, 12, 24]"
-                        showFirstLastButtons="true"
-                        (page)="onTaskPage($event)">
+        <mat-paginator 
+            [class.loading-blur]="tasks().isLoading"
+            [length]="tasks().page?.totalElements"
+            [pageIndex]="tasks().pageIndex"
+            [pageSize]="tasks().pageSize"
+            [pageSizeOptions]="[8, 12, 24]"
+            showFirstLastButtons="true"
+            (page)="onTaskPage($event)">
         </mat-paginator>
     </mat-card-content>
 </mat-card>

@@ -1,28 +1,22 @@
 <mat-card appearance="outlined" class="overview-card">
-    @if (selectedTaskCache().isLoading) {
-        <div class="spinner-container">
-            <mat-spinner diameter="30"></mat-spinner>
-            <span>{{ 'task.title.loading.single' | translate }}</span>
-        </div>
+    @if (selectedProjectCache().error || selectedTaskCache().error) {
+        <mat-card-header>
+            <mat-card-title class="error-card-title">{{ 'common.title.error' | translate }}</mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+            <p>{{ (selectedTaskCache().error ?? selectedProjectCache().error) | translate }}</p>
+        </mat-card-content>
+
+        <mat-card-actions class="error-actions-container">
+            <button matButton="elevated" (click)="onTryAgain()">
+                <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
+                {{ 'common.button.reload' | translate }}
+            </button>
+        </mat-card-actions>
     }
     @else {
-        @if (selectedProjectCache().error || selectedTaskCache().error) {
-            <mat-card-header>
-                <mat-card-title class="error-card-title">{{ 'common.title.error' | translate }}</mat-card-title>
-            </mat-card-header>
-
-            <mat-card-content>
-                <p>{{ (selectedTaskCache().error ?? selectedProjectCache().error) | translate }}</p>
-            </mat-card-content>
-
-            <mat-card-actions class="error-actions-container">
-                <button matButton="elevated" (click)="onTryAgain()">
-                    <mat-icon fontSet="material-symbols-outlined">repeat</mat-icon>
-                    {{ 'common.button.reload' | translate }}
-                </button>
-            </mat-card-actions>
-        }
-        @else {
+        <div class="task-wrapper" [class.loading-blur]="selectedTaskCache().isLoading">
             <div class="header-container">
                 <div>
                     <button mat-icon-button [routerLink]="['../../']" [relativeTo]="route">
@@ -62,9 +56,9 @@
                     </button>
                 }         
             </div>
-    
+
             <mat-divider></mat-divider>
-    
+
             <mat-card-content class="task-content-container">
                 @if (isEditingDescription()) {
                     <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
@@ -106,7 +100,7 @@
                         <mat-form-field appearance="outline">
                             <mat-label>{{ 'task.title.newDueDate' | translate }}</mat-label>
                             <input matInput [matDatepicker]="picker" formControlName="taskDueDate">
-    
+
                             <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
                             <mat-datepicker #picker></mat-datepicker>
                         </mat-form-field>
@@ -144,7 +138,7 @@
                                         }
                                     </mat-select>
                                 </mat-form-field>
-    
+
                                 <mat-chip-listbox multiple formControlName="labels">
                                     @for (label of projectLabels().page?.content; track label.id) {
                                         <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">                                        
@@ -194,7 +188,7 @@
                     </div>
                 }
             </mat-card-content>
-    
+
             <mat-card-actions class="task-actions-container">
                 @if (isAdmin() || isManager()) {
                     <button matButton="outlined" (click)="onTaskDelete()">
@@ -248,6 +242,13 @@
                 }
                 <app-message-list></app-message-list>
             </mat-card-content>
+        </div>
+        @if (selectedTaskCache().isLoading) {
+            <div class="loading-overlay">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>{{ 'task.title.loading.single' | translate }}</span>
+            </div>
         }
     }
+    
 </mat-card>

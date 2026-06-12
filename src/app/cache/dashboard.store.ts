@@ -13,8 +13,8 @@ export class DashboardStore {
   private readonly projectStore = inject(ProjectStore);
   private readonly myTaskStore = inject(TaskStore);
 
-  readonly projectsCache = this.projectStore.cache;
-  readonly myTasksCache = this.myTaskStore.cache;
+  readonly projectsCache = this.projectStore.cache.asReadonly();
+  readonly myTasksCache = this.myTaskStore.cache.asReadonly();
 
   cacheMyProjects(filter: string, state: TableState) : Observable<Page<ProjectResponse>> {
     return this.projectStore.cacheMyProjects(filter, state);
@@ -26,5 +26,9 @@ export class DashboardStore {
 
   cachePublicProjects(filter: string, state: TableState) : Observable<Page<ProjectResponse>> {
     return this.projectStore.cachePublicProjects(filter, state);
+  }
+
+  clearProjectsCache() {
+    this.projectStore.clearCache();
   }
 }

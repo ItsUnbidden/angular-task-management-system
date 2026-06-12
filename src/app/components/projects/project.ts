@@ -149,9 +149,10 @@ export class Project {
 
     effect(() => {
       const isAdmin = this.isAdmin();
+      const isManager = this.isManager();
 
       untracked(() => {
-        if (isAdmin) {
+        if (isAdmin || isManager) {
           this.isPrivateCtrl.enable();
         }
         else {
