@@ -214,6 +214,7 @@
             </mat-card-actions>
 
             <mat-card-content>
+                <app-subtasks-list></app-subtasks-list>
                 @if (isDropboxConnected() && isContributor()) {
                     @if (selectedProjectCache().item?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
                         <app-attachment-list></app-attachment-list>

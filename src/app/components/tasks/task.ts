@@ -35,6 +35,7 @@ import { Project } from '../projects/project';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NotificationService } from '../../service/notification.service';
+import { SubtasksList } from '../subtasks/subtasks-list/subtasks-list';
 
 @Component({
   selector: 'app-task',
@@ -42,7 +43,7 @@ import { NotificationService } from '../../service/notification.service';
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule, MessageList,
+    MatChipsModule, MatSelectModule, MessageList, SubtasksList,
     AttachmentList, TranslatePipe],
   templateUrl: './task.html',
   styleUrl: './task.css',

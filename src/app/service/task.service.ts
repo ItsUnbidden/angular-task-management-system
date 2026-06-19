@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TaskCreateRequest, TaskDeleteResponse, TaskFilter, TaskResponse, TaskUpdateRequest, TaskUpdateStatusRequest } from '../models/task.model';
 import { Page } from '../models/general.model';
+import { getPageableParams } from '../utils';
+import { SortDirection } from '@angular/material/sort';
 
 @Injectable({
   providedIn: 'root',
@@ -15,15 +17,11 @@ export class TaskService {
   }
 
   getTasksForProject(projectId: number, page: number, size: number) : Observable<Page<TaskResponse>> {
-    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}?page=${page}&size=${size}`);
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}`, { params: getPageableParams(page, size) });
   }
 
-  getMyTasks(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<TaskResponse>> {
-    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
-    
-    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
-
-    return this.http.get<Page<TaskResponse>>(`/api/tasks/me`, { params });
+  getMyTasks(name: string, page: number, size: number, sort: string, direction: SortDirection) : Observable<Page<TaskResponse>> {
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/me`, { params: getPageableParams(page, size, sort, direction, { name }) });
   }
 
   getTasksByLabel(labelId: number) : Observable<TaskResponse[]> {
@@ -31,25 +29,7 @@ export class TaskService {
   }
   
   getFilteredTasksInProject(projectId: number, filter: TaskFilter, page: number, size: number) : Observable<Page<TaskResponse>> {
-    let params = new HttpParams();
-
-    if (filter.assigneeId)
-      params = params.set('assigneeId', filter.assigneeId);
-    if (filter.priority)
-      params = params.set('priority', filter.priority);
-    if (filter.status)
-      params = params.set('status', filter.status);
-    if (filter.dueDateFrom)
-      params = params.set('dueDateFrom', filter.dueDateFrom)
-    if (filter.dueDateTo)
-      params = params.set('dueDateTo', filter.dueDateTo)
-    if (filter.labelIds && filter.labelIds.length !== 0)
-      params = params.set('labelIds', filter.labelIds.join());
-      
-    params = params
-      .set('size', size)
-      .set('page', page);
-    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}/filter`, { params });
+    return this.http.get<Page<TaskResponse>>(`/api/tasks/projects/${projectId}/filter`, { params: getPageableParams(page, size, undefined, undefined, filter) });
   }
 
   createTask(request: TaskCreateRequest) : Observable<TaskResponse> {

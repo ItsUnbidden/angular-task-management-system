@@ -1,9 +1,11 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ProjectCreateRequest, ProjectDeleteResponse, ProjectResponse, ProjectRoleUpdateRequest, ProjectUpdateRequest, ProjectUpdateStatusRequest, ProjectWithDropboxResultResponse } from '../models/project.model';
 import { Page } from '../models/general.model';
 import { ProjectCalendarDisconnectionResponseDto } from '../models/external.model';
+import { getPageableParams } from '../utils';
+import { SortDirection } from '@angular/material/sort';
 
 @Injectable({
   providedIn: 'root',
@@ -15,20 +17,12 @@ export class ProjectService {
     return this.http.get<ProjectResponse>(`/api/projects/${projectId}`);
   }
 
-  getMyProjects(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
-    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
-    
-    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
-
-    return this.http.get<Page<ProjectResponse>>(`/api/projects/me`, { params });
+  getMyProjects(name: string, page: number, size: number, sort: string, direction: SortDirection) : Observable<Page<ProjectResponse>> {
+    return this.http.get<Page<ProjectResponse>>(`/api/projects/me`, { params: getPageableParams(page, size, sort, direction, { name }) });
   }
 
-  searchProjectsByName(name: string, page: number, size: number, sort: string, direction: string) : Observable<Page<ProjectResponse>> {
-    let params = new HttpParams().set('name', name).set('page', page).set('size', size);
-    
-    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
-
-    return this.http.get<Page<ProjectResponse>>(`/api/projects/search`, { params })
+  searchProjectsByName(name: string, page: number, size: number, sort: string, direction: SortDirection) : Observable<Page<ProjectResponse>> {
+    return this.http.get<Page<ProjectResponse>>(`/api/projects/search`, { params: getPageableParams(page, size, sort, direction, { name }) })
   }
 
   createProject(request: ProjectCreateRequest) : Observable<ProjectWithDropboxResultResponse> {

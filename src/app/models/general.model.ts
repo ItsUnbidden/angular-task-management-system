@@ -22,7 +22,7 @@ export interface PageCache<T extends Entity, F> extends Cache {
   pageIndex: number;
   pageSize: number;
   sort: string;
-  direction: 'asc' | 'desc' | '';
+  direction: SortDirection
 }
 
 export interface SingleItemCache<T extends Entity> extends Cache {
@@ -33,5 +33,7 @@ export interface TableState {
   pageIndex: number;
   pageSize: number;
   sortActive: string;
-  sortDirection: 'asc' | 'desc' | '';
+  sortDirection: SortDirection
 }
+
+type SortDirection = 'asc' | 'desc' | '';

@@ -3,6 +3,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { LoginRequest, UserDeleteResponse, UserResponse, UserUpdateRequest } from '../models/user.model';
 import { Page } from '../models/general.model';
+import { getPageableParams } from '../utils';
+import { SortDirection } from '@angular/material/sort';
 
 @Injectable({
   providedIn: 'root',
@@ -18,12 +20,8 @@ export class UserService {
     return this.http.get<UserResponse>(`/api/users/${id}`);
   }
 
-  searchUsers(search: string, type: 'username' | 'email', page: number, size: number, sort: string, direction: string) : Observable<Page<UserResponse>> {
-    let params = new HttpParams().set('search', search).set('type', type).set('page', page).set('size', size);
-
-    if (sort !== '' && direction !== '') params = params.set('sort', sort + ',' + direction);
-
-    return this.http.get<Page<UserResponse>>(`/api/users/search`, { params });
+  searchUsers(search: string, type: 'username' | 'email', page: number, size: number, sort: string, direction: SortDirection) : Observable<Page<UserResponse>> {
+    return this.http.get<Page<UserResponse>>(`/api/users/search`, { params: getPageableParams(page, size, sort, direction, { search, type }) });
   };
 
   changeLock(id: number) : Observable<UserResponse> {

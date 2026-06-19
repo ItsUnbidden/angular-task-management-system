@@ -444,6 +444,25 @@
             }
         }
     },
+    "subtask": {
+        "title": {
+            "name": "Subtask title",
+            "newName": "New subtask title",
+            "loading": {
+                "plural": "Loading subtasks...",
+                "create": "Creating subtask...",
+                "edit": "Updating subtask..."
+            }
+        },
+        "button": {
+            "create": "New subtask"
+        },
+        "validation": {
+            "required": "Subtask name is required.",
+            "minLength": "Subtask title must be at least {{minLength}} characters long.",
+            "maxLength": "Task title cannot be more than {{maxLength}} characters long."
+        }
+    },
     "label": {
         "title": {
             "label": "Label",

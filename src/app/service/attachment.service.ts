@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { catchError, from, map, Observable, switchMap, throwError } from 'rxjs';
+import { catchError, from, Observable, switchMap, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpEvent } from '@angular/common/http';
 import { AttachmentResponse } from '../models/attachment.model';
 import { Page } from '../models/general.model';
-import { error } from 'console';
 
 @Injectable({
   providedIn: 'root',
