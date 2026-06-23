@@ -11,9 +11,13 @@ import { ValidationBoundaries } from '../../../config/validation-boundaries';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
+import { EMPTY, forkJoin, map, switchMap, tap } from 'rxjs';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxChange, MatCheckboxModule } from '@angular/material/checkbox';
+import { TaskStore } from '../../../cache/task.store';
+import { ProjectStore } from '../../../cache/project.store';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
 
 @Component({
   selector: 'app-subtasks-list',
@@ -51,13 +55,14 @@ export class SubtasksList {
     ] })
   });
 
-  constructor() {
+  constructor(private taskStore: TaskStore, private projectStore: ProjectStore, private dialog: MatDialog) {
     effect(() => {
       const taskId = this.taskId();
 
       if (taskId) {
-        this.subtaskStore.cacheSubtasks(taskId, 0, 10).subscribe();
-      }
+        this.subtaskStore.clearCache();
+        this.subtaskStore.cacheSubtasks(taskId, 0, 10).subscribe()
+      };
     });
     effect(() => {
       const creating = this.creating();
@@ -73,7 +78,9 @@ export class SubtasksList {
   protected onSelectedChange(subtask: SubtaskResponse, event: MatCheckboxChange) {
     event.source.checked = !event.checked;
 
-    this.subtaskStore.updateSubtask(subtask, event.checked).subscribe();
+    this.subtaskStore.updateSubtask(subtask, event.checked).pipe(
+      switchMap(() => forkJoin([this.taskStore.updateProgress(), this.projectStore.updateProgress()]))
+    ).subscribe();
   }
 
   protected getUpdating(id: number) : boolean {
@@ -91,26 +98,38 @@ export class SubtasksList {
   protected onEditSubmit(subtask: SubtaskResponse) {
     const newTitle = this.subtaskEditForm.value.name;
 
-    if (newTitle) {
-      this.subtaskStore.updateSubtask(subtask, newTitle).subscribe({
-        next: () => {
-          this.editing.set(null);
-        }
-      });
-    }
+    if (newTitle) this.subtaskStore.updateSubtask(subtask, newTitle).subscribe({
+      next: () => {
+        this.editing.set(null);
+      }
+    });
   }
 
   protected onCreateSubmit() {
     const name = this.subtaskForm.value.name;
 
-    if (name) this.subtaskStore.createSubtask(name).subscribe({
-      next: () => {
-        this.createFormExpanded.set(false);
-      }
-    });
+    if (name) this.subtaskStore.createSubtask(name).pipe(
+      tap({
+        next: () => this.createFormExpanded.set(false)
+      }),
+      switchMap(() => forkJoin([this.taskStore.updateProgress(), this.projectStore.updateProgress()]))
+    ).subscribe();
   }
 
   protected onDelete(subtask: SubtaskResponse) {
-    this.subtaskStore.deleteSubtask(subtask).subscribe();
+    this.dialog.open(ConfirmDialog, {
+      data: {
+        title: { key: 'subtask.confirm.delete.title' },
+        message: { key: 'subtask.confirm.delete.message', params: { name: subtask.name } },
+      },
+      width: '480px',
+      disableClose: true
+    }).afterClosed().pipe(
+      switchMap(confirmed => {
+        if (confirmed) return this.subtaskStore.deleteSubtask(subtask);
+        return EMPTY;
+      }),
+      switchMap(() => forkJoin([this.taskStore.updateProgress(), this.projectStore.updateProgress()]))
+    ).subscribe();
   }
 }

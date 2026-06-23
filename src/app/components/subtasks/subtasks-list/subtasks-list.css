@@ -1,11 +1,42 @@
+.main-container {
+    margin: 10px 0px 10px 0px;
+}
+
 .title-field {
     width: 100%;
+    margin-top: 10px;
+}
+
+.create-container {
+    margin-bottom: 10px;
+}
+
+.main-content {
+    position: relative;
+}
+
+.list-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.frame {
+    display: flex;
+    justify-content: center;
+    position: relative;
+    min-height: 50px;
+    padding: 0px 12px 0px 12px;
+
+    border-style: solid;
+    border-width: var(--mat-card-outlined-outline-width, 1px);
+    border-color: var(--mat-card-outlined-outline-color, var(--mat-sys-outline-variant));
+    border-radius: var(--mat-card-outlined-container-shape, var(--mat-sys-corner-medium));
 }
 
 .subtask-container {
     position: relative;
     min-height: 50px;
-    margin: 10px 0px 10px 0px;
     padding: 0px 12px 0px 12px;
 
     border-style: solid;
@@ -24,8 +55,4 @@
     display: flex;
     align-items: center;
     gap: 5px;
-}
-
-.subtask-title {
-    font-size: 16px;
 }

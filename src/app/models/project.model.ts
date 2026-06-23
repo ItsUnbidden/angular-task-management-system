@@ -8,6 +8,7 @@ export interface ProjectResponse extends Entity {
   endDate?: string;
   status: ProjectStatus;
   projectRoles: ProjectRoleResponse[];
+  progress: number;
   isPrivate: boolean;
   isDropboxConnected: boolean;
   isCalendarConnected: boolean;

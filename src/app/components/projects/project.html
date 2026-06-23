@@ -64,6 +64,9 @@
                         </div>
                         
                     }
+                    <p>{{ 'project.title.progress' | translate }}</p>
+                    <mat-progress-bar [value]="projectCache().item?.progress" mode="determinate"></mat-progress-bar>
+
                     @if (isEditingDescription()) {
                         <form [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
                             <mat-form-field class="description-input" appearance="outline">
@@ -157,7 +160,7 @@
                                 </button>
                             }                  
                             @if (admins().length !== 0) {
-                                <h3>Admins</h3>
+                                <h3>{{ 'project.title.admins' | translate }}</h3>
                                 @for (admin of admins(); track admin.userId) {
                                     <div class="row">
                                         <p>{{ admin.username }}</p>
@@ -181,7 +184,7 @@
                                 }
                             }
                             @if (contributors().length !== 0) {
-                                <h3>Contributors</h3>
+                                <h3>{{ 'project.title.contributors' | translate }}</h3>
                                 @for (contributor of contributors(); track contributor.userId) {
                                     <div class="row">
                                         <p>{{ contributor.username }}</p>

@@ -12,6 +12,7 @@ export interface TaskResponse extends Entity {
   assigneeId?: number;
   assigneeUsername?: string;
   amountOfMessages: number;
+  progress: number;
   labelIds: number[];
 }
 

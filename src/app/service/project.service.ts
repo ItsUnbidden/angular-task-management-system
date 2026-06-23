@@ -80,4 +80,8 @@ export class ProjectService {
   disconnectCalendar(projectId: number) : Observable<ProjectCalendarDisconnectionResponseDto> {
     return this.http.delete<ProjectCalendarDisconnectionResponseDto>(`/api/projects/${projectId}/google/disconnect`);
   }
+
+  getProgress(projectId: number) : Observable<number> {
+    return this.http.get<number>(`/api/projects/${projectId}/progress`);
+  }
 }

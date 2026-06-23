@@ -60,6 +60,8 @@
             <mat-divider></mat-divider>
 
             <mat-card-content class="task-content-container">
+                <p>{{ 'task.title.progress' | translate }}</p>
+                <mat-progress-bar [value]="selectedTaskCache().item?.progress" mode="determinate"></mat-progress-bar>
                 @if (isEditingDescription()) {
                     <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitTaskDescription()">
                         <mat-form-field class="description-input" appearance="outline">
@@ -213,8 +215,15 @@
                 }  
             </mat-card-actions>
 
+            <mat-divider></mat-divider>
+
             <mat-card-content>
                 <app-subtasks-list></app-subtasks-list>
+            </mat-card-content>
+
+            <mat-divider></mat-divider>
+
+            <mat-card-content>
                 @if (isDropboxConnected() && isContributor()) {
                     @if (selectedProjectCache().item?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
                         <app-attachment-list></app-attachment-list>
@@ -228,7 +237,7 @@
                         }
                     }
                     @else if (!currentProjectRole()?.isDropboxConnected) {
-                        <p></p>
+                        <p>{{ 'attachment.title.notJoined' | translate }}</p>
                         <button matButton="elevated" (click)="onJoinDropbox()">
                             <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
                             {{ 'project.button.dropbox.join' | translate }}
@@ -241,6 +250,11 @@
                 @else {
                     <p>{{ 'attachment.title.userNotConnected' | translate }}</p>
                 }
+            </mat-card-content>
+
+            <mat-divider></mat-divider>
+
+            <mat-card-content>
                 <app-message-list></app-message-list>
             </mat-card-content>
         </div>

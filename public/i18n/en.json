@@ -57,8 +57,8 @@
         }
     },
     "attachment": {
-        "none": "There are currently no attachments.",
         "title": {
+            "none": "There are currently no attachments.",
             "loading": "Loading attachments...",
             "notJoined": "This project is connected to Dropbox, but you haven't joined yet.",
             "onlyMembers": "Only project members can access attachments.",
@@ -217,6 +217,9 @@
             "private": "Private project",
             "projectMembers": "Project members",
             "creator": "Creator: ",
+            "admins": "Admins",
+            "contributors": "Contributors",
+            "progress": "Progress:",
             "projects": {
                 "my": "My projects",
                 "public": "Public projects",
@@ -384,6 +387,7 @@
             "newDueDate": "New due date",
             "noDueDate": "This task does not have a due date.",
             "dates": "Dates",
+            "progress": "Progress:",
             "table": {
                 "name": "Name",
                 "priority": "Priority",
@@ -421,7 +425,7 @@
         },
         "success": {
             "delete": {
-                "full": "You have successfully deleted task <strong>{{name}}</strong>.",
+                "full": "You have successfully deleted task {{name}}.",
                 "dropboxFailed": "You have successfully deleted task {{name}}, but there was a Dropbox issue: {{dropboxMessage}}"
             }
         },
@@ -446,6 +450,7 @@
     },
     "subtask": {
         "title": {
+            "none": "There are currently no subtasks.",
             "name": "Subtask title",
             "newName": "New subtask title",
             "loading": {
@@ -456,6 +461,12 @@
         },
         "button": {
             "create": "New subtask"
+        },
+        "confirm": {
+            "delete": {
+                "title": "Delete subtask",
+                "message": "Are you sure you want to delete subtask <strong>{{name}}</strong>?"
+            }
         },
         "validation": {
             "required": "Subtask name is required.",

@@ -47,4 +47,8 @@ export class TaskService {
   deleteTask(taskId: number) : Observable<TaskDeleteResponse> {
     return this.http.delete<TaskDeleteResponse>(`/api/tasks/${taskId}`);
   }
+
+  getProgress(taskId: number) : Observable<number> {
+    return this.http.get<number>(`/api/tasks/${taskId}/progress`);
+  }
 }

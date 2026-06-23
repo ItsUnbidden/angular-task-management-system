@@ -2,6 +2,11 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin: 10px 0px 10px 0px;
+}
+
+.main-content {
+    position: relative;
 }
 
 .attachments-grid {
@@ -14,6 +19,20 @@
 .attachment-actions-container {
     display: flex;
     gap: 12px;
+}
+
+.frame {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    min-height: 50px;
+    padding: 0px 12px 0px 12px;
+
+    border-style: solid;
+    border-width: var(--mat-card-outlined-outline-width, 1px);
+    border-color: var(--mat-card-outlined-outline-color, var(--mat-sys-outline-variant));
+    border-radius: var(--mat-card-outlined-container-shape, var(--mat-sys-corner-medium));
 }
 
 mat-progress-bar {
