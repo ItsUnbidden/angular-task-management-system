@@ -24,7 +24,10 @@ export class AttachmentStore extends AbstractStore<AttachmentResponse, never> {
     effect(() => {
       const taskId = this.selectedTaskId();
 
-      if (taskId) this.cacheAttachmentsForTask(taskId).subscribe();
+      if (taskId) {
+        this.clearCache();
+        this.cacheAttachmentsForTask(taskId).subscribe();
+      };
     });
   }
 

@@ -1,0 +1,102 @@
+<div class="main-container">
+    <div class="create-container">
+        @if (createFormExpanded()) {
+            <form [formGroup]="subtaskForm" [class.loading-blur]="creating()" (submit)="onCreateSubmit()">
+                <mat-form-field class="title-field">
+                    <mat-label>{{ 'subtask.title.name' | translate }}</mat-label>
+                    <textarea matInput type="text" formControlName="name" rows="3"></textarea>
+                    <mat-hint align="end">{{ subtaskForm.value.name?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
+                    @if (subtaskForm.hasError('required', 'name')) {
+                        <mat-error>{{ 'subtask.validation.name.required' | translate }}</mat-error>
+                    }
+                    @if (subtaskForm.hasError('maxlength', 'name')) {
+                        <mat-error>{{ 'subtask.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
+                    }
+                </mat-form-field>
+                <button mat-icon-button type="submit" [disabled]="subtaskForm.invalid || creating()">
+                    <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                </button>
+                <button mat-icon-button type="button" (click)="createFormExpanded.set(false)" [disabled]="creating()">
+                    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                </button>
+            </form>
+        }
+        @else {
+            <button matButton="filled" (click)="createFormExpanded.set(true)">
+                <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
+                {{ 'subtask.button.create' | translate }}
+            </button>
+        }
+        @if (creating()) {
+            <div class="loading-overlay">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>{{ 'subtask.title.loading.create' | translate }}</span>
+            </div>
+        }
+    </div>
+    <div class="main-content">
+        @if (subtaskCache().error) {
+            <p class="simple-error-message" [class.loading-blur]="subtaskCache().isLoading">{{ subtaskCache().error | translate }}</p>
+        }
+        @else if ((subtaskCache().page?.content?.length ?? 0) < 1) {
+            <div class="frame" [class.loading-blur]="subtaskCache().isLoading">
+                <p class="larger-text">{{ 'subtask.title.none' | translate }}</p>
+            </div>
+        }
+        @else {
+            <div class="list-wrapper" [class.loading-blur]="subtaskCache().isLoading">
+                @for (subtask of subtaskCache().page?.content; track subtask.id) {
+                    <div class="subtask-container">
+                        @if (editing() == subtask.id) {
+                            <form [formGroup]="subtaskEditForm" (submit)="onEditSubmit(subtask)" [class.loading-blur]="getUpdating(subtask.id)">
+                                <mat-form-field class="title-field">
+                                    <mat-label>{{ 'subtask.title.newName' | translate }}</mat-label>
+                                    <textarea matInput type="text" formControlName="name" rows="3"></textarea>
+                                    <mat-hint align="end">{{ subtaskEditForm.value.name?.length }} / {{ NAME_MAX_LENGTH }}</mat-hint>
+                                    @if (subtaskForm.hasError('required', 'name')) {
+                                        <mat-error>{{ 'subtask.validation.name.required' | translate }}</mat-error>
+                                    }
+                                    @if (subtaskForm.hasError('maxlength', 'name')) {
+                                        <mat-error>{{ 'subtask.validation.name.maxLength' | translate:{ maxLength: NAME_MAX_LENGTH } }}</mat-error>
+                                    }
+                                </mat-form-field>
+                                <button mat-icon-button type="submit" [disabled]="subtaskEditForm.invalid || getUpdating(subtask.id)">
+                                    <mat-icon fontSet="material-symbols-outlined">check</mat-icon>
+                                </button>
+                                <button mat-icon-button type="button" (click)="editing.set(null)" [disabled]="getUpdating(subtask.id)">
+                                    <mat-icon fontSet="material-symbols-outlined">close</mat-icon>
+                                </button>
+                            </form>
+                        } 
+                        @else {
+                            <div class="subtask-content-container" [class.loading-blur]="getUpdating(subtask.id)">
+                                <p class="larger-text">{{ subtask.name }}</p>
+                                <div class="actions-container">
+                                    <mat-checkbox [checked]="subtask.completed" (change)="onSelectedChange(subtask, $event)" [disabled]="getUpdating(subtask.id)"></mat-checkbox>
+                                    <button mat-icon-button (click)="onEdit(subtask)" [disabled]="getUpdating(subtask.id)">
+                                        <mat-icon fontSet="material-symbols-outlined">edit</mat-icon>
+                                    </button>
+                                    <button mat-icon-button (click)="onDelete(subtask)" [disabled]="getUpdating(subtask.id)">
+                                        <mat-icon fontSet="material-symbols-outlined">delete</mat-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                        @if (getUpdating(subtask.id) && !subtaskCache().isLoading) {
+                            <div class="loading-overlay">
+                                <mat-spinner diameter="30"></mat-spinner>
+                                <span>{{ 'subtask.title.loading.edit' | translate }}</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }    
+        @if (subtaskCache().isLoading && !creating()) {
+            <div class="loading-overlay">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>{{ 'subtask.title.loading.plural' | translate }}</span>
+            </div>
+        }
+    </div>
+</div>

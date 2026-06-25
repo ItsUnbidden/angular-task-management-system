@@ -1,6 +1,6 @@
 <div class="main-container">
-    <div>
-        <button matButton="elevated" (click)="fileInput.click()">
+    <div class="create-container">
+        <button matButton="filled" (click)="fileInput.click()">
             <mat-icon fontSet="material-symbols-outlined">attachment</mat-icon>
             {{ 'attachment.button.new' | translate }}
         </button>
@@ -10,21 +10,19 @@
             <mat-progress-bar mode="indeterminate"></mat-progress-bar>
         }
     </div>
-    @if (attachmentsCache().isLoading) {
-        <div class="spinner-container">
-            <mat-spinner diameter="30"></mat-spinner>
-            <span>{{ 'attachment.title.loading' | translate }}</span>
-        </div>
-    } 
-    @else {  
+    <div class="main-content">
         @if (attachmentsCache().error) {
-            <div class="simple-error-message">{{ attachmentsCache().error | translate }}</div>
+            <div class="frame" [class.loading-blur]="attachmentsCache().isLoading">
+                <div class="simple-error-message">{{ attachmentsCache().error | translate }}</div>
+            </div>
         } 
         @else if ((attachmentsCache().page?.content?.length ?? 0) < 1) {
-            <div>{{ 'attachment.none' | translate }}</div>
+            <div class="frame" [class.loading-blur]="attachmentsCache().isLoading">
+                <p class="larger-text">{{ 'attachment.title.none' | translate }}</p>
+            </div>
         }
         @else {
-            <div class="attachments-grid">
+            <div class="attachments-grid" [class.loading-blur]="attachmentsCache().isLoading">
                 @for (attachment of attachmentsCache().page?.content; track attachment.id) {
                     <mat-card>
                         <mat-card-header>
@@ -33,7 +31,7 @@
                             </mat-card-title>
                         </mat-card-header>
                         <mat-card-content>
-                            {{ attachment.uploadDate }}
+                            {{ attachment.uploadDate | date:'medium' }}
                         </mat-card-content>
                         <mat-card-actions class="attachment-actions-container">
                             <button matButton="elevated" (click)="onDownloadFile(attachment)">
@@ -49,5 +47,11 @@
                 }
             </div>
         }
-    }
+        @if (attachmentsCache().isLoading) {
+            <div class="spinner-container">
+                <mat-spinner diameter="30"></mat-spinner>
+                <span>{{ 'attachment.title.loading' | translate }}</span>
+            </div>
+        } 
+    </div>
 </div>

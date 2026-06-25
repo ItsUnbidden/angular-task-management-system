@@ -303,6 +303,25 @@ export class ProjectStore extends AbstractStore<ProjectResponse, string> {
     return EMPTY;
   }
 
+  updateProgress() : Observable<number> {
+    const projectId = this.selectedProjectCache().item?.id;
+
+    if (projectId) return this.projectService.getProgress(projectId).pipe(tap({
+      next: progress => {
+        this.selectedProjectCache.update(cache => {
+          const project = cache.item;
+
+          if (project) {
+            return { ...cache, item: { ...project, progress } };
+          }
+          return cache;
+        });
+      }
+    }),
+    catchError(() => of(0)));
+    return of(0);
+  }
+
   clearSelectedProject() {
     this.selectedProjectCache.set({ isLoading: false, error: null });
   }

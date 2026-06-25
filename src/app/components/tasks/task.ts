@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { Component, effect, inject, signal, untracked } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -35,6 +35,8 @@ import { Project } from '../projects/project';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NotificationService } from '../../service/notification.service';
+import { SubtasksList } from '../subtasks/subtasks-list/subtasks-list';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-task',
@@ -42,8 +44,8 @@ import { NotificationService } from '../../service/notification.service';
     MatInputModule, MatButtonModule, MatIconModule,
     MatCardModule, MatDividerModule, MatFormFieldModule,
     MatNativeDateModule, MatDatepickerModule, ReactiveFormsModule,
-    MatChipsModule, MatSelectModule, MessageList,
-    AttachmentList, TranslatePipe],
+    MatChipsModule, MatSelectModule, MessageList, SubtasksList,
+    AttachmentList, TranslatePipe, MatProgressBarModule],
   templateUrl: './task.html',
   styleUrl: './task.css',
 })
@@ -283,7 +285,9 @@ export class Task {
     if (task) {
       const request = { newStatus: newStatus };
       
-      this.taskStore.updateCachedTask(request).subscribe({
+      this.taskStore.updateCachedTask(request).pipe(
+        switchMap(() => this.projectStore.updateProgress())
+      ).subscribe({
         error: (err: HttpErrorResponse) => {
           const error = err.error as GeneralApiError;
 
@@ -359,12 +363,17 @@ export class Task {
         disableClose: true,
         width: '480px'
       })
-      .afterClosed().pipe(switchMap(confirmed => {
-        if (confirmed) {
-          return this.taskStore.deleteTask(task.id);
-        }
-        return EMPTY;
-      }))
+      .afterClosed().pipe(
+        switchMap(confirmed => {
+          if (confirmed) {
+            return this.taskStore.deleteTask(task.id);
+          }
+          return EMPTY;
+        }),
+        switchMap(response => {
+          return this.projectStore.updateProgress().pipe(map(() => response));
+        })
+      )
       .subscribe({
         next: response => {
           this.router.navigateByUrl(`/projects/${task.projectId}`);

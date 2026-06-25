@@ -32,6 +32,7 @@ import { GeneralApiError } from '../../models/error.model';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
 import { NotificationService } from '../../service/notification.service';
 import { TranslatePipe } from '@ngx-translate/core';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
   selector: 'app-overview',
@@ -39,7 +40,7 @@ import { TranslatePipe } from '@ngx-translate/core';
     MatInputModule, MatFormFieldModule, ReactiveFormsModule, MatButtonModule,
     MatSlideToggleModule, MatDatepickerModule, MatDivider, MatChipsModule,
     MatPaginatorModule, RouterOutlet, MatExpansionModule, MatSnackBarModule,
-    TranslatePipe],
+    TranslatePipe, MatProgressBarModule],
   templateUrl: './project.html',
   styleUrl: './project.css',
 })

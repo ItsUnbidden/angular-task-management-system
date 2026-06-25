@@ -4,6 +4,8 @@ import { EssentialUserResponse, UserResponse } from "./models/user.model";
 import { ProjectResponse } from "./models/project.model";
 import { ErrorType, ExternalServiceApiError, GeneralApiError } from "./models/error.model";
 import { DropboxErrorTag, DropboxOperationResult, ThirdPartyOperationResult, ThirdPartyOperationStatus } from "./models/external.model";
+import { HttpParams } from "@angular/common/http";
+import { SortDirection } from "@angular/material/sort";
 
 export function toLocalDateString(date: Date | null): string | undefined {
   if (!date) {
@@ -171,4 +173,25 @@ export function getDefaultMessageForExternalError(result: ThirdPartyOperationRes
 
 export function isExternalError(error: GeneralApiError) : error is ExternalServiceApiError {
   return 'externalResult' in error;
+}
+
+export function getPageableParams(page: number, size: number, sort?: string, direction?: SortDirection, filter?: Object) : HttpParams {
+  let params = new HttpParams().set('page', page).set('size', size);
+    
+  if (sort && direction) params = params.set('sort', sort + ',' + direction);
+
+  if (filter) {
+    const entries = Object.entries(filter);
+
+    entries.forEach(e => {
+      if (e[1] !== undefined && e[1] !== null) {
+        if (typeof e[1] !== 'object') {
+          params = params.set(e[0], e[1]);
+        } else {
+          if (environment.logErrors) console.warn('Unable to include an object into as an HTTP param.')
+        }
+      }
+    });
+  }
+  return params;
 }

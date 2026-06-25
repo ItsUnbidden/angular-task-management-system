@@ -17,10 +17,11 @@ import { SimpleApiError } from '../../../models/error.model';
 import { AttachmentResponse } from '../../../models/attachment.model';
 import { TranslatePipe } from '@ngx-translate/core';
 import { NotificationService } from '../../../service/notification.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-attachment-list',
-  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule, TranslatePipe],
+  imports: [MatCardModule, MatButtonModule, MatIconModule, MatProgressBarModule, MatSliderModule, MatProgressSpinnerModule, TranslatePipe, DatePipe],
   templateUrl: './attachment-list.html',
   styleUrl: './attachment-list.css',
 })

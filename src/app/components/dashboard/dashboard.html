@@ -90,7 +90,7 @@
                             </mat-form-field>
                         </form>
                         @if (myTasksCache().error) {
-                            <div class="simple-error-message">{{ myTasksCache().error }}</div>
+                            <div class="simple-error-message">{{ myTasksCache().error | translate }}</div>
                         }
                         @else {
                             <div class="table-wrapper">

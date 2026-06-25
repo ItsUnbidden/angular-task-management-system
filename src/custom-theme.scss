@@ -185,6 +185,7 @@ body {
   ))
 }
 
+// Loading-related elements
 .spinner-container {
   display: flex;
   flex-direction: column;
@@ -209,6 +210,20 @@ body {
   pointer-events: none;
 }
 
+// Error
 .simple-error-message {
   color: #c62828;
+}
+
+// Text
+.normal-text {
+  font-size: 10;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.larger-text {
+  font-size: 16px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { CommentResponse, MessageCreateRequest, MessageResponse, ReplyResponse } from '../models/message.model';
 import { Page } from '../models/general.model';
+import { getPageableParams } from '../utils';
 
 @Injectable({
   providedIn: 'root',
@@ -11,11 +12,11 @@ export class MessageService {
   constructor(private readonly http: HttpClient) {}
 
   getCommentsForTask(taskId: number, page: number, size: number) : Observable<Page<CommentResponse>> {
-    return this.http.get<Page<CommentResponse>>(`/api/messages/comments/tasks/${taskId}?page=${page}&size=${size}`);
+    return this.http.get<Page<CommentResponse>>(`/api/messages/comments/tasks/${taskId}`, { params: getPageableParams(page, size) });
   }
 
   getRepliesForComment(commentId: number, page: number, size: number) : Observable<Page<ReplyResponse>> {
-    return this.http.get<Page<ReplyResponse>>(`/api/messages/comments/${commentId}/replies?page=${page}&size=${size}`);
+    return this.http.get<Page<ReplyResponse>>(`/api/messages/comments/${commentId}/replies`, { params: getPageableParams(page, size) });
   }
 
   leaveComment(taskId: number, request: MessageCreateRequest) : Observable<CommentResponse> {

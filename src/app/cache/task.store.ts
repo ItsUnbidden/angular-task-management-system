@@ -127,17 +127,36 @@ export class TaskStore extends AbstractStore<TaskResponse, TaskFilter | string> 
     );
   }
 
+  updateProgress() : Observable<number> {
+    const taskId = this.selectedTaskCache().item?.id;
+
+    if (taskId) return this.taskService.getProgress(taskId).pipe(tap({
+      next: progress => {
+        this.selectedTaskCache.update(cache => {
+          const task = cache.item;
+
+          if (task) {
+            return { ...cache, item: { ...task, progress } };
+          }
+          return cache;
+        });
+      }
+    }),
+    catchError(() => of(0)));
+    return of(0);
+  }
+
   clearSelectedTask() {
     this.selectedTaskCache.set({ isLoading: false, error: null });
   }
 
-  setSelectedTaskIsLoading(value: boolean) {
+  private setSelectedTaskIsLoading(value: boolean) {
     this.selectedTaskCache.update(cache => {
       return { ...cache, isLoading: value, error: null };
     });
   }
 
-  setSelectedTaskError(error: string | null) {
+  private setSelectedTaskError(error: string | null) {
     this.selectedTaskCache.update(cache => {
       return { ...cache, isLoading: false, error };
     });
