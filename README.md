@@ -190,7 +190,7 @@ It will build the Angular project into a bunch of static chunks that the backend
 ## Future improvements
 There are quite a few things I would like to add after I'm done fixing major bugs. Here are some of them:
 
-### Subtasks and progress bars
+### Subtasks and progress bars (ADDED)
 While using the system myself, I've found out that tasks can accidentally become too big. When that happens, it becomes hard to track progress. It would be great to add the ability to add small subtasks that you can independently check as completed. That could also be expanded on by adding a progress bar for tasks, where completing each subtask contributes to the bar. Going even further, projects themselves can have a progress bar, the value of which corresponds to the combined progress of all of the tasks. 
 
 ### UI blinking (RESOLVED)
