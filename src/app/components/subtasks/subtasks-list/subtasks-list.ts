@@ -18,6 +18,7 @@ import { TaskStore } from '../../../cache/task.store';
 import { ProjectStore } from '../../../cache/project.store';
 import { MatDialog } from '@angular/material/dialog';
 import { ConfirmDialog } from '../../util/confirm-dialog/confirm-dialog';
+import { UserStore } from '../../../cache/user.store';
 
 @Component({
   selector: 'app-subtasks-list',
@@ -29,6 +30,8 @@ export class SubtasksList {
   protected readonly NAME_MAX_LENGTH = ValidationBoundaries.SUBTASK_NAME_MAX_LENGTH;
 
   private readonly subtaskStore = inject(SubtaskStore);
+  private readonly projectStore = inject(ProjectStore);
+  private readonly userStore = inject(UserStore);
   private readonly route = inject(ActivatedRoute);
 
   private readonly taskId = toSignal(
@@ -38,6 +41,9 @@ export class SubtasksList {
   protected readonly subtaskCache = this.subtaskStore.cache.asReadonly();
   protected readonly creating = this.subtaskStore.creating.asReadonly();
   protected readonly editing = signal<number | null>(null);
+  
+  protected readonly isAdmin = this.projectStore.isAdmin;
+  protected readonly isManager = this.userStore.isManager;
 
   protected readonly createFormExpanded = signal(false);
 
@@ -55,7 +61,7 @@ export class SubtasksList {
     ] })
   });
 
-  constructor(private taskStore: TaskStore, private projectStore: ProjectStore, private dialog: MatDialog) {
+  constructor(private taskStore: TaskStore, private dialog: MatDialog) {
     effect(() => {
       const taskId = this.taskId();
 
@@ -93,6 +99,14 @@ export class SubtasksList {
     this.subtaskEditForm.patchValue({
       name: subtask.name
     });
+  }
+
+  protected onCreate() {
+    this.createFormExpanded.set(true);
+    this.subtaskForm.patchValue({
+      name: ""
+    });
+    this.subtaskForm.markAsUntouched();
   }
 
   protected onEditSubmit(subtask: SubtaskResponse) {

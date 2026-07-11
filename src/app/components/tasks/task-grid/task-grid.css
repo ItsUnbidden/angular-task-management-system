@@ -23,6 +23,13 @@
 
 .task-tile {
   cursor: pointer;
+  transition: transform 150ms;
+}
+
+.task-tile:hover {
+  transform: 
+    translateY(-4px)
+    scale(1.03);
 }
 
 .task-tile mat-card-header {

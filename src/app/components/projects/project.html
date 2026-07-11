@@ -68,7 +68,7 @@
                     <mat-progress-bar [value]="projectCache().item?.progress" mode="determinate"></mat-progress-bar>
 
                     @if (isEditingDescription()) {
-                        <form [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
+                        <form class="description-edit" [formGroup]="descriptionEditForm" (ngSubmit)="onSubmitProjectDescription()">
                             <mat-form-field class="description-input" appearance="outline">
                                 <mat-label>{{ 'project.title.newDescription' | translate }}</mat-label>
                                 <textarea matInput type="text" formControlName="projectDescription" rows="5"></textarea>

@@ -36,8 +36,7 @@
 }
 
 .description-edit {
-    display: flex;
-    flex-direction: column;
+    margin-top: 10px;
 }
 
 .description-field {

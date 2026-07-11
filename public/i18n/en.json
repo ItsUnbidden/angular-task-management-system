@@ -469,9 +469,11 @@
             }
         },
         "validation": {
-            "required": "Subtask name is required.",
-            "minLength": "Subtask title must be at least {{minLength}} characters long.",
-            "maxLength": "Task title cannot be more than {{maxLength}} characters long."
+            "name": {
+                "required": "Subtask name is required.",
+                "minLength": "Subtask title must be at least {{minLength}} characters long.",
+                "maxLength": "Task title cannot be more than {{maxLength}} characters long."
+            }
         }
     },
     "label": {
@@ -577,11 +579,18 @@
             "connect": "Dropbox has been connected successfully."
         },
         "error": {
-            "connect": "Failed to connect Dropbox due to an error.",
+            "connect": {
+                "external": "An external Dropbox issue has occured. Please try again later.",
+                "taken": "This Dropbox account is already in use by someone else.",
+                "exchange": "An internal issue has occured. Please try again later.",
+                "id": "An internal issue has occured. Please try again later.",
+                "unknown": "An unknown error has occured. Please try again later."
+            },
             "unknown": "An external Dropbox issue has occured. Please try again later.",
             "status": {
                 "notApplicable": "This action is not allowed. Try reloading the page to ensure the state is up to date.",
-                "ranOutOfRetries": "There were too many retry attempts. Please try again later."
+                "ranOutOfRetries": "There were too many retry attempts. Please try again later.",
+                "skipped": "Either you or the target of your action is not connected to Dropbox."
             },
             "tag": {
                 "ioException": "An internal server error has occured. Please try again later.",
@@ -615,7 +624,13 @@
             "connect": "Calendar has been connected successfully."
         },
         "error": {
-            "connect": "Failed to connect Calendar due to an error."
+            "connect": {
+                "external": "An external Google issue has occured. Please try again later.",
+                "taken": "This Google account is already in use by someone else.",
+                "exchange": "An internal issue has occured. Please try again later.",
+                "id": "An internal issue has occured. Please try again later.",
+                "unknown": "An unknown error has occured. Please try again later."
+            }
         }
     }
 }

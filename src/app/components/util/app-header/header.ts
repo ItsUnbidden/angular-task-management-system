@@ -108,12 +108,12 @@ export class Header {
   }
 
   protected onConnectDropbox() {
-    const returnUrl = this.router.url;
+    const returnUrl = this.router.url.split("?")[0];
     window.location.href = `/api/oauth2/connect/dropbox?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
 
   protected onConnectCalendar() {
-    const returnUrl = this.router.url;
+    const returnUrl = this.router.url.split("?")[0];
     window.location.href = `/api/oauth2/connect/google?returnUrl=${encodeURIComponent(returnUrl)}`;
   }
   
