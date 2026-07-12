@@ -41,12 +41,17 @@ export class App implements OnInit {
       next: paramMap => {
         const provider = paramMap.get('oauth');
         const result = paramMap.get('result');
+        const reason = paramMap.get('reason');
 
         if (provider && result) {
+          const baseErrorKey = `${provider === 'dropbox' ? provider : 'calendar'}.error.connect.`;
+
           if (result === 'success') {
             this.notification.infoAsync(`${provider === 'dropbox' ? provider : 'calendar'}.success.connect`, 5000);
+          } else if (reason) {
+            this.notification.infoAsync(baseErrorKey + reason, 10000);
           } else {
-            this.notification.infoAsync(`${provider === 'dropbox' ? provider : 'calendar'}.error.connect`, 10000);
+            this.notification.infoAsync(baseErrorKey + 'unknown', 10000);
           }
         }
       }

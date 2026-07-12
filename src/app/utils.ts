@@ -159,6 +159,7 @@ export function getDefaultMessageForExternalError(result: ThirdPartyOperationRes
   switch (dropboxResult.status) {
     case ThirdPartyOperationStatus.NOT_APPLICABLE: return 'dropbox.error.status.notApplicable';
     case ThirdPartyOperationStatus.RAN_OUT_OF_RETRIES: return 'dropbox.error.status.ranOutOfRetries';
+    case ThirdPartyOperationStatus.SKIPPED: return 'dropbox.error.status.skipped';
   }
   if (dropboxResult.tag) {
     switch (dropboxResult.tag) {

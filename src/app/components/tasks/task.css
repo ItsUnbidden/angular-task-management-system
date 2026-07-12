@@ -53,11 +53,6 @@
     white-space: pre-wrap;
 }
 
-.description-edit {
-    display: flex;
-    flex-direction: column;
-}
-
 .task-content-container {
     display: flex;
     flex-direction: column;
@@ -91,4 +86,31 @@
 
 .inline-form-field {
     width: 500px;
+}
+
+.attachments-container {
+    margin: 10px 0px 10px 0px
+}
+
+.join-dropbox-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.join-dropbox-button {
+    width: 250px;
+}
+
+.frame {
+    display: flex;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0px 12px 0px 12px;
+
+    border-style: solid;
+    border-width: var(--mat-card-outlined-outline-width, 1px);
+    border-color: var(--mat-card-outlined-outline-color, var(--mat-sys-outline-variant));
+    border-radius: var(--mat-card-outlined-container-shape, var(--mat-sys-corner-medium));
 }

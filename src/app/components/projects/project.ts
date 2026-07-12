@@ -31,7 +31,7 @@ import { ProjectRoleResponse, ProjectUpdateRequest, ProjectWithDropboxResultResp
 import { GeneralApiError } from '../../models/error.model';
 import { ThirdPartyOperationStatus } from '../../models/external.model';
 import { NotificationService } from '../../service/notification.service';
-import { TranslatePipe } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 
 @Component({
@@ -104,6 +104,7 @@ export class Project {
 
   constructor(private readonly dialog: MatDialog,
               private readonly notification: NotificationService,
+              private readonly translate: TranslateService,
               private readonly router: Router,
               private readonly projectService: ProjectService) {
     effect(() => {
@@ -299,7 +300,7 @@ export class Project {
           } else {
             this.notification.info('project.success.addUser.dropboxFailed', 10000, {
               username: responseUsernamePair[1],
-              dropboxMessage: getDefaultMessageForExternalError(responseUsernamePair[0].dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(responseUsernamePair[0].dropboxResult))
             });
           }
         }
@@ -336,7 +337,7 @@ export class Project {
           } else {
             this.notification.info('project.success.removeUser.dropboxFailed', 10000, {
               username: projectRole.username,
-              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(response.dropboxResult))
             });
           }
         },
@@ -374,7 +375,7 @@ export class Project {
           } else {
             this.notification.info('project.success.quit.dropboxFailed', 10000, {
               projectName: project.name,
-              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(response.dropboxResult))
             });
           }
         },
@@ -467,7 +468,7 @@ export class Project {
           } else {
             this.notification.info('project.success.transfer.dropboxFailed', 10000, {
               username: projectRole.username,
-              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(response.dropboxResult))
             });
           }
         },
@@ -505,7 +506,7 @@ export class Project {
           } else {
             this.notification.info('project.success.delete.dropboxFailed', 10000, {
               projectName: project.name,
-              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(response.dropboxResult))
             });
           }
         },
@@ -658,7 +659,7 @@ export class Project {
             this.notification.info('project.success.disconnectDropbox.full', 10000);
           } else {
             this.notification.info('project.success.disconnectDropbox.dropboxFailed', 10000, {
-              dropboxMessage: getDefaultMessageForExternalError(response.dropboxResult)
+              dropboxMessage: this.translate.instant(getDefaultMessageForExternalError(response.dropboxResult))
             });
           }
         },

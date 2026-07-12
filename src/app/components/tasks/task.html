@@ -223,32 +223,44 @@
 
             <mat-divider></mat-divider>
 
-            <mat-card-content>
+            <mat-card-content class="attachments-container">
                 @if (isDropboxConnected() && isContributor()) {
                     @if (selectedProjectCache().item?.isDropboxConnected && currentProjectRole()?.isDropboxConnected) {
                         <app-attachment-list></app-attachment-list>
                     }
                     @else if (!selectedProjectCache().item?.isDropboxConnected) {
                         @if (isCreator()) {
-                            <p>{{ 'attachment.title.projectNotConnected.creator' | translate }}</p>
+                            <div class="frame">
+                                <p>{{ 'attachment.title.projectNotConnected.creator' | translate }}</p>
+                            </div>
                         }
                         @else {
-                            <p>{{ 'attachment.title.projectNotConnected.member' | translate }}</p>
+                            <div class="frame">
+                                <p>{{ 'attachment.title.projectNotConnected.member' | translate }}</p>
+                            </div>
                         }
                     }
                     @else if (!currentProjectRole()?.isDropboxConnected) {
-                        <p>{{ 'attachment.title.notJoined' | translate }}</p>
-                        <button matButton="elevated" (click)="onJoinDropbox()">
-                            <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
-                            {{ 'project.button.dropbox.join' | translate }}
-                        </button>
+                        <div class="frame">
+                            <div class="join-dropbox-container">
+                                <p class="larger-text">{{ 'attachment.title.notJoined' | translate }}</p>
+                                <button matButton="filled" class="join-dropbox-button" (click)="onJoinDropbox()">
+                                    <mat-icon fontSet="material-symbols-outlined">join</mat-icon>
+                                    {{ 'project.button.dropbox.join' | translate }}
+                                </button>
+                            </div>
+                        </div>
                     }
                 }
                 @else if(!isContributor()) {
-                    <p>{{ 'attachment.title.onlyMembers' | translate }}</p>
+                    <div class="frame">
+                        <p class="larger-text">{{ 'attachment.title.onlyMembers' | translate }}</p>
+                    </div>
                 }
                 @else {
-                    <p>{{ 'attachment.title.userNotConnected' | translate }}</p>
+                    <div class="frame">
+                        <p class="larger-text">{{ 'attachment.title.userNotConnected' | translate }}</p>
+                    </div>
                 }
             </mat-card-content>
 

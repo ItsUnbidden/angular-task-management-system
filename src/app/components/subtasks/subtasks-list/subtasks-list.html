@@ -21,8 +21,8 @@
                 </button>
             </form>
         }
-        @else {
-            <button matButton="filled" (click)="createFormExpanded.set(true)">
+        @else if (isAdmin() || isManager()) {
+            <button matButton="filled" (click)="onCreate()">
                 <mat-icon fontSet="material-symbols-outlined">add</mat-icon>
                 {{ 'subtask.button.create' | translate }}
             </button>
