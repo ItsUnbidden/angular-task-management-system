@@ -66,7 +66,8 @@ export class UpdateUserDetailsDialog {
         username: username ? username : user.username,
         email: email ? email : user.email,
         password,
-        repeatPassword
+        repeatPassword,
+        version: user.version
       }).subscribe({
         next: () => {
           this.notification.info('user.success.update', 5000);

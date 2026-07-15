@@ -5,6 +5,7 @@ export interface LabelResponse extends Entity {
   color: string;
   projectId: number;
   taskIds: number[];
+  version: number;
 }
 
 export interface LabelCreateRequest {
@@ -18,6 +19,7 @@ export interface LabelUpdateRequest {
   name: string;
   color: string;
   taskIds: number[];
+  version: number;
 }
 
 export enum LabelColor {

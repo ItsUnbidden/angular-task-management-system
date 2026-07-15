@@ -21,6 +21,7 @@ export interface UserResponse extends EssentialUserResponse {
   email: string;
   isLocked: boolean;
   roles: UserRole[];
+  version: number;
 }
 
 export interface UserUpdateRequest {
@@ -28,6 +29,7 @@ export interface UserUpdateRequest {
   email: string;
   password?: string;
   repeatPassword?: string;
+  version: number;
 }
 
 export interface UserDeleteResponse {

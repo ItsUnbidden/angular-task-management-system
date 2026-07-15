@@ -14,6 +14,7 @@ export interface TaskResponse extends Entity {
   amountOfMessages: number;
   progress: number;
   labelIds: number[];
+  version: number;
 }
 
 export interface TaskCreateRequest {
@@ -33,6 +34,7 @@ export interface TaskUpdateRequest {
   dueDate?: string;
   newAssigneeId?: number;
   labelIds: number[];
+  version: number;
 }
 
 export interface TaskUpdateStatusRequest {

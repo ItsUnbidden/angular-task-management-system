@@ -53,7 +53,8 @@ export class SubtaskStore extends AbstractStore<SubtaskResponse, never> {
   }
 
   updateSubtask(subtask: SubtaskResponse, arg: string | boolean) : Observable<SubtaskResponse> {
-    const request = typeof arg === 'string' ? { name: arg, completed: subtask.completed } : { name: subtask.name, completed: arg };
+    const request = typeof arg === 'string' ? { name: arg, completed: subtask.completed, version: subtask.version }
+                                            : { name: subtask.name, completed: arg, version: subtask.version };
 
     this.setUpdating(subtask.id, true);
     return this.subtaskService.updateSubtask(subtask.id, request).pipe(tap({

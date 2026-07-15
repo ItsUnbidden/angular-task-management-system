@@ -422,11 +422,6 @@ export class Task {
 
     if (!task) return undefined;
     
-    return { name: task.name,
-            description: task.description,
-            dueDate: task.dueDate,
-            priority: task.priority,
-            newAssigneeId: task.assigneeId, 
-            labelIds: task.labelIds };
+    return { ...task };
   }
 }

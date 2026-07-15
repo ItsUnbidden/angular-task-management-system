@@ -732,10 +732,6 @@ export class Project {
 
     if (!project) return undefined;
     
-    return { name: project.name,
-            description: project.description,
-            startDate: project.startDate ?? '',
-            endDate: project.endDate,
-            isPrivate: project.isPrivate };
+    return { ...project, startDate: project.startDate ?? '' };
   }
 }
