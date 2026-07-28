@@ -15,8 +15,8 @@ export class MessageService {
     return this.http.get<Page<CommentResponse>>(`/api/messages/comments/tasks/${taskId}`, { params: getPageableParams(page, size) });
   }
 
-  getRepliesForComment(commentId: number, page: number, size: number) : Observable<Page<ReplyResponse>> {
-    return this.http.get<Page<ReplyResponse>>(`/api/messages/comments/${commentId}/replies`, { params: getPageableParams(page, size) });
+  getRepliesForComment(commentId: number) : Observable<ReplyResponse[]> {
+    return this.http.get<ReplyResponse[]>(`/api/messages/comments/${commentId}/replies`);
   }
 
   leaveComment(taskId: number, request: MessageCreateRequest) : Observable<CommentResponse> {

@@ -142,25 +142,12 @@ export class Project {
     });
 
     effect(() => {
-      if (this.isSavingPrivacy()) {
-        this.isPrivateCtrl.disable({ emitEvent: false });
-      } else {
-        this.isPrivateCtrl.enable({ emitEvent: false });
+      if ((this.isAdmin() || this.isManager()) && !this.isSavingPrivacy()) {
+        this.isPrivateCtrl.enable();
       }
-    });
-
-    effect(() => {
-      const isAdmin = this.isAdmin();
-      const isManager = this.isManager();
-
-      untracked(() => {
-        if (isAdmin || isManager) {
-          this.isPrivateCtrl.enable();
-        }
-        else {
-          this.isPrivateCtrl.disable();
-        }
-      });
+      else {
+        this.isPrivateCtrl.disable();
+      }
     });
   } 
 
@@ -732,10 +719,6 @@ export class Project {
 
     if (!project) return undefined;
     
-    return { name: project.name,
-            description: project.description,
-            startDate: project.startDate ?? '',
-            endDate: project.endDate,
-            isPrivate: project.isPrivate };
+    return { ...project, startDate: project.startDate ?? '' };
   }
 }

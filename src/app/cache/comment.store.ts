@@ -15,7 +15,7 @@ export class CommentStore extends AbstractStore<CommentResponse, never> {
     const currentCache = this.cache();
 
     return currentCache && currentCache.page
-        ? CommentStore.ITEMS_PER_PAGE * (currentCache.pageIndex + 1) >= currentCache.page?.totalElements
+        ? CommentStore.ITEMS_PER_PAGE * (currentCache.pageIndex + 1) >= currentCache.page?.page.totalElements
         : false;
   });
 

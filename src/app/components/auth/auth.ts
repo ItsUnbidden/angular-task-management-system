@@ -79,8 +79,8 @@ export class Auth {
     if (username && password) {
       this.isLoading.set(true);
       this.authService.login({ username, password }).pipe(
-        finalize(() => this.isLoading.set(false)),
-        switchMap(() => this.authService.refreshCsrfToken())
+        switchMap(() => this.authService.refreshCsrfToken()),
+        finalize(() => this.isLoading.set(false))
       ).subscribe({
         next: () => this.router.navigateByUrl(this.returnUrl),
         error: (err: HttpErrorResponse) => {
@@ -101,8 +101,8 @@ export class Auth {
       if (username && password && repeatPassword && email) {
         this.isLoading.set(true);
         this.authService.register({ username, password, repeatPassword, email }).pipe(
-          finalize(() => this.isLoading.set(false)),
-          switchMap(() => this.authService.login({ username, password }))
+          switchMap(() => this.authService.login({ username, password })),
+          finalize(() => this.isLoading.set(false))
         ).subscribe({
           next: () => this.router.navigateByUrl(this.returnUrl),
           error: (err: HttpErrorResponse) => {

@@ -51,7 +51,7 @@
 
                 <mat-paginator #myProjectsPaginator
                     [class.loading-blur]="usersCache().isLoading"
-                    [length]="usersCache().page?.totalElements"
+                    [length]="usersCache().page?.page?.totalElements"
                     [pageIndex]="usersCache().pageIndex"
                     [pageSize]="usersCache().pageSize"
                     [pageSizeOptions]="[25, 50, 75]"

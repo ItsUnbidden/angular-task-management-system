@@ -12,6 +12,7 @@ export interface ProjectResponse extends Entity {
   isPrivate: boolean;
   isDropboxConnected: boolean;
   isCalendarConnected: boolean;
+  version: number;
 }
 
 export interface ProjectWithDropboxResultResponse extends ProjectResponse {
@@ -32,6 +33,7 @@ export interface ProjectUpdateRequest {
   startDate: string;
   endDate?: string;
   isPrivate?: boolean;
+  version: number;
 }
 
 export interface ProjectDeleteResponse {

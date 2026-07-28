@@ -128,7 +128,8 @@ export class LabelManagementDialog {
       this.labelService.updateLabel(label.id, {
         name: this.labelForm.value.name ?? '',
         color: this.labelForm.value.color ?? '',
-        taskIds: label.taskIds
+        taskIds: label.taskIds,
+        version: label.version
       }).subscribe({
         next: label => {
           this.hasChangedLabels = true;

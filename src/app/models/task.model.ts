@@ -11,9 +11,9 @@ export interface TaskResponse extends Entity {
   projectName: string;
   assigneeId?: number;
   assigneeUsername?: string;
-  amountOfMessages: number;
+  numberOfMessages: number;
   progress: number;
-  labelIds: number[];
+  version: number;
 }
 
 export interface TaskCreateRequest {
@@ -33,6 +33,7 @@ export interface TaskUpdateRequest {
   dueDate?: string;
   newAssigneeId?: number;
   labelIds: number[];
+  version: number;
 }
 
 export interface TaskUpdateStatusRequest {
@@ -46,6 +47,7 @@ export interface TaskFilter {
   status?: TaskStatus;
   priority?: TaskPriority;
   labelIds?: number[];
+  anyLabels?: boolean;
 }
 
 export interface TaskDeleteResponse {

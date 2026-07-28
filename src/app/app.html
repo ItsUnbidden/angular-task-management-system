@@ -1,3 +1,11 @@
 <app-header></app-header>
 
-<router-outlet />
+@if (userStore.userCache().isLoading) {
+    <div class="loading-container">
+        <mat-spinner diameter="75"></mat-spinner>
+        <span>{{ 'user.title.loading.startup' | translate }}</span>
+    </div>
+}
+@else {
+    <router-outlet />
+}

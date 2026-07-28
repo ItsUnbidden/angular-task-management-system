@@ -1,32 +1,39 @@
-import { computed } from '@angular/core';
-import { AbstractStore } from './abstract.store';
-import { catchError, map, Observable } from 'rxjs';
+import { computed, signal } from '@angular/core';
+import { catchError, EMPTY, finalize, map, Observable } from 'rxjs';
 import { MessageService } from '../service/message.service';
 import { FlattenedReply, ReplyResponse } from '../models/message.model';
+import { HttpErrorResponse } from '@angular/common/http';
+import { getDefaultErrorMessageForType } from '../utils';
+import { SimpleApiError } from '../models/error.model';
 
-export class ReplyStore extends AbstractStore<ReplyResponse, never> {
-  static readonly ITEMS_PER_PAGE = 10;
+export class ReplyStore {
+  readonly cache = signal<ReplyResponse[]>([]);
+  readonly error = signal<string | null>(null);
+  readonly isLoading = signal<boolean>(false);
 
   readonly flattenedCache = computed(() => {
     const repliesCache = this.cache();
 
-    return this.flattenReplies(repliesCache.page?.content ?? [], 0);
+    return this.flattenReplies(repliesCache, 0);
   });
 
-  constructor(private readonly messageService: MessageService) { super() }
+  constructor(private readonly messageService: MessageService) {}
 
-  cacheMoreReplies(commentId: number, page: number) : Observable<FlattenedReply[]> {
-    this.preLoading(page, ReplyStore.ITEMS_PER_PAGE);
-    if (page === 0) {
-      this.clearCache();
-    }
-    return this.messageService.getRepliesForComment(commentId, page, ReplyStore.ITEMS_PER_PAGE).pipe(
+  cacheReplies(commentId: number) : Observable<FlattenedReply[]> {
+    this.isLoading.set(true);
+    return this.messageService.getRepliesForComment(commentId).pipe(
       map((replies) => {
-        this.postLoading(replies, true);
-        return this.flattenReplies(replies.content, 0);
-      },
-      catchError(this.catchErrorDefault)
-    ));
+          this.cache.set(replies);
+          return this.flattenedCache();
+      }),
+      catchError((err: HttpErrorResponse) => {
+        const error = err.error as SimpleApiError;
+      
+        this.error.set(getDefaultErrorMessageForType(error));
+        return EMPTY;
+      }),
+      finalize(() => this.isLoading.set(false))
+    );
   }
 
   private flattenReplies(replies: ReplyResponse[], depth: number) : FlattenedReply[] {

@@ -45,7 +45,7 @@ export class MessageStore {
     }));
   }
 
-  cacheMoreReplies(commentId: number, page?: number) : Observable<FlattenedReply[]> {
+  cacheMoreReplies(commentId: number) : Observable<FlattenedReply[]> {
     let store = this.replyStores().get(commentId);
 
     if (!store) {
@@ -58,9 +58,8 @@ export class MessageStore {
       });
       store = newStore;
     }
-    const currentPage = store.cache().page?.number ?? 0;
 
-    return store.cacheMoreReplies(commentId, page ?? currentPage).pipe(tap({
+    return store.cacheReplies(commentId).pipe(tap({
       next: flattenedReplies => {
         this.messageStates.update(map => {
           const newMessageStates = new Map(map);
@@ -98,7 +97,7 @@ export class MessageStore {
   isLoadingRepliesForComment(commentId: number) : boolean {
     const store = this.replyStores().get(commentId);
 
-    return (store) ? store.cache().isLoading : false;
+    return (store) ? store.isLoading() : false;
   }
 
   isReplying(messageId: number) : boolean {

@@ -3,6 +3,7 @@ import { Entity } from "./general.model";
 export interface SubtaskResponse extends Entity {
     name: string;
     completed: boolean;
+    version: number;
 }
 
 export interface SubtaskCreateRequest {
@@ -13,4 +14,5 @@ export interface SubtaskCreateRequest {
 export interface SubtaskUpdateRequest {
     name: string;
     completed: boolean;
+    version: number;
 }

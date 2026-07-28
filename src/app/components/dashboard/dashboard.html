@@ -60,7 +60,7 @@
         
                                 <mat-paginator #myProjectsPaginator
                                     [class.loading-blur]="projectsCache().isLoading"
-                                    [length]="projectsCache().page?.totalElements"
+                                    [length]="projectsCache().page?.page?.totalElements"
                                     [pageIndex]="projectsCache().pageIndex"
                                     [pageSize]="projectsCache().pageSize"
                                     [pageSizeOptions]="[10, 20, 30]"
@@ -127,7 +127,7 @@
         
                                 <mat-paginator #tasksPaginator
                                     [class.loading-blur]="projectsCache().isLoading"
-                                    [length]="myTasksCache().page?.totalElements"
+                                    [length]="myTasksCache().page?.page?.totalElements"
                                     [pageIndex]="myTasksCache().pageIndex"
                                     [pageSize]="myTasksCache().pageSize"
                                     [pageSizeOptions]="[10, 20, 30]"
@@ -206,7 +206,7 @@
     
                                 <mat-paginator #publicProjectsPaginator 
                                     [class.loading-blur]="projectsCache().isLoading"
-                                    [length]="projectsCache().page?.totalElements"
+                                    [length]="projectsCache().page?.page?.totalElements"
                                     [pageIndex]="projectsCache().pageIndex"
                                     [pageSize]="projectsCache().pageSize"
                                     [pageSizeOptions]="[25, 50, 75]"

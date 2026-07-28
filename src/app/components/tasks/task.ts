@@ -156,11 +156,20 @@ export class Task {
             })
           }
           this.chipsEditForm.patchValue({
-            taskPriority: task.priority,
-            labels: task.labelIds
+            taskPriority: task.priority
           })
         });
       }
+    });
+    
+    effect(() => {
+      const selectedLabels = this.selectedTaskLabels();
+
+      untracked(() => {
+        this.chipsEditForm.patchValue({
+          labels: selectedLabels.map(l => l.id)
+        });
+      });
     });
   };
 
@@ -422,11 +431,6 @@ export class Task {
 
     if (!task) return undefined;
     
-    return { name: task.name,
-            description: task.description,
-            dueDate: task.dueDate,
-            priority: task.priority,
-            newAssigneeId: task.assigneeId, 
-            labelIds: task.labelIds };
+    return { ...task, labelIds: this.selectedTaskLabels().map(l => l.id) };
   }
 }
