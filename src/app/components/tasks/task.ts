@@ -156,11 +156,20 @@ export class Task {
             })
           }
           this.chipsEditForm.patchValue({
-            taskPriority: task.priority,
-            labels: task.labelIds
+            taskPriority: task.priority
           })
         });
       }
+    });
+    
+    effect(() => {
+      const selectedLabels = this.selectedTaskLabels();
+
+      untracked(() => {
+        this.chipsEditForm.patchValue({
+          labels: selectedLabels.map(l => l.id)
+        });
+      });
     });
   };
 
@@ -422,6 +431,6 @@ export class Task {
 
     if (!task) return undefined;
     
-    return { ...task };
+    return { ...task, labelIds: this.selectedTaskLabels().map(l => l.id) };
   }
 }

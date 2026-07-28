@@ -46,11 +46,17 @@
                             }
                         </mat-chip-listbox>
                     </div>
-                    <mat-chip-listbox multiple formControlName="labelIds">
-                        @for (label of projectLabels().page?.content; track label.id) {
-                            <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
-                        }
-                    </mat-chip-listbox>                    
+                    <div class="filters-internal-container">
+                        <mat-chip-listbox multiple formControlName="labelIds">
+                            @for (label of projectLabels().page?.content; track label.id) {
+                                <mat-chip-option [value]="label.id" class="label-chip" [attr.data-color]="label.color">{{ label.name }}</mat-chip-option>
+                            }
+                        </mat-chip-listbox>  
+                        <mat-radio-group formControlName="anyLabels">
+                            <mat-radio-button [value]="true">{{ 'task.button.labelsFilter.any' | translate }}</mat-radio-button>
+                            <mat-radio-button [value]="false">{{ 'task.button.labelsFilter.all' | translate }}</mat-radio-button>
+                        </mat-radio-group>                  
+                    </div>
                 </form>
             </mat-card-content>
             <mat-card-actions>
@@ -63,7 +69,7 @@
         
         @if (tasks().error) {
             <mat-card-header>
-                <mat-card-title class="error-card-title">{{ 'error.title.error' | translate }}</mat-card-title>
+                <mat-card-title class="error-card-title">{{ 'common.title.error' | translate }}</mat-card-title>
             </mat-card-header>
 
             <mat-card-content>
@@ -115,7 +121,7 @@
         }
         <mat-paginator 
             [class.loading-blur]="tasks().isLoading"
-            [length]="tasks().page?.totalElements"
+            [length]="tasks().page?.page?.totalElements"
             [pageIndex]="tasks().pageIndex"
             [pageSize]="tasks().pageSize"
             [pageSizeOptions]="[8, 12, 24]"

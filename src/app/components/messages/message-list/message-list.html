@@ -1,7 +1,7 @@
 <div class="main-container">
     <mat-card>
         <mat-card-header>
-            <mat-card-title class="card-title">{{ 'message.title.messages' | translate:{ numberOfMessages: taskCache().item?.amountOfMessages ?? 0 } }}</mat-card-title>
+            <mat-card-title class="card-title">{{ 'message.title.messages' | translate:{ numberOfMessages: taskCache().item?.numberOfMessages ?? 0 } }}</mat-card-title>
         </mat-card-header>
         <mat-divider></mat-divider>
         <mat-card-content>
@@ -72,10 +72,10 @@
                                     {{ 'common.button.delete' | translate }}
                                 </button>
                             }
-                            @if (comment.amountOfReplies > 0 && !isCommentExpanded(comment.id)) {
+                            @if (comment.numberOfReplies > 0 && !isCommentExpanded(comment.id)) {
                                 <button matButton="elevated" (click)="onOpenCommentReplies(comment)">
                                     <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                                    {{ 'message.button.showReplies' | translate:{ numberOfReplies: comment.amountOfReplies } }}
+                                    {{ 'message.button.showReplies' | translate:{ numberOfReplies: comment.numberOfReplies } }}
                                 </button>
                             } 
                             @else if ((userCache().item?.id !== comment.userId || isManager()) && !isReplying(comment.id)) {
@@ -106,8 +106,10 @@
 
                         @if (isCommentExpanded(comment.id)) {
                             @if (isLoadingRepliesForComment(comment.id)) {
-                                <mat-spinner></mat-spinner>
-                                <span>{{ 'message.title.loading.reply' | translate }}</span>
+                                <div class="spinner-container">
+                                    <mat-spinner diameter="30"></mat-spinner>
+                                    <span>{{ 'message.title.loading.reply' | translate }}</span>
+                                </div>
                             }
                             @else {
                                 <div class="replies-container">                                      
@@ -183,18 +185,10 @@
                                 </div>
                             }
                             <mat-card-actions class="message-actions-container">
-                                @if (isLastRepliesPage(comment.id)) {
-                                    <button matButton="outlined" (click)="onHideReplies(comment.id)">
-                                        {{ 'message.button.hideReplies' | translate }}
-                                        <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
-                                    </button>
-                                }
-                                @else {
-                                    <button matButton="elevated" (click)="onMoreReplies(comment.id)">
-                                        <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_down</mat-icon>
-                                        {{ 'message.button.showMoreReplies' | translate }}
-                                    </button>
-                                }
+                                <button matButton="outlined" (click)="onHideReplies(comment.id)">
+                                    {{ 'message.button.hideReplies' | translate }}
+                                    <mat-icon fontSet="material-symbols-outlined">keyboard_arrow_up</mat-icon>
+                                </button>
                             </mat-card-actions>
                         }
                     }                       
@@ -203,7 +197,7 @@
         </mat-list>
     }
     <div class="message-actions-container">
-        @if (commentCache().page?.last) {
+        @if (isLastCommentsPage()) {
             @if (commentCache().pageIndex !== 0) {
                 <button matButton="outlined" (click)="onHideComments()">
                     {{ 'message.button.hideComments' | translate }}

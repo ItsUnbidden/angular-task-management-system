@@ -41,7 +41,7 @@ export abstract class AbstractStore<T extends Entity, F> {
     } else {
       this.cache.update(c => {
         if (add && c.page) {
-          const newPage: Page<T> = { ...arg, content: c.page.content.concat(arg.content), size: c.page.size + arg.size };
+          const newPage: Page<T> = { content: c.page.content.concat(arg.content), page: { ...arg.page, size: arg.page.size + c.page.page.size } };
           return {...c, page: newPage, isLoading: false};
         }
         return {...c, page: arg, isLoading: false};

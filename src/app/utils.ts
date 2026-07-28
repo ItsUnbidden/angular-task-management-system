@@ -90,8 +90,10 @@ export function getProjectCreator(project: ProjectResponse) : EssentialUserRespo
 }
 
 export function getDefaultErrorMessageForType(error: GeneralApiError) : string {
-  if (environment.logErrors) {
-    console.error('An error has occured.', error);
+  if (environment.logErrors) console.error('An error has occured.', error);
+  if (!error) {
+    if (environment.logErrors) console.error("The error is null or undefined.");
+    return "common.error.unknown";
   }
   if (isExternalError(error) && error.externalResult) {
     return getDefaultMessageForExternalError(error.externalResult);
@@ -186,11 +188,7 @@ export function getPageableParams(page: number, size: number, sort?: string, dir
 
     entries.forEach(e => {
       if (e[1] !== undefined && e[1] !== null) {
-        if (typeof e[1] !== 'object') {
-          params = params.set(e[0], e[1]);
-        } else {
-          if (environment.logErrors) console.warn('Unable to include an object into as an HTTP param.')
-        }
+        params = params.set(e[0], e[1]);
       }
     });
   }

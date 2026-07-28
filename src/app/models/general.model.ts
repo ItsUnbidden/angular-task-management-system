@@ -4,11 +4,14 @@ export interface Entity {
 
 export interface Page<T extends Entity> {
   content: T[];
+  page: PageMeta;
+}
+
+export interface PageMeta {
   totalElements: number;
-  number: number;
+  totalPages: number;
   size: number;
-  first: boolean;
-  last: boolean;
+  number: number;
 }
 
 export interface Cache {

@@ -15,7 +15,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from "@angular/material/icon";
 import { getChipColor, getChipTextKey, toLocalDateString } from '../../../utils';
-import { EMPTY, map, Observable, switchMap } from 'rxjs';
+import { EMPTY, map, Observable, switchMap, tap } from 'rxjs';
 import { ProjectStore } from '../../../cache/project.store';
 import { TaskStore } from '../../../cache/task.store';
 import { UserStore } from '../../../cache/user.store';
@@ -25,14 +25,15 @@ import { TaskStatus, TaskPriority, TaskResponse } from '../../../models/task.mod
 import { EssentialUserResponse } from '../../../models/user.model';
 import { Page } from '../../../models/general.model';
 import { TranslatePipe } from '@ngx-translate/core';
+import { MatRadioGroup, MatRadioButton } from "@angular/material/radio";
 
 @Component({
   selector: 'app-task-grid',
   imports: [CommonModule, MatCardModule, MatDividerModule,
-            MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule,
-            MatButtonModule, MatSelectModule, ReactiveFormsModule,
-            MatDatepickerModule, MatNativeDateModule, MatIconModule,
-            TranslatePipe],
+    MatProgressSpinnerModule, MatChipsModule, MatPaginatorModule,
+    MatButtonModule, MatSelectModule, ReactiveFormsModule,
+    MatDatepickerModule, MatNativeDateModule, MatIconModule,
+    TranslatePipe, MatRadioGroup, MatRadioButton],
   templateUrl: './task-grid.html',
   styleUrl: './task-grid.css',
 })
@@ -79,7 +80,8 @@ export class TaskGrid {
     priority: new FormControl<TaskPriority | null>(this.currentFilter()?.priority ?? null),
     dueDateFrom: new FormControl<Date | null>(this.getDate(this.currentFilter()?.dueDateFrom)),
     dueDateTo: new FormControl<Date | null>(this.getDate(this.currentFilter()?.dueDateTo)),
-    labelIds: new FormControl<number[]>(this.currentFilter()?.labelIds ?? [])
+    labelIds: new FormControl<number[] | null>(this.currentFilter()?.labelIds ?? null),
+    anyLabels: new FormControl<boolean>(this.currentFilter()?.anyLabels ?? false)
   });
 
   protected readonly priorityOptions: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH'];
@@ -119,7 +121,8 @@ export class TaskGrid {
           priority: this.filterForm.value.priority ?? undefined,
           dueDateFrom: toLocalDateString(this.filterForm.value.dueDateFrom ?? null),
           dueDateTo: toLocalDateString(this.filterForm.value.dueDateTo ?? null),
-          labelIds: this.filterForm.value.labelIds ?? undefined
+          labelIds: this.filterForm.value.labelIds ?? undefined,
+          anyLabels: this.filterForm.value.anyLabels ?? undefined
         }))
       ).subscribe();
     }
@@ -163,7 +166,8 @@ export class TaskGrid {
       priority: null,
       dueDateFrom: null,
       dueDateTo: null,
-      labelIds: []
+      labelIds: null,
+      anyLabels: null
     });
     const project = this.selectedProjectCache()?.item;
 

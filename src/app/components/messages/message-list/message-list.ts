@@ -46,6 +46,8 @@ export class MessageList {
   protected readonly commentCache = this.messageStore.commentsCache.asReadonly();
   protected readonly userCache = this.userStore.userCache.asReadonly();
 
+  protected readonly isLastCommentsPage = this.messageStore.commentStore.isLastCommentsPage;
+
   protected readonly isManager = this.userStore.isManager;
 
   protected readonly maxReplyDepth = 6;
@@ -108,7 +110,7 @@ export class MessageList {
         })).subscribe({
         next: () => {
           this.taskCache.update(cache => {
-            return { ...cache, item: cache.item ? { ...cache.item, amountOfMessages: ++cache.item.amountOfMessages } : undefined };
+            return { ...cache, item: cache.item ? { ...cache.item, numberOfMessages: ++cache.item.numberOfMessages } : undefined };
           });
           this.newCommentForm.patchValue({
             comment: ''
@@ -145,7 +147,7 @@ export class MessageList {
             return this.messageStore.cacheMoreComments(task.id, 0);
           }
           else if (parent) {
-            return this.messageStore.cacheMoreReplies(parent.id, 0);
+            return this.messageStore.cacheMoreReplies(parent.id);
           }
           return EMPTY;
         }
@@ -179,7 +181,7 @@ export class MessageList {
         switchMap(confirmed => {
           if (confirmed) {
             this.taskCache.update(cache => {
-              return { ...cache, item: cache.item ? { ...cache.item, amountOfMessages: --cache.item.amountOfMessages } : undefined };
+              return { ...cache, item: cache.item ? { ...cache.item, numberOfMessages: --cache.item.numberOfMessages } : undefined };
             });
             return this.messageService.deleteMessage(message.id);
           }         
@@ -223,13 +225,13 @@ export class MessageList {
       switchMap(reply => {
         this.disableReplying();
         this.taskCache.update(cache => {
-          return { ...cache, item: cache.item ? { ...cache.item, amountOfMessages: ++cache.item.amountOfMessages } : undefined };
+          return { ...cache, item: cache.item ? { ...cache.item, numberOfMessages: ++cache.item.numberOfMessages } : undefined };
         });
         if (this.isComment(message)) {
-          return this.messageStore.cacheMoreReplies(message.id, 0);
+          return this.messageStore.cacheMoreReplies(message.id);
         }
         if (superParent) {
-          return this.messageStore.cacheMoreReplies(superParent.id, 0);
+          return this.messageStore.cacheMoreReplies(superParent.id);
         }
         return EMPTY;
       }
@@ -288,12 +290,6 @@ export class MessageList {
     return this.messageStore.isEditing(messageId);
   }
 
-  protected isLastRepliesPage(commentId: number) : boolean {
-    const store = this.messageStore.replyStores().get(commentId);
-
-    return store?.cache().page?.last ?? false;
-  }
-
   protected setExpandComment(commentId: number, isExpanded: boolean) {
     this.messageStore.setExpandComment(commentId, isExpanded);
   }
@@ -315,6 +311,6 @@ export class MessageList {
   }
 
   private isComment(message: MessageResponse): message is CommentResponse {
-    return "amountOfReplies" in message;
+    return "numberOfReplies" in message;
   }
 }

@@ -172,7 +172,8 @@
             "loading": {
                 "single": "Loading user...",
                 "plural": "Loading users...",
-                "addUserToProject": "Adding the user..."
+                "addUserToProject": "Adding the user...",
+                "startup": "Please wait..."
             }
         },
         "button": {
@@ -415,7 +416,11 @@
             "new": "Create task",
             "notStarted": "Mark as \"Not started\"",
             "inProgress": "Mark as \"In progress\"",
-            "completed": "Mark as \"Completed\""
+            "completed": "Mark as \"Completed\"",
+            "labelsFilter": {
+                "any": "Any",
+                "all": "All"
+            }
         },
         "confirm": {
             "delete": {
@@ -534,8 +539,7 @@
             "reply": "Reply",
             "hideComments": "Hide comments",
             "showMoreComments": "Show more comments",
-            "hideReplies": "Hide replies",
-            "showMoreReplies": "Show more replies"
+            "hideReplies": "Hide replies"
         },
         "confirm": {
             "delete": {

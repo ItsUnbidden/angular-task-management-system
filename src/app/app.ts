@@ -9,10 +9,12 @@ import { UserStore } from './cache/user.store';
 import { AuthService } from './service/auth.service';
 import { NotificationService } from './service/notification.service';
 import { LanguageService } from './service/language.service';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, Header],
+  imports: [RouterOutlet, Header, MatProgressSpinnerModule, TranslatePipe],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -21,7 +23,8 @@ export class App implements OnInit {
               private readonly oauth2Service: OAuth2Service, private readonly router: Router,
               private readonly notification: NotificationService,
               private readonly languageService: LanguageService,
-              userStore: UserStore, iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
+              protected readonly userStore: UserStore,
+              iconRegistry: MatIconRegistry, sanitizer: DomSanitizer) {
     effect(() => {
       const user = userStore.userCache().item;
 

@@ -9,7 +9,7 @@ export interface MessageResponse extends Entity {
 }
 
 export interface CommentResponse extends MessageResponse {
-  amountOfReplies: number;
+  numberOfReplies: number;
 }
 
 export interface ReplyResponse extends MessageResponse {
